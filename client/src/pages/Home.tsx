@@ -7,6 +7,7 @@ import { services } from "@/data/services";
 import { ServiceCard } from "@/components/ServiceCard";
 import { QuestionnaireWizard } from "@/components/QuestionnaireWizard";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
+import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { 
   Loader2, 
   Sparkles, 
@@ -18,7 +19,9 @@ import {
   Star,
   ClipboardList,
   FileText,
-  DollarSign
+  DollarSign,
+  Brain,
+  HelpCircle
 } from "lucide-react";
 import {
   Form,
@@ -43,6 +46,7 @@ export default function Home() {
   const [suggestedServiceIds, setSuggestedServiceIds] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
   
   const createLead = useCreateLead();
 
@@ -151,6 +155,11 @@ export default function Home() {
         onOpenChange={setShowPayoutModal} 
       />
 
+      <HowItWorksModal
+        open={showHowItWorksModal}
+        onOpenChange={setShowHowItWorksModal}
+      />
+
       <main>
         {/* Hero Section */}
         <section className="relative py-12 lg:py-20 overflow-hidden">
@@ -170,9 +179,21 @@ export default function Home() {
               
               {/* Left Column: Content */}
               <div className="text-white space-y-6 pt-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 font-medium text-sm">
-                  <Sparkles className="w-4 h-4" />
-                  <span>AI-Powered Lead Analysis</span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 font-medium text-sm">
+                    <Sparkles className="w-4 h-4" />
+                    <span>AI-Powered Lead Analysis</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHowItWorksModal(true)}
+                    className="text-blue-300 border border-blue-400/30 bg-blue-500/10"
+                    data-testid="button-how-it-works"
+                  >
+                    <Brain className="w-4 h-4 mr-1" />
+                    How AI Helps You
+                  </Button>
                 </div>
                 <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight text-white">
                   Brand Ambassador <br />
