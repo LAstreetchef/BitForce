@@ -137,7 +137,7 @@ export default function Home() {
                   <Sparkles className="w-4 h-4" />
                   <span>AI-Powered Lead Analysis</span>
                 </div>
-                <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight">
+                <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight text-white">
                   Brand Ambassador <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
                     Service Portal
