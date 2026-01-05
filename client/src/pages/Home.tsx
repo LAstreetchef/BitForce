@@ -133,7 +133,7 @@ export default function Home() {
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-            <a href="#" className="hover:text-blue-600 transition-colors">Portal</a>
+            <a href="/portal" className="hover:text-blue-600 transition-colors" data-testid="link-portal">Ambassador Portal</a>
             <a href="#services" className="hover:text-blue-600 transition-colors">Services</a>
             <a href="#membership" className="hover:text-blue-600 transition-colors">Membership</a>
           </nav>
