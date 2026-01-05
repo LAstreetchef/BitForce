@@ -192,7 +192,7 @@ export default function Home() {
                     data-testid="button-how-it-works"
                   >
                     <Brain className="w-4 h-4 mr-1" />
-                    How AI Helps You
+                    How It Works
                   </Button>
                 </div>
                 <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight text-white">
