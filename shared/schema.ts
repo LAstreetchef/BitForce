@@ -2,6 +2,8 @@ import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export * from "./models/auth";
+
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   fullName: text("full_name").notNull(),

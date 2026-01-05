@@ -1,8 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -19,10 +21,14 @@ import {
   BookOpen, 
   Settings,
   Home,
-  DollarSign
+  DollarSign,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
@@ -39,11 +45,56 @@ interface PortalLayoutProps {
 export function PortalLayout({ children }: PortalLayoutProps) {
   const [location] = useLocation();
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be logged in to access the Ambassador Portal.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+    }
+  }, [isLoading, isAuthenticated, toast]);
 
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userInitials = user?.firstName && user?.lastName 
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || "U";
+
+  const userName = user?.firstName && user?.lastName 
+    ? `${user.firstName} ${user.lastName}`
+    : user?.email || "Ambassador";
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
@@ -112,6 +163,29 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+
+          <SidebarFooter className="p-4 border-t">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-9 h-9">
+                <AvatarImage src={user?.profileImageUrl || undefined} alt={userName} />
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate" data-testid="text-user-name">{userName}</div>
+                <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => logout()}
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </SidebarFooter>
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
