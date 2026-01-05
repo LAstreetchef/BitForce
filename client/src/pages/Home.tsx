@@ -112,11 +112,20 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-12 lg:py-20 bg-slate-900 overflow-hidden">
-          {/* Abstract Background */}
+        <section className="relative py-12 lg:py-20 overflow-hidden">
+          {/* Video Background */}
           <div className="absolute inset-0 z-0">
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-blue-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-1/2 h-full bg-indigo-600/20 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src="/hero-bg.mp4" type="video/mp4" />
+            </video>
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-slate-900/70"></div>
           </div>
 
           <div className="container mx-auto px-4 relative z-10">
