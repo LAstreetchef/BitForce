@@ -5,6 +5,7 @@ import { insertLeadSchema } from "@shared/schema";
 import { useCreateLead } from "@/hooks/use-leads";
 import { services } from "@/data/services";
 import { ServiceCard } from "@/components/ServiceCard";
+import { QuestionnaireWizard } from "@/components/QuestionnaireWizard";
 import { 
   Loader2, 
   Sparkles, 
@@ -13,7 +14,9 @@ import {
   Shield, 
   Globe, 
   Clock, 
-  Star 
+  Star,
+  ClipboardList,
+  FileText
 } from "lucide-react";
 import {
   Form,
@@ -31,7 +34,10 @@ import type { z } from "zod";
 
 type LeadFormValues = z.infer<typeof insertLeadSchema>;
 
+type IntakeMode = "wizard" | "form";
+
 export default function Home() {
+  const [intakeMode, setIntakeMode] = useState<IntakeMode>("wizard");
   const [suggestedServiceIds, setSuggestedServiceIds] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -78,6 +84,23 @@ export default function Home() {
 
   const handleMembershipClick = () => {
     alert("Premium Membership signup coming soon! We're putting the finishing touches on our exclusive portal.");
+  };
+
+  const handleWizardComplete = (recommendedServices: string[], interestsSummary: string) => {
+    setSuggestedServiceIds(recommendedServices);
+    setShowSuggestions(true);
+    form.setValue("interests", interestsSummary);
+    setIntakeMode("form");
+  };
+
+  const handleWizardSkip = () => {
+    setIntakeMode("form");
+  };
+
+  const handleStartWizard = () => {
+    setIntakeMode("wizard");
+    setSuggestedServiceIds([]);
+    setShowSuggestions(false);
   };
 
   // Sort services to put suggestions first
@@ -169,121 +192,186 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right Column: Form */}
-              <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-2xl shadow-blue-900/20">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">New Client Intake</h2>
-                  <p className="text-slate-500">Fill out the details below to generate service matches.</p>
-                </div>
-
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                    <div className="grid md:grid-cols-2 gap-5">
-                      <FormField
-                        control={form.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John Doe" className="input-field" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="(555) 123-4567" className="input-field" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="john@example.com" className="input-field" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+              {/* Right Column: Wizard or Form */}
+              <AnimatePresence mode="wait">
+                {intakeMode === "wizard" ? (
+                  <motion.div
+                    key="wizard"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                  >
+                    <QuestionnaireWizard
+                      onComplete={handleWizardComplete}
+                      onSkip={handleWizardSkip}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Home Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St, City, State" className="input-field" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="interests"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Interests & Needs</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe what the client is looking for (e.g., 'needs roof repair after storm' or 'wants to digitize old vhs tapes')..." 
-                              className="input-field min-h-[100px] resize-none" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex gap-3 pt-2">
-                      <Button 
-                        type="button" 
-                        onClick={handleSuggest}
-                        variant="secondary"
-                        className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200"
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="form"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="bg-white rounded-2xl p-6 lg:p-8 shadow-2xl shadow-blue-900/20"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900">New Client Intake</h2>
+                        <p className="text-slate-500">
+                          {showSuggestions 
+                            ? "Review recommendations and complete the form." 
+                            : "Fill out the details below to generate service matches."}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleStartWizard}
+                        className="shrink-0"
+                        data-testid="button-restart-wizard"
                       >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Analyze Needs
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createLead.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
-                      >
-                        {createLead.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-2" />
-                            Submit Lead
-                          </>
-                        )}
+                        <ClipboardList className="w-4 h-4 mr-1" />
+                        Guided
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </div>
+
+                    {showSuggestions && suggestedServiceIds.length > 0 && (
+                      <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                        <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-blue-600" />
+                          Recommended Services
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {suggestedServiceIds.map((id) => {
+                            const service = services.find((s) => s.id === id);
+                            if (!service) return null;
+                            return (
+                              <span
+                                key={id}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full"
+                              >
+                                {service.name}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                        <div className="grid md:grid-cols-2 gap-5">
+                          <FormField
+                            control={form.control}
+                            name="fullName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John Doe" className="input-field" data-testid="input-fullname" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="(555) 123-4567" className="input-field" data-testid="input-phone" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email Address</FormLabel>
+                              <FormControl>
+                                <Input placeholder="john@example.com" className="input-field" data-testid="input-email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Home Address</FormLabel>
+                              <FormControl>
+                                <Input placeholder="123 Main St, City, State" className="input-field" data-testid="input-address" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="interests"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Client Interests & Needs</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Describe what the client is looking for (e.g., 'needs roof repair after storm' or 'wants to digitize old vhs tapes')..." 
+                                  className="input-field min-h-[100px] resize-none" 
+                                  data-testid="textarea-interests"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="flex gap-3 pt-2">
+                          <Button 
+                            type="button" 
+                            onClick={handleSuggest}
+                            variant="secondary"
+                            className="flex-1 bg-blue-50 text-blue-700 border-blue-200"
+                            data-testid="button-analyze"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Analyze Needs
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={createLead.isPending}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+                            data-testid="button-submit-lead"
+                          >
+                            {createLead.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-4 h-4 mr-2" />
+                                Submit Lead
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </section>
