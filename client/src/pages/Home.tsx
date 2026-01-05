@@ -144,7 +144,7 @@ export default function Home() {
                   </span>
                 </h1>
                 <p className="text-lg text-slate-300 max-w-lg leading-relaxed">
-                  Streamline your intake process. Enter client details and let our intelligence engine suggest the perfect service packages instantly.
+                  Enter client details and let our intelligence engine suggest the perfect service packages instantly.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-6 pt-4">
