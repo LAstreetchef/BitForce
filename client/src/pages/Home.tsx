@@ -6,6 +6,7 @@ import { useCreateLead } from "@/hooks/use-leads";
 import { services } from "@/data/services";
 import { ServiceCard } from "@/components/ServiceCard";
 import { QuestionnaireWizard } from "@/components/QuestionnaireWizard";
+import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { 
   Loader2, 
   Sparkles, 
@@ -16,7 +17,8 @@ import {
   Clock, 
   Star,
   ClipboardList,
-  FileText
+  FileText,
+  DollarSign
 } from "lucide-react";
 import {
   Form,
@@ -40,6 +42,7 @@ export default function Home() {
   const [intakeMode, setIntakeMode] = useState<IntakeMode>("wizard");
   const [suggestedServiceIds, setSuggestedServiceIds] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
   
   const createLead = useCreateLead();
 
@@ -130,25 +133,36 @@ export default function Home() {
             <a href="#services" className="hover:text-blue-600 transition-colors">Services</a>
             <a href="#membership" className="hover:text-blue-600 transition-colors">Membership</a>
           </nav>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPayoutModal(true)}
+            className="flex items-center gap-2"
+            data-testid="button-open-payout-modal"
+          >
+            <DollarSign className="w-4 h-4 text-green-600" />
+            <span className="hidden sm:inline">My Earnings</span>
+          </Button>
         </div>
       </header>
+
+      <AmbassadorPayoutModal 
+        open={showPayoutModal} 
+        onOpenChange={setShowPayoutModal} 
+      />
 
       <main>
         {/* Hero Section */}
         <section className="relative py-12 lg:py-20 overflow-hidden">
-          {/* Video Background */}
+          {/* Background Image */}
           <div className="absolute inset-0 z-0">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
+            <img
+              src="/hero-bg.jpg"
+              alt="Community event"
               className="absolute inset-0 w-full h-full object-cover"
-            >
-              <source src="/hero-bg.mp4" type="video/mp4" />
-            </video>
+            />
             {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-slate-900/70"></div>
+            <div className="absolute inset-0 bg-slate-900/60"></div>
           </div>
 
           <div className="container mx-auto px-4 relative z-10">
