@@ -1,0 +1,74 @@
+Here is a well-structured prompt you can copy-paste directly into Replit (e.g. when creating a new Replit → choose HTML, CSS, JS template) or into an AI code generation tool inside Replit to build/improve the application:
+
+```text
+Create a complete, modern single-page web application in Replit using HTML, CSS, and JavaScript (with Bootstrap 5) for a company called "Digital Intelligence Marketing".
+
+The purpose of the app is for brand ambassadors to sign up new customers for various home and digital services.
+
+Design goals:
+- Clean, professional, modern look and feel
+- Use a blue primary color scheme (#007bff primary, light backgrounds, white cards)
+- Include a nice header with company logo placeholder (use a simple text logo or img tag with src="https://via.placeholder.com/200x80/007bff/ffffff?text=EveryBit")
+- Responsive design (mobile-friendly)
+
+Main features to implement:
+
+1. Customer Information Form (top section)
+   - Fields: Full Name, Email, Phone, Home Address, Interests/Needs (textarea)
+   - Big blue "Suggest Services" button that triggers AI-like service suggestions
+
+2. AI-Powered Service Suggestions
+   - When user clicks "Suggest Services", analyze the Interests/Needs textarea
+   - Use simple JavaScript keyword matching to suggest relevant services
+   - Display suggested services in a nice list or cards (clickable to open details)
+
+3. Current Services Grid
+   - Display all available services as responsive cards (3 per row on desktop)
+   - Services list:
+     - Digitizing Photos & Videos
+     - Home AI Assistance
+     - Home Digital Services (alarms, cameras, internet, website creation)
+     - Roof Installation & Repair
+     - Driveway Services
+     - Plumbing Services
+     - General Home Improvement Assistance
+     - Mortgage & Financing Solutions
+     - Custom / Other Services
+   - Each card should be clickable and open a Bootstrap modal
+
+4. Service Detail Modal
+   - When clicking any service (from suggestions or main list):
+     - Show modal with service name as title
+     - List of 3–5 helpful questions the ambassador should ask the customer
+     - Sales feedback/talking points to help close the sale
+     - Nice formatting (bullet points, bold text)
+
+5. Premium Membership Tier Section (bottom)
+   - Attractive card or section with heading "Premium Membership"
+   - Benefits list:
+     - Periodic professional home visits
+     - Personal AI-powered webpage (we create & maintain for you)
+     - Priority access to all services
+     - Exclusive offers on popular products
+   - Big green "Sign Up for Membership" button (just alert() for now)
+
+Technical requirements:
+- Use Bootstrap 5 CDN (css + js bundle)
+- Use only vanilla JavaScript (no frameworks like React/Vue)
+- Put all services data in a JavaScript array of objects (name, questions array, feedback string)
+- Make the suggestion logic case-insensitive and match multiple keywords
+- Add subtle hover effects on service cards
+- Make sure the whole page is scrollable and looks good on mobile
+
+Bonus (if you have time):
+- Add a simple loading spinner when "Suggest Services" is clicked (fake 800ms delay)
+- Add basic form validation (name, email required)
+- Make the "Sign Up" buttons show a success alert with customer name
+
+Please generate the complete code in one file (index.html) with embedded <style> and <script> tags.
+Use nice spacing, comments, and make the code easy to extend later.
+```
+
+You can paste this prompt directly into Replit's AI code generator (if available), or into ChatGPT/Claude/Grok/etc. while working in Replit, or simply use it as a detailed specification for manual development.
+
+Let me know if you'd like a shorter version, more detailed version, or one focused on specific parts (e.g. only the suggestion logic)!
