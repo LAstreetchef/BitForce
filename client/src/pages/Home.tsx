@@ -96,10 +96,10 @@ export default function Home() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              D
+              B
             </div>
             <span className="font-display font-bold text-xl text-slate-900 tracking-tight">
-              Digital Intelligence Marketing
+              Bit Force
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -381,7 +381,7 @@ export default function Home() {
       <footer className="bg-slate-50 py-12 border-t border-slate-200">
         <div className="container mx-auto px-4 text-center">
           <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} Digital Intelligence Marketing. All rights reserved.
+            © {new Date().getFullYear()} Bit Force. All rights reserved.
           </p>
         </div>
       </footer>
