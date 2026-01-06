@@ -8,6 +8,7 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { QuestionnaireWizard } from "@/components/QuestionnaireWizard";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
+import { useAuth } from "@/hooks/use-auth";
 import { 
   Loader2, 
   Sparkles, 
@@ -21,7 +22,9 @@ import {
   FileText,
   DollarSign,
   Brain,
-  HelpCircle
+  HelpCircle,
+  LogOut,
+  LogIn
 } from "lucide-react";
 import {
   Form,
@@ -47,6 +50,7 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
+  const { isAuthenticated, isLoading: authLoading, logout, isLoggingOut } = useAuth();
   
   const createLead = useCreateLead();
 
@@ -138,16 +142,48 @@ export default function Home() {
             <a href="#services" className="hover:text-blue-600 transition-colors">Services</a>
             <a href="#membership" className="hover:text-blue-600 transition-colors">Membership</a>
           </nav>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPayoutModal(true)}
-            className="flex items-center gap-2"
-            data-testid="button-open-payout-modal"
-          >
-            <DollarSign className="w-4 h-4 text-green-600" />
-            <span className="hidden sm:inline">My Earnings</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPayoutModal(true)}
+              className="flex items-center gap-2"
+              data-testid="button-open-payout-modal"
+            >
+              <DollarSign className="w-4 h-4 text-green-600" />
+              <span className="hidden sm:inline">My Earnings</span>
+            </Button>
+            {authLoading ? (
+              <Button variant="ghost" size="sm" disabled>
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </Button>
+            ) : isAuthenticated ? (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => logout()}
+                disabled={isLoggingOut}
+                data-testid="button-logout"
+              >
+                {isLoggingOut ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <LogOut className="w-4 h-4 mr-2" />
+                )}
+                <span className="hidden sm:inline">Log Out</span>
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-login"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Log In</span>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 

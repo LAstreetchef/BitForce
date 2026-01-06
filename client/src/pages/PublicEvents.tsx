@@ -34,7 +34,9 @@ import {
   UserPlus,
   ArrowLeft,
   Loader2,
-  Rocket
+  Rocket,
+  LogOut,
+  LogIn
 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -97,7 +99,7 @@ const eventPerks = [
 export default function PublicEvents() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
-  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, logout, isLoggingOut } = useAuth();
   const spotsFilledPercent = ((featuredEvent.totalSpots - featuredEvent.spotsRemaining) / featuredEvent.totalSpots) * 100;
 
   const checkoutMutation = useMutation({
@@ -198,12 +200,38 @@ export default function PublicEvents() {
             <a href="#register" className="hover:text-blue-600 transition-colors" data-testid="link-register-anchor">Register</a>
             <Link href="/portal" className="hover:text-blue-600 transition-colors" data-testid="link-portal">Ambassador Portal</Link>
           </nav>
-          <Link href="/" data-testid="link-back-home">
-            <Button variant="ghost" size="sm" data-testid="button-back-home">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {authLoading ? (
+              <Button variant="ghost" size="sm" disabled>
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </Button>
+            ) : isAuthenticated ? (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => logout()}
+                disabled={isLoggingOut}
+                data-testid="button-logout"
+              >
+                {isLoggingOut ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <LogOut className="w-4 h-4 mr-2" />
+                )}
+                Log Out
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-login"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Log In
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
