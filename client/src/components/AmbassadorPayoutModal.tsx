@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -12,8 +13,6 @@ import {
   Star, 
   Zap, 
   Target, 
-  Home, 
-  Monitor, 
   Wallet, 
   Gift,
   Users,
@@ -21,7 +20,11 @@ import {
   Crown,
   CheckCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  RefreshCcw,
+  Calculator,
+  Timer,
+  Infinity
 } from "lucide-react";
 
 import successImage1 from "@assets/stock_images/person_celebrating_w_0451e351.jpg";
@@ -44,11 +47,12 @@ const serviceCommissions = [
   { service: "Premium Bundle", avgSale: "$8,000", commission: "$2,400", rate: "30%" },
 ];
 
-const recruitmentBonuses = [
-  { milestone: "1st Recruit", bonus: "$100", total: "$100", icon: Users },
-  { milestone: "5 Recruits", bonus: "$100 each + $100 bonus", total: "$600", icon: Star },
-  { milestone: "10 Recruits", bonus: "$150 each + $300 bonus", total: "$1,800", icon: Award },
-  { milestone: "25 Recruits", bonus: "$200 each + $1,000 bonus", total: "$6,000", icon: Crown },
+const passiveIncomeStacks = [
+  { referrals: 5, monthly: "$20", yearly: "$240", icon: Star },
+  { referrals: 10, monthly: "$40", yearly: "$480", icon: Award },
+  { referrals: 25, monthly: "$100", yearly: "$1,200", icon: Crown },
+  { referrals: 50, monthly: "$200", yearly: "$2,400", icon: Rocket },
+  { referrals: 100, monthly: "$400", yearly: "$4,800", icon: Infinity },
 ];
 
 const successStories = [
@@ -58,74 +62,91 @@ const successStories = [
     earnings: "$8,400",
     period: "Last Month",
     quote: "I started part-time and now I'm earning more than my old 9-5!",
-    sales: 24
+    sales: 24,
+    recruits: 12
   },
   { 
     name: "Sarah M.", 
     location: "Houston, TX",
     earnings: "$47,000",
     period: "Last Quarter",
-    quote: "The recruitment bonuses alone paid for my vacation!",
-    sales: 89
+    quote: "The passive income from my team is incredible - I earn while I sleep!",
+    sales: 89,
+    recruits: 35
   },
   { 
     name: "David K.", 
     location: "Phoenix, AZ",
     earnings: "$112,000",
     period: "This Year",
-    quote: "From side hustle to six figures. This changed my life.",
-    sales: 245
+    quote: "From side hustle to six figures. The referral bonuses changed everything.",
+    sales: 245,
+    recruits: 78
   },
 ];
 
-const earningsProjections = [
-  { level: "Part-Time Hustle", salesPerWeek: "3-5", monthly: "$1,500 - $2,500", yearly: "$18,000 - $30,000", color: "from-blue-500 to-blue-600" },
-  { level: "Full-Time Grind", salesPerWeek: "8-12", monthly: "$4,000 - $6,000", yearly: "$48,000 - $72,000", color: "from-purple-500 to-purple-600" },
-  { level: "Top Performer", salesPerWeek: "15-20", monthly: "$8,000 - $12,000", yearly: "$96,000 - $144,000", color: "from-amber-500 to-orange-500" },
-  { level: "Elite Ambassador", salesPerWeek: "25+", monthly: "$15,000+", yearly: "$180,000+", color: "from-emerald-500 to-teal-500" },
-];
-
 export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutModalProps) {
+  const [calculatorReferrals, setCalculatorReferrals] = useState([10]);
+
+  const instantBonus = calculatorReferrals[0] * 50;
+  const monthlyPassive = calculatorReferrals[0] * 4;
+  const yearlyPassive = monthlyPassive * 12;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0" data-testid="modal-ambassador-payout">
         <VisuallyHidden>
           <DialogTitle>Ambassador Earnings and Payout Information</DialogTitle>
-          <DialogDescription>Details about commission rates, recruitment bonuses, and earnings projections</DialogDescription>
+          <DialogDescription>Details about the ambassador program, pricing, and earning potential</DialogDescription>
         </VisuallyHidden>
         <div className="relative">
           <div 
-            className="relative h-48 bg-cover bg-center"
+            className="relative h-56 bg-cover bg-center"
             style={{ backgroundImage: `url(${successImage1})` }}
             data-testid="section-hero-banner"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-green-900/90 via-emerald-800/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-green-900/95 via-emerald-800/90 to-transparent" />
             <div className="absolute inset-0 flex items-center p-8">
-              <div className="text-white">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="text-white max-w-lg">
+                <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-5 h-5 text-yellow-400" />
-                  <span className="text-emerald-300 font-medium">Unlimited Earning Potential</span>
+                  <span className="text-emerald-300 font-medium">New Hybrid Program</span>
                 </div>
-                <h2 className="text-3xl font-bold mb-2" data-testid="text-hero-title">Turn Your Network Into Income</h2>
-                <p className="text-emerald-100 max-w-md" data-testid="text-hero-subtitle">Join thousands of ambassadors earning $5,000+ monthly. Your success starts here.</p>
+                <h2 className="text-3xl font-bold mb-3" data-testid="text-hero-title">
+                  Turn Your Network Into Passive Income
+                </h2>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+                    <div className="text-sm text-emerald-200">One-time Entry</div>
+                    <div className="text-2xl font-bold text-white">$29</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+                    <div className="text-sm text-emerald-200">Monthly Access</div>
+                    <div className="text-2xl font-bold text-white">$19.99</div>
+                  </div>
+                  <div className="bg-yellow-400/20 backdrop-blur-sm rounded-lg px-4 py-2 border border-yellow-400/40">
+                    <div className="text-sm text-yellow-200">Per Referral</div>
+                    <div className="text-2xl font-bold text-yellow-300">$50+</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="p-6">
-            <Tabs defaultValue="earnings" className="w-full">
+            <Tabs defaultValue="program" className="w-full">
               <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="earnings" data-testid="tab-earnings">
-                  <DollarSign className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Earnings</span>
+                <TabsTrigger value="program" data-testid="tab-program">
+                  <Rocket className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Program</span>
+                </TabsTrigger>
+                <TabsTrigger value="passive" data-testid="tab-passive">
+                  <RefreshCcw className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Passive</span>
                 </TabsTrigger>
                 <TabsTrigger value="commissions" data-testid="tab-commissions">
                   <TrendingUp className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Commissions</span>
-                </TabsTrigger>
-                <TabsTrigger value="recruit" data-testid="tab-recruit">
-                  <Users className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Recruit</span>
+                  <span className="hidden sm:inline">Sales</span>
                 </TabsTrigger>
                 <TabsTrigger value="success" data-testid="tab-success">
                   <Star className="w-4 h-4 mr-1" />
@@ -133,54 +154,220 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="earnings" className="space-y-6" data-testid="content-earnings">
+              <TabsContent value="program" className="space-y-6" data-testid="content-program">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold mb-2">Your Path to $100K+</h3>
-                  <p className="text-muted-foreground">Real projections based on ambassador performance</p>
+                  <h3 className="text-2xl font-bold mb-2">The Bit Force Ambassador Program</h3>
+                  <p className="text-muted-foreground">Low barrier. High reward. Sustainable passive income.</p>
                 </div>
 
-                <div className="grid gap-4">
-                  {earningsProjections.map((proj, index) => (
-                    <Card 
-                      key={proj.level} 
-                      className="overflow-visible"
-                      data-testid={`projection-${proj.level.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      <div className="flex flex-col sm:flex-row">
-                        <div className={`bg-gradient-to-r ${proj.color} p-4 text-white sm:w-48 flex items-center justify-center rounded-t-md sm:rounded-l-md sm:rounded-tr-none`}>
-                          <div className="text-center">
-                            <div className="font-bold" data-testid={`text-level-${proj.level.toLowerCase().replace(/\s+/g, '-')}`}>{proj.level}</div>
-                            <div className="text-sm opacity-90">{proj.salesPerWeek} sales/week</div>
-                          </div>
+                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <DollarSign className="w-8 h-8" />
+                      </div>
+                      <div className="text-3xl font-bold mb-1">$29</div>
+                      <div className="text-emerald-100">One-Time Sign Up</div>
+                      <div className="text-sm text-emerald-200 mt-2">Training, dashboard, tools</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Timer className="w-8 h-8" />
+                      </div>
+                      <div className="text-3xl font-bold mb-1">$19.99</div>
+                      <div className="text-emerald-100">Monthly Subscription</div>
+                      <div className="text-sm text-emerald-200 mt-2">Leads, community, support</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-yellow-400/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Gift className="w-8 h-8 text-yellow-300" />
+                      </div>
+                      <div className="text-3xl font-bold mb-1 text-yellow-300">$50</div>
+                      <div className="text-emerald-100">Per Qualified Referral</div>
+                      <div className="text-sm text-emerald-200 mt-2">+ $4/mo passive forever</div>
+                    </div>
+                  </div>
+                </div>
+
+                <Card className="p-6 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
+                  <div className="flex items-start gap-4">
+                    <Zap className="w-10 h-10 text-amber-500 shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-lg text-amber-900 dark:text-amber-200 mb-2">
+                        Break Even With Just ONE Referral!
+                      </h4>
+                      <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                        <div className="bg-white dark:bg-amber-900/30 rounded-lg p-3">
+                          <div className="text-amber-700 dark:text-amber-300 font-medium mb-1">Your Investment</div>
+                          <div className="text-lg font-bold text-amber-900 dark:text-amber-100">$29 + $19.99 = $49</div>
                         </div>
-                        <div className="flex-1 p-4 flex items-center justify-around gap-4">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground">Monthly</div>
-                            <div className="text-xl font-bold text-green-600" data-testid={`text-monthly-${proj.level.toLowerCase().replace(/\s+/g, '-')}`}>{proj.monthly}</div>
-                          </div>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground hidden sm:block" />
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground">Yearly</div>
-                            <div className="text-xl font-bold text-emerald-600" data-testid={`text-yearly-${proj.level.toLowerCase().replace(/\s+/g, '-')}`}>{proj.yearly}</div>
-                          </div>
+                        <div className="bg-white dark:bg-amber-900/30 rounded-lg p-3">
+                          <div className="text-amber-700 dark:text-amber-300 font-medium mb-1">Your First Referral</div>
+                          <div className="text-lg font-bold text-green-600">+$50 instant bonus</div>
                         </div>
                       </div>
-                    </Card>
-                  ))}
+                      <div className="flex items-center gap-2 mt-3 text-amber-800 dark:text-amber-300">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="font-medium">You're already profitable from day one!</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Card className="p-5">
+                    <h4 className="font-bold mb-3 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      What's Included
+                    </h4>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Complete training and onboarding
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Personal ambassador dashboard
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Exclusive leads and prospects
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Marketing materials and templates
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Private community access
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        Monthly training webinars
+                      </li>
+                    </ul>
+                  </Card>
+                  <Card className="p-5">
+                    <h4 className="font-bold mb-3 flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-blue-500" />
+                      How You Earn
+                    </h4>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        <strong>$50 instant</strong> per qualified referral
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        <strong>20% override</strong> (~$4/mo per referral)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        15-30% commission on all sales
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        No cap on earnings - ever
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        Weekly payouts via PayPal/Stripe
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        Lifetime passive from your team
+                      </li>
+                    </ul>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="passive" className="space-y-6" data-testid="content-passive">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Build Your Passive Income Empire</h3>
+                  <p className="text-muted-foreground">Every referral adds $4/month to your recurring income - forever</p>
                 </div>
 
-                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-center">
-                  <Zap className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
-                  <h4 className="font-bold text-lg mb-2">Quick Math</h4>
-                  <p className="text-muted-foreground mb-4">
-                    Just <span className="font-bold text-foreground">2 roofing sales per week</span> = 
-                    <span className="text-green-600 font-bold"> $3,600/month</span> in commissions alone!
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>No caps on earnings</span>
-                    <CheckCircle className="w-4 h-4 text-green-500 ml-4" />
-                    <span>Weekly payouts</span>
+                <Card className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Calculator className="w-6 h-6 text-purple-600" />
+                    <h4 className="font-bold text-lg">Interactive Earnings Calculator</h4>
+                  </div>
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Number of Active Referrals</span>
+                      <span className="font-bold text-xl text-purple-600">{calculatorReferrals[0]}</span>
+                    </div>
+                    <Slider
+                      value={calculatorReferrals}
+                      onValueChange={setCalculatorReferrals}
+                      min={1}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                      data-testid="slider-referrals"
+                    />
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div className="bg-white dark:bg-purple-900/30 rounded-xl p-4 text-center">
+                      <Gift className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <div className="text-sm text-muted-foreground mb-1">Instant Bonuses</div>
+                      <div className="text-3xl font-bold text-green-600" data-testid="text-instant-bonus">${instantBonus.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-white dark:bg-purple-900/30 rounded-xl p-4 text-center">
+                      <RefreshCcw className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                      <div className="text-sm text-muted-foreground mb-1">Monthly Passive</div>
+                      <div className="text-3xl font-bold text-blue-600" data-testid="text-monthly-passive">${monthlyPassive}/mo</div>
+                    </div>
+                    <div className="bg-white dark:bg-purple-900/30 rounded-xl p-4 text-center">
+                      <TrendingUp className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                      <div className="text-sm text-muted-foreground mb-1">Yearly Passive</div>
+                      <div className="text-3xl font-bold text-purple-600" data-testid="text-yearly-passive">${yearlyPassive.toLocaleString()}/yr</div>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="text-center">
+                  <h4 className="font-bold mb-4">Passive Income Milestones</h4>
+                </div>
+                <div className="grid gap-3">
+                  {passiveIncomeStacks.map((tier) => {
+                    const IconComponent = tier.icon;
+                    return (
+                      <Card 
+                        key={tier.referrals} 
+                        className="p-4 hover-elevate"
+                        data-testid={`passive-tier-${tier.referrals}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
+                            <IconComponent className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold">{tier.referrals} Active Referrals</div>
+                            <div className="text-sm text-muted-foreground">20% override on each</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xl font-bold text-green-600">{tier.monthly}</div>
+                            <div className="text-sm text-muted-foreground">{tier.yearly}/year</div>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <div className="relative rounded-xl overflow-hidden">
+                  <img 
+                    src={lifestyleImage} 
+                    alt="Lifestyle freedom" 
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-transparent flex items-center p-6">
+                    <div className="text-white">
+                      <div className="font-bold text-lg">Money While You Sleep</div>
+                      <p className="text-purple-200 text-sm">Your referrals keep paying - month after month</p>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -188,7 +375,7 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
               <TabsContent value="commissions" className="space-y-6" data-testid="content-commissions">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-2">Commission Per Sale</h3>
-                  <p className="text-muted-foreground">See exactly what you earn on every service</p>
+                  <p className="text-muted-foreground">Plus your referral bonuses and passive income!</p>
                 </div>
 
                 <div className="space-y-3">
@@ -203,7 +390,7 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
                           <div className="font-medium">{item.service}</div>
                           <div className="text-sm text-muted-foreground">Avg. Sale: {item.avgSale}</div>
                         </div>
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                           {item.rate}
                         </Badge>
                         <div className="text-right">
@@ -230,87 +417,10 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
                 </div>
               </TabsContent>
 
-              <TabsContent value="recruit" className="space-y-6" data-testid="content-recruit">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold mb-2">Recruitment Bonuses</h3>
-                  <p className="text-muted-foreground">Earn BIG by building your team</p>
-                </div>
-
-                <div 
-                  className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl p-6 text-white text-center mb-6"
-                  data-testid="section-first-recruit-bonus"
-                >
-                  <Gift className="w-12 h-12 mx-auto mb-3 text-yellow-300" />
-                  <div className="text-4xl font-bold mb-2" data-testid="text-first-recruit-amount">$100</div>
-                  <div className="text-emerald-100">For Your FIRST Verified Recruit</div>
-                  <div className="text-sm text-emerald-200 mt-2">Paid instantly when they make their first sale</div>
-                </div>
-
-                <div className="grid gap-4">
-                  {recruitmentBonuses.map((tier) => {
-                    const IconComponent = tier.icon;
-                    return (
-                      <Card 
-                        key={tier.milestone} 
-                        className="p-4 hover-elevate"
-                        data-testid={`recruit-tier-${tier.milestone.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shrink-0">
-                            <IconComponent className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-bold">{tier.milestone}</div>
-                            <div className="text-sm text-muted-foreground">{tier.bonus}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-green-600">{tier.total}</div>
-                            <div className="text-xs text-muted-foreground">total earned</div>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-5">
-                  <div className="flex gap-4 items-start">
-                    <Crown className="w-8 h-8 text-purple-500 shrink-0" />
-                    <div>
-                      <h4 className="font-bold text-purple-900 dark:text-purple-200 mb-1">
-                        Team Leader Bonus
-                      </h4>
-                      <p className="text-sm text-purple-800 dark:text-purple-300 mb-2">
-                        Earn <span className="font-bold">5% override</span> on ALL sales made by ambassadors you recruit. 
-                        Build a team of 10 active sellers and earn an extra $2,000+/month passively!
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-purple-700 dark:text-purple-400">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>Lifetime override on your recruits</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
               <TabsContent value="success" className="space-y-6" data-testid="content-success">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-2">Real Ambassadors, Real Results</h3>
                   <p className="text-muted-foreground">Join the success stories</p>
-                </div>
-
-                <div className="relative rounded-xl overflow-hidden mb-6">
-                  <img 
-                    src={lifestyleImage} 
-                    alt="Success lifestyle" 
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-6">
-                    <div className="text-white">
-                      <div className="text-2xl font-bold">Live the Life You Deserve</div>
-                      <p className="text-white/80">Financial freedom is closer than you think</p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="grid gap-4">
@@ -330,9 +440,14 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
                               <span className="font-bold">{story.name}</span>
                               <span className="text-muted-foreground text-sm ml-2">{story.location}</span>
                             </div>
-                            <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              {story.sales} sales
-                            </Badge>
+                            <div className="flex gap-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                                {story.sales} sales
+                              </Badge>
+                              <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                {story.recruits} recruits
+                              </Badge>
+                            </div>
                           </div>
                           <p className="text-muted-foreground text-sm italic mb-3">"{story.quote}"</p>
                           <div className="flex items-center gap-2">
@@ -354,7 +469,7 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/90 to-transparent flex items-center p-6">
                     <div className="text-white">
                       <div className="font-bold text-lg">Your Success Story is Next</div>
-                      <p className="text-emerald-200 text-sm">Start today, earn this week</p>
+                      <p className="text-emerald-200 text-sm">$29 to start. Unlimited potential.</p>
                     </div>
                   </div>
                 </div>
@@ -364,16 +479,16 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
             <div className="mt-6 pt-6 border-t">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
-                  <div className="text-sm text-muted-foreground">Ready to start earning?</div>
-                  <div className="font-bold">Join 2,500+ successful ambassadors today</div>
+                  <div className="text-sm text-muted-foreground">Start for just $29 + $19.99/mo</div>
+                  <div className="font-bold">Break even with your first referral!</div>
                 </div>
                 <Button 
                   size="lg" 
-                  className="bg-green-600 text-white"
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white"
                   data-testid="button-start-earning"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  Start Earning Now
+                  Join Now - $29
                 </Button>
               </div>
             </div>

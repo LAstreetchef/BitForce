@@ -12,7 +12,13 @@ import {
   Wallet,
   Heart,
   Lightbulb,
-  Target
+  Target,
+  DollarSign,
+  Users,
+  Gift,
+  RefreshCcw,
+  Rocket,
+  Timer
 } from "lucide-react";
 
 interface HowItWorksModalProps {
@@ -68,6 +74,14 @@ const customerOutcomes = [
     description: "From home safety improvements to digital tools that simplify life, AI ensures nothing important gets overlooked."
   }
 ];
+
+const ambassadorProgram = {
+  signupFee: "$29",
+  monthlyFee: "$19.99",
+  referralBonus: "$50",
+  recurringOverride: "20%",
+  monthlyPassive: "$4"
+};
 
 export function HowItWorksModal({ open, onOpenChange }: HowItWorksModalProps) {
   return (
@@ -154,6 +168,70 @@ export function HowItWorksModal({ open, onOpenChange }: HowItWorksModalProps) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Rocket className="w-5 h-5 text-purple-600" />
+              <h3 className="font-bold text-lg" data-testid="text-ambassador-section-title">Ambassador Program Pricing</h3>
+            </div>
+
+            <Card className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200 dark:border-purple-800">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-bold text-purple-900 dark:text-purple-200 mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Investment
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-white dark:bg-purple-900/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Timer className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm">One-Time Sign Up</span>
+                      </div>
+                      <span className="font-bold text-lg">{ambassadorProgram.signupFee}</span>
+                    </div>
+                    <div className="flex items-center justify-between bg-white dark:bg-purple-900/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <RefreshCcw className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm">Monthly Subscription</span>
+                      </div>
+                      <span className="font-bold text-lg">{ambassadorProgram.monthlyFee}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-green-800 dark:text-green-200 mb-4 flex items-center gap-2">
+                    <Gift className="w-5 h-5" />
+                    Your Earnings
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-white dark:bg-green-900/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">Per Qualified Referral</span>
+                      </div>
+                      <span className="font-bold text-lg text-green-600">{ambassadorProgram.referralBonus}</span>
+                    </div>
+                    <div className="flex items-center justify-between bg-white dark:bg-green-900/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <RefreshCcw className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">Monthly Passive/Referral</span>
+                      </div>
+                      <span className="font-bold text-lg text-green-600">{ambassadorProgram.monthlyPassive}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
+                <div className="flex items-center gap-2 text-sm text-purple-800 dark:text-purple-300">
+                  <Sparkles className="w-4 h-4 text-yellow-500" />
+                  <span><strong>Quick ROI:</strong> One referral covers your investment! Each additional referral = $50 instant + $4/month forever.</span>
+                </div>
+              </div>
+            </Card>
           </div>
 
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5" data-testid="section-summary">
