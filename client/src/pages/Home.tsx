@@ -198,7 +198,7 @@ export default function Home() {
                 <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight text-white">
                   Brand Ambassador <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-                    Service Portal
+                    Portal
                   </span>
                 </h1>
                 <p className="text-lg text-slate-300 max-w-lg leading-relaxed">
