@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
@@ -209,13 +209,17 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/ambassador/create-checkout-session", async (req: Request, res: Response) => {
+  app.post("/api/ambassador/create-checkout-session", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const { userId, email, fullName, referralCode } = req.body;
-
-      if (!userId || !email || !fullName) {
-        return res.status(400).json({ message: "Missing required fields" });
+      const user = req.user as any;
+      const userClaims = user?.claims;
+      if (!userClaims?.sub) {
+        return res.status(401).json({ message: "Not authenticated" });
       }
+
+      const userId = userClaims.sub;
+      const email = userClaims.email || "";
+      const fullName = [userClaims.first_name, userClaims.last_name].filter(Boolean).join(" ") || "Ambassador";
 
       const existingAmbassador = await storage.getAmbassadorByUserId(userId);
       if (existingAmbassador && existingAmbassador.subscriptionStatus === "active") {
@@ -227,7 +231,6 @@ export async function registerRoutes(
         name: fullName,
         metadata: {
           userId,
-          referralCode: referralCode || "",
         },
       });
 
@@ -257,17 +260,15 @@ export async function registerRoutes(
         subscription_data: {
           metadata: {
             userId,
-            referralCode: referralCode || "",
             type: "ambassador_subscription",
           },
         },
         success_url: `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN}/portal?session_id={CHECKOUT_SESSION_ID}&success=true`,
-        cancel_url: `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN}/portal?canceled=true`,
+        cancel_url: `${req.headers.origin || process.env.REPLIT_DEV_DOMAIN}/events?canceled=true`,
         metadata: {
           userId,
           email,
           fullName,
-          referralCode: referralCode || "",
           type: "ambassador_signup",
         },
       });

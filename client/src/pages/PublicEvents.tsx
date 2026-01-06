@@ -33,10 +33,12 @@ import {
   TrendingUp,
   UserPlus,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Rocket
 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 import networkingEvent1 from "@assets/stock_images/business_networking__d342869f.jpg";
 import networkingEvent2 from "@assets/stock_images/business_networking__276fb736.jpg";
@@ -95,7 +97,45 @@ const eventPerks = [
 export default function PublicEvents() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const spotsFilledPercent = ((featuredEvent.totalSpots - featuredEvent.spotsRemaining) / featuredEvent.totalSpots) * 100;
+
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/ambassador/create-checkout-session", {});
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Checkout failed" }));
+        throw new Error(errorData.message || "Failed to start checkout");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Checkout Error",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBecomeAmbassador = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in first to become an ambassador.",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+    checkoutMutation.mutate();
+  };
 
   const form = useForm<EventSignupValues>({
     resolver: zodResolver(eventSignupSchema),
@@ -251,6 +291,46 @@ export default function PublicEvents() {
                   </Card>
                 );
               })}
+            </div>
+
+            {/* Become an Ambassador CTA */}
+            <div className="mt-12 text-center">
+              <Card className="inline-block p-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 border-blue-200 dark:border-blue-800">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white">$29</span>
+                    <span>signup +</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white">$19.99</span>
+                    <span>/month</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 max-w-md">
+                    Earn $50 bonus per referral + 20% recurring monthly income from your team
+                  </p>
+                  <Button 
+                    size="lg" 
+                    onClick={handleBecomeAmbassador}
+                    disabled={checkoutMutation.isPending || authLoading}
+                    data-testid="button-become-ambassador"
+                  >
+                    {checkoutMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Starting Checkout...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="w-5 h-5 mr-2" />
+                        Become an Ambassador
+                      </>
+                    )}
+                  </Button>
+                  {!isAuthenticated && !authLoading && (
+                    <p className="text-sm text-muted-foreground">
+                      You'll need to log in first
+                    </p>
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
         </section>
