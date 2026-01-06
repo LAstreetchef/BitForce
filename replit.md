@@ -2,7 +2,21 @@
 
 ## Overview
 
-This is a single-page web application for "Digital Intelligence Marketing" designed to help brand ambassadors sign up new customers for various home and digital services. The app features a customer information form, AI-powered service suggestions (using client-side keyword matching), a grid of available services with detailed modals, and a premium membership section.
+This is a full-stack web application for "Bit Force" (formerly Digital Intelligence Marketing) designed to help brand ambassadors sign up new customers for various home and digital services. The app features:
+
+- **Lead Generation**: Customer information forms with AI-powered service suggestions (client-side keyword matching)
+- **Ambassador Portal**: Dashboard, Leads, Team, Events, Resources, and Settings pages for authenticated ambassadors
+- **Public Events Page**: Accessible at `/events` for potential ambassadors to learn about and register for events
+- **Ambassador Subscription Program**: Hybrid pricing model with Stripe integration
+- **Referral System**: Track referrals, bonuses, and passive income earnings
+
+## Ambassador Program Pricing
+
+The ambassador program uses a hybrid pricing model:
+- **Signup Fee**: $29 one-time activation fee
+- **Monthly Subscription**: $19.99/month
+- **Referral Bonus**: $50 instant cash bonus per qualified referral (after their first month)
+- **Recurring Override**: 20% of referral's monthly subscription (~$4/month passive income per active referral)
 
 ## User Preferences
 
@@ -55,6 +69,10 @@ The application uses client-side keyword matching (not actual AI) to suggest rel
 
 ### Required Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string (required)
+- `SESSION_SECRET`: Secret for session management (required)
+- `STRIPE_SECRET_KEY`: Stripe secret key for payment processing (required for ambassador subscriptions)
+- `STRIPE_PUBLISHABLE_KEY`: Stripe publishable key for frontend checkout (required)
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret for signature verification (optional, recommended for production)
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migration tooling
