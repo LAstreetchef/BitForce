@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertLeadSchema, leads } from './schema';
+import { insertLeadSchema, insertEventRegistrationSchema, leads, eventRegistrations } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -19,6 +19,17 @@ export const api = {
       input: insertLeadSchema,
       responses: {
         201: z.custom<typeof leads.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+  },
+  eventRegistrations: {
+    create: {
+      method: 'POST' as const,
+      path: '/api/event-registrations',
+      input: insertEventRegistrationSchema,
+      responses: {
+        201: z.custom<typeof eventRegistrations.$inferSelect>(),
         400: errorSchemas.validation,
       },
     },

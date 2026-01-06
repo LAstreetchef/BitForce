@@ -12,11 +12,13 @@ import Team from "@/pages/portal/Team";
 import Resources from "@/pages/portal/Resources";
 import Settings from "@/pages/portal/Settings";
 import Events from "@/pages/portal/Events";
+import PublicEvents from "@/pages/PublicEvents";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home}/>
+      <Route path="/events" component={PublicEvents}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />

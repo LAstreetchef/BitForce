@@ -28,5 +28,21 @@ export async function registerRoutes(
     }
   });
 
+  app.post(api.eventRegistrations.create.path, async (req, res) => {
+    try {
+      const input = api.eventRegistrations.create.input.parse(req.body);
+      const registration = await storage.createEventRegistration(input);
+      res.status(201).json(registration);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      throw err;
+    }
+  });
+
   return httpServer;
 }
