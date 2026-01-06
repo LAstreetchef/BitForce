@@ -23,7 +23,8 @@ import {
   Home,
   DollarSign,
   LogOut,
-  Loader2
+  Loader2,
+  CalendarDays
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { useState, useEffect } from "react";
@@ -34,6 +35,7 @@ const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
   { title: "Leads", url: "/portal/leads", icon: ClipboardList },
   { title: "My Team", url: "/portal/team", icon: Users },
+  { title: "Events", url: "/portal/events", icon: CalendarDays },
   { title: "Resources", url: "/portal/resources", icon: BookOpen },
   { title: "Settings", url: "/portal/settings", icon: Settings },
 ];

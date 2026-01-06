@@ -11,6 +11,7 @@ import Leads from "@/pages/portal/Leads";
 import Team from "@/pages/portal/Team";
 import Resources from "@/pages/portal/Resources";
 import Settings from "@/pages/portal/Settings";
+import Events from "@/pages/portal/Events";
 
 function Router() {
   return (
@@ -39,6 +40,11 @@ function Router() {
       <Route path="/portal/settings">
         <PortalLayout>
           <Settings />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/events">
+        <PortalLayout>
+          <Events />
         </PortalLayout>
       </Route>
       <Route component={NotFound} />
