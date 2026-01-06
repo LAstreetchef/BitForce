@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -88,6 +89,10 @@ export function AmbassadorPayoutModal({ open, onOpenChange }: AmbassadorPayoutMo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0" data-testid="modal-ambassador-payout">
+        <VisuallyHidden>
+          <DialogTitle>Ambassador Earnings and Payout Information</DialogTitle>
+          <DialogDescription>Details about commission rates, recruitment bonuses, and earnings projections</DialogDescription>
+        </VisuallyHidden>
         <div className="relative">
           <div 
             className="relative h-48 bg-cover bg-center"
