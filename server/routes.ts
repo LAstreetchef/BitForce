@@ -297,6 +297,79 @@ export async function registerRoutes(
     }
   });
 
+  // Verify checkout session after Stripe redirect
+  app.post("/api/ambassador/verify-checkout", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userClaims = user?.claims;
+      if (!userClaims?.sub) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { sessionId } = req.body;
+      if (!sessionId) {
+        return res.status(400).json({ message: "Missing session ID" });
+      }
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["subscription"],
+      });
+
+      if (session.payment_status !== "paid") {
+        return res.status(400).json({ message: "Payment not completed" });
+      }
+
+      const sessionUserId = session.metadata?.userId;
+      if (sessionUserId !== userClaims.sub) {
+        return res.status(403).json({ message: "Session does not belong to this user" });
+      }
+
+      const userId = userClaims.sub;
+      const email = userClaims.email || session.customer_email || "";
+      const fullName = session.metadata?.fullName || [userClaims.first_name, userClaims.last_name].filter(Boolean).join(" ") || "Ambassador";
+
+      let ambassador = await storage.getAmbassadorByUserId(userId);
+
+      const subscription = session.subscription as any;
+      const stripeSubscriptionId = typeof subscription === "string" ? subscription : subscription?.id;
+      const stripeCustomerId = typeof session.customer === "string" ? session.customer : session.customer?.id || "";
+
+      if (!ambassador) {
+        const referralCode = `AMB${userId.slice(-6).toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`;
+        
+        ambassador = await storage.createAmbassadorSubscription({
+          userId,
+          email,
+          fullName,
+          referralCode,
+          subscriptionStatus: "active",
+          stripeCustomerId,
+          stripeSubscriptionId,
+          signupFeePaid: true,
+          firstMonthCompleted: false,
+        });
+      } else {
+        await storage.updateAmbassadorSubscription(ambassador.id, {
+          subscriptionStatus: "active",
+          stripeCustomerId,
+          stripeSubscriptionId,
+          signupFeePaid: true,
+        });
+        ambassador = await storage.getAmbassadorByUserId(userId);
+      }
+
+      res.json({ 
+        success: true, 
+        isAmbassador: true,
+        subscriptionStatus: "active",
+        referralCode: ambassador?.referralCode,
+      });
+    } catch (err) {
+      console.error("Verify checkout error:", err);
+      res.status(500).json({ message: "Failed to verify checkout session" });
+    }
+  });
+
   app.get("/api/ambassador/subscription-status", async (req: Request, res: Response) => {
     try {
       const userId = req.query.userId as string;

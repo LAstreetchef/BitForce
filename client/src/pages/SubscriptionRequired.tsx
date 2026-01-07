@@ -1,11 +1,12 @@
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, ArrowLeft, Zap, Users, DollarSign, TrendingUp } from "lucide-react";
+import { Check, Loader2, ArrowLeft, Zap, Users, DollarSign, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Link, useLocation } from "wouter";
 
 interface SubscriptionRequiredProps {
   userId: string;
@@ -13,6 +14,48 @@ interface SubscriptionRequiredProps {
 
 export default function SubscriptionRequired({ userId }: SubscriptionRequiredProps) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get("session_id");
+    const success = urlParams.get("success");
+
+    if (sessionId && success === "true" && !isVerifying && !verificationSuccess) {
+      setIsVerifying(true);
+      
+      apiRequest("POST", "/api/ambassador/verify-checkout", { sessionId })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setVerificationSuccess(true);
+            toast({
+              title: "Welcome to Bit Force!",
+              description: "Your subscription is now active. Redirecting to your dashboard...",
+            });
+            queryClient.invalidateQueries({ queryKey: ["/api/ambassador/subscription-status"] });
+            
+            setTimeout(() => {
+              window.history.replaceState({}, "", "/portal");
+              setLocation("/portal");
+            }, 2000);
+          } else {
+            throw new Error(data.message || "Verification failed");
+          }
+        })
+        .catch(err => {
+          console.error("Verification error:", err);
+          toast({
+            title: "Verification Issue",
+            description: "There was an issue verifying your payment. Please try again or contact support.",
+            variant: "destructive",
+          });
+          setIsVerifying(false);
+        });
+    }
+  }, [isVerifying, verificationSuccess, toast, setLocation]);
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
@@ -39,6 +82,30 @@ export default function SubscriptionRequired({ userId }: SubscriptionRequiredPro
     { icon: DollarSign, text: "20% recurring commission on referrals" },
     { icon: TrendingUp, text: "Gamification rewards and leaderboard" },
   ];
+
+  if (isVerifying || verificationSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full text-center">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            {verificationSuccess ? (
+              <>
+                <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+                <h2 className="text-2xl font-bold">Welcome to Bit Force!</h2>
+                <p className="text-muted-foreground">Your subscription is now active. Redirecting to your dashboard...</p>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-16 h-16 text-primary mx-auto animate-spin" />
+                <h2 className="text-2xl font-bold">Verifying Payment</h2>
+                <p className="text-muted-foreground">Please wait while we confirm your subscription...</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
