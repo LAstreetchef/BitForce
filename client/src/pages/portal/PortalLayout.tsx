@@ -58,7 +58,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
 
-  const { data: subscriptionStatus, isLoading: subscriptionLoading } = useQuery<SubscriptionStatus>({
+  const { data: subscriptionStatus, isLoading: subscriptionLoading, isFetched: subscriptionFetched } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/ambassador/subscription-status", user?.id],
     queryFn: async () => {
       const res = await fetch(`/api/ambassador/subscription-status?userId=${user?.id}`);
@@ -66,6 +66,8 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     },
     enabled: !!user?.id,
   });
+
+  const isSubscriptionCheckComplete = !!user?.id && subscriptionFetched;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -85,7 +87,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     "--sidebar-width-icon": "3rem",
   };
 
-  if (isLoading || subscriptionLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
@@ -102,6 +104,17 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSubscriptionCheckComplete || subscriptionLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-muted-foreground">Checking subscription...</p>
         </div>
       </div>
     );
