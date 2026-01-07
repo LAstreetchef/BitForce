@@ -42,6 +42,7 @@ import { eq, and, ilike, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
+  getLead(id: number): Promise<Lead | null>;
   getLeads(): Promise<Lead[]>;
   createEventRegistration(registration: InsertEventRegistration): Promise<EventRegistration>;
   
@@ -110,6 +111,11 @@ export class DatabaseStorage implements IStorage {
   async createLead(insertLead: InsertLead): Promise<Lead> {
     const [lead] = await db.insert(leads).values(insertLead).returning();
     return lead;
+  }
+
+  async getLead(id: number): Promise<Lead | null> {
+    const [lead] = await db.select().from(leads).where(eq(leads.id, id));
+    return lead || null;
   }
 
   async getLeads(): Promise<Lead[]> {

@@ -9,6 +9,7 @@ import { runScraper, getRecommendationsForLead, initializeProviders } from "./se
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
+import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail } from "./services/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -198,6 +199,11 @@ export async function registerRoutes(
     try {
       const input = api.leads.create.input.parse(req.body);
       const lead = await storage.createLead(input);
+      
+      // Send confirmation email to lead and notification to admin (don't block response)
+      sendLeadConfirmationEmail(lead).catch(err => console.error("Failed to send lead confirmation:", err));
+      sendAdminNotificationEmail(lead).catch(err => console.error("Failed to send admin notification:", err));
+      
       res.status(201).json(lead);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -618,6 +624,13 @@ export async function registerRoutes(
       }
 
       const updatedService = await storage.updateLeadServiceStatus(id, status, notes);
+
+      // Send status update email to lead (don't block response)
+      const lead = await storage.getLead(updatedService.leadId);
+      if (lead && ["contacted", "interested", "sold"].includes(status)) {
+        sendLeadStatusUpdateEmail(lead, updatedService.serviceName, status)
+          .catch(err => console.error("Failed to send status update email:", err));
+      }
 
       // Award points based on status change
       let pointsToAward = 0;
