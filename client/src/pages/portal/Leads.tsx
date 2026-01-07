@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search, 
   Phone,
@@ -11,12 +12,15 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  Sparkles,
+  ClipboardList
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import LocalSolutions from "@/components/LocalSolutions";
+import LeadServicesManager from "@/components/LeadServicesManager";
 import type { Lead } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 
@@ -146,7 +150,24 @@ export default function Leads() {
                     </div>
                     {isExpanded && (
                       <div className="mt-4 pt-4 border-t">
-                        <LocalSolutions interests={lead.interests} />
+                        <Tabs defaultValue="services" className="w-full">
+                          <TabsList className="mb-4">
+                            <TabsTrigger value="services" data-testid={`tab-services-${lead.id}`}>
+                              <ClipboardList className="w-4 h-4 mr-2" />
+                              My Services
+                            </TabsTrigger>
+                            <TabsTrigger value="recommendations" data-testid={`tab-recommendations-${lead.id}`}>
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Recommendations
+                            </TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="services">
+                            <LeadServicesManager leadId={lead.id} />
+                          </TabsContent>
+                          <TabsContent value="recommendations">
+                            <LocalSolutions interests={lead.interests} />
+                          </TabsContent>
+                        </Tabs>
                       </div>
                     )}
                   </Card>
