@@ -8,14 +8,20 @@ const { Pool } = pg;
 function getDatabaseUrl(): string {
   const replitDbPath = "/tmp/replitdb";
   
-  if (fs.existsSync(replitDbPath)) {
-    const dbUrl = fs.readFileSync(replitDbPath, "utf-8").trim();
-    if (dbUrl) {
-      return dbUrl;
+  try {
+    if (fs.existsSync(replitDbPath)) {
+      const dbUrl = fs.readFileSync(replitDbPath, "utf-8").trim();
+      if (dbUrl) {
+        console.log("Using database URL from /tmp/replitdb (production)");
+        return dbUrl;
+      }
     }
+  } catch (err) {
+    console.log("Could not read /tmp/replitdb, falling back to DATABASE_URL");
   }
   
   if (process.env.DATABASE_URL) {
+    console.log("Using database URL from DATABASE_URL environment variable");
     return process.env.DATABASE_URL;
   }
   
