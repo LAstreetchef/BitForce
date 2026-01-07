@@ -12,16 +12,17 @@ app.get("/api/health", (_req, res) => {
 });
 
 // In production, add a fast root health check that deployment probes use
-// In development, let Vite serve the frontend at "/"
+// Health probes typically send no Accept header or Accept: */* - respond immediately
+// Browsers request text/html - pass through to static file serving
 if (process.env.NODE_ENV === "production") {
   app.get("/", (_req, res, next) => {
-    // If this is a health check (no accept header for HTML), respond quickly
     const accept = _req.headers.accept || "";
-    if (!accept.includes("text/html")) {
-      return res.status(200).send("OK");
+    // If browser explicitly requests HTML, let static files serve index.html
+    if (accept.includes("text/html")) {
+      return next();
     }
-    // Otherwise, pass through to static file serving
-    next();
+    // Health check probe or non-browser request - respond immediately
+    res.status(200).send("OK");
   });
 }
 
