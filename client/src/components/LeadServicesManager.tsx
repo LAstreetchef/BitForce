@@ -63,7 +63,7 @@ export default function LeadServicesManager({ leadId, recommendations = [] }: Le
   const { toast } = useToast();
 
   const { data: services = [], isLoading } = useQuery<LeadService[]>({
-    queryKey: ["/api/leads", leadId, "services"],
+    queryKey: [`/api/leads/${leadId}/services`],
   });
 
   const addServiceMutation = useMutation({
@@ -71,7 +71,7 @@ export default function LeadServicesManager({ leadId, recommendations = [] }: Le
       return apiRequest("POST", `/api/leads/${leadId}/services`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/leads", leadId, "services"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/leads/${leadId}/services`] });
       queryClient.invalidateQueries({ queryKey: ["/api/gamification/stats"] });
       setNewServiceName("");
       setNewServiceNotes("");
@@ -96,7 +96,7 @@ export default function LeadServicesManager({ leadId, recommendations = [] }: Le
       return apiRequest("PATCH", `/api/lead-services/${id}/status`, { status, notes });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/leads", leadId, "services"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/leads/${leadId}/services`] });
       queryClient.invalidateQueries({ queryKey: ["/api/gamification/stats"] });
       const pointValue = POINT_VALUES[variables.status as keyof typeof POINT_VALUES];
       if (pointValue) {
