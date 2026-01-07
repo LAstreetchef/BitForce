@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const httpServer = createServer(app);
@@ -11,18 +13,34 @@ app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "ok", timestamp: Date.now() });
 });
 
-// In production, add a fast root health check that deployment probes use
-// Health probes typically send no Accept header or Accept: */* - respond immediately
-// Browsers request text/html - pass through to static file serving
+// In production, root "/" must respond immediately with 200 OK for deployment health checks
+// Load index.html into memory at startup for fast serving
+let cachedIndexHtml: string | null = null;
 if (process.env.NODE_ENV === "production") {
-  app.get("/", (_req, res, next) => {
-    const accept = _req.headers.accept || "";
-    // If browser explicitly requests HTML, let static files serve index.html
-    if (accept.includes("text/html")) {
-      return next();
+  const indexPath = path.resolve(__dirname, "public", "index.html");
+  try {
+    if (fs.existsSync(indexPath)) {
+      cachedIndexHtml = fs.readFileSync(indexPath, "utf-8");
+      console.log("[server] Cached index.html for fast root serving");
     }
-    // Health check probe or non-browser request - respond immediately
-    res.status(200).send("OK");
+  } catch (err) {
+    console.error("[server] Failed to cache index.html:", err);
+  }
+  
+  // HEAD requests for health probes - respond immediately with just status
+  app.head("/", (_req, res) => {
+    res.status(200).end();
+  });
+  
+  // GET requests - serve cached index.html for browsers, fallback to OK for probes
+  app.get("/", (_req, res) => {
+    // Serve cached index.html immediately - no file I/O needed
+    if (cachedIndexHtml) {
+      res.status(200).type("html").send(cachedIndexHtml);
+    } else {
+      // Fallback: just return OK for health check
+      res.status(200).send("OK");
+    }
   });
 }
 
