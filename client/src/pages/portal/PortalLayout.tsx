@@ -27,6 +27,7 @@ import {
   CalendarDays
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
+import { SupportChat } from "@/components/SupportChat";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -249,6 +250,8 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         open={showPayoutModal} 
         onOpenChange={setShowPayoutModal} 
       />
+
+      <SupportChat />
     </SidebarProvider>
   );
 }

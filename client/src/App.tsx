@@ -13,6 +13,7 @@ import Resources from "@/pages/portal/Resources";
 import Settings from "@/pages/portal/Settings";
 import Events from "@/pages/portal/Events";
 import PublicEvents from "@/pages/PublicEvents";
+import SupportInbox from "@/pages/admin/SupportInbox";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function Router() {
           <Events />
         </PortalLayout>
       </Route>
+      <Route path="/admin/support" component={SupportInbox} />
       <Route component={NotFound} />
     </Switch>
   );
