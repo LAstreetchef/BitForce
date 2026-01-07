@@ -9,6 +9,7 @@ This is a full-stack web application for "Bit Force" (formerly Digital Intellige
 - **Public Events Page**: Accessible at `/events` for potential ambassadors to learn about and register for events
 - **Ambassador Subscription Program**: Hybrid pricing model with Stripe integration
 - **Referral System**: Track referrals, bonuses, and passive income earnings
+- **Support Chat ("Charlie" System)**: Austere, anonymous support chat where ambassadors can message management without seeing who responds (like Charlie from Charlie's Angels)
 
 ## Ambassador Program Pricing
 
@@ -73,6 +74,7 @@ The application uses client-side keyword matching (not actual AI) to suggest rel
 - `STRIPE_SECRET_KEY`: Stripe secret key for payment processing (required for ambassador subscriptions)
 - `STRIPE_PUBLISHABLE_KEY`: Stripe publishable key for frontend checkout (required)
 - `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret for signature verification (optional, recommended for production)
+- `ADMIN_USER_IDS`: Comma-separated list of Replit user IDs with admin access to support inbox (if empty, all authenticated users have admin access for development)
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migration tooling
