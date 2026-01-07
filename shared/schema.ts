@@ -156,3 +156,133 @@ export const insertProviderListingSchema = createInsertSchema(providerListings).
 
 export type ProviderListing = typeof providerListings.$inferSelect;
 export type InsertProviderListing = z.infer<typeof insertProviderListingSchema>;
+
+// Lead Services - tracks services assigned/offered to leads by ambassadors
+export const leadServices = pgTable("lead_services", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").notNull(),
+  listingId: integer("listing_id"),
+  serviceName: text("service_name").notNull(),
+  status: text("status").notNull().default("suggested"),
+  notes: text("notes"),
+  ambassadorId: text("ambassador_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertLeadServiceSchema = createInsertSchema(leadServices).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type LeadService = typeof leadServices.$inferSelect;
+export type InsertLeadService = z.infer<typeof insertLeadServiceSchema>;
+
+// Lead service status options
+export const LEAD_SERVICE_STATUSES = [
+  "suggested",
+  "contacted", 
+  "interested",
+  "sold",
+  "declined"
+] as const;
+
+export type LeadServiceStatus = typeof LEAD_SERVICE_STATUSES[number];
+
+// Ambassador Points - gamification tracking
+export const ambassadorPoints = pgTable("ambassador_points", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  totalPoints: integer("total_points").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastActivityDate: timestamp("last_activity_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAmbassadorPointsSchema = createInsertSchema(ambassadorPoints).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type AmbassadorPoints = typeof ambassadorPoints.$inferSelect;
+export type InsertAmbassadorPoints = z.infer<typeof insertAmbassadorPointsSchema>;
+
+// Ambassador Actions - log of point-earning activities
+export const ambassadorActions = pgTable("ambassador_actions", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  actionType: text("action_type").notNull(),
+  pointsAwarded: integer("points_awarded").notNull(),
+  leadId: integer("lead_id"),
+  leadServiceId: integer("lead_service_id"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAmbassadorActionSchema = createInsertSchema(ambassadorActions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type AmbassadorAction = typeof ambassadorActions.$inferSelect;
+export type InsertAmbassadorAction = z.infer<typeof insertAmbassadorActionSchema>;
+
+// Point values for different actions
+export const ACTION_POINTS = {
+  SUGGEST_SERVICE: 5,
+  CONTACT_LEAD: 10,
+  LEAD_INTERESTED: 15,
+  MAKE_SALE: 50,
+  DAILY_LOGIN: 2,
+  STREAK_BONUS_7: 25,
+  STREAK_BONUS_30: 100,
+} as const;
+
+// Level thresholds
+export const LEVEL_THRESHOLDS = [
+  0,      // Level 1
+  100,    // Level 2
+  300,    // Level 3
+  600,    // Level 4
+  1000,   // Level 5
+  1500,   // Level 6
+  2500,   // Level 7
+  4000,   // Level 8
+  6000,   // Level 9
+  10000,  // Level 10
+] as const;
+
+// Ambassador Badges
+export const ambassadorBadges = pgTable("ambassador_badges", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  badgeType: text("badge_type").notNull(),
+  earnedAt: timestamp("earned_at").defaultNow(),
+});
+
+export const insertAmbassadorBadgeSchema = createInsertSchema(ambassadorBadges).omit({ 
+  id: true, 
+  earnedAt: true 
+});
+
+export type AmbassadorBadge = typeof ambassadorBadges.$inferSelect;
+export type InsertAmbassadorBadge = z.infer<typeof insertAmbassadorBadgeSchema>;
+
+// Badge definitions
+export const BADGE_DEFINITIONS = {
+  FIRST_LEAD: { name: "First Lead", description: "Suggested your first service", icon: "star" },
+  FIRST_SALE: { name: "Closer", description: "Made your first sale", icon: "trophy" },
+  STREAK_7: { name: "Week Warrior", description: "7-day activity streak", icon: "flame" },
+  STREAK_30: { name: "Monthly Master", description: "30-day activity streak", icon: "zap" },
+  SALES_10: { name: "Sales Pro", description: "Made 10 sales", icon: "trending-up" },
+  SALES_50: { name: "Sales Legend", description: "Made 50 sales", icon: "crown" },
+  LEVEL_5: { name: "Rising Star", description: "Reached level 5", icon: "sparkles" },
+  LEVEL_10: { name: "Elite Ambassador", description: "Reached level 10", icon: "award" },
+} as const;
+
+export type BadgeType = keyof typeof BADGE_DEFINITIONS;

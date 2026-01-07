@@ -6,6 +6,10 @@ import {
   recurringOverrides,
   serviceProviders,
   providerListings,
+  leadServices,
+  ambassadorPoints,
+  ambassadorActions,
+  ambassadorBadges,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -19,10 +23,19 @@ import {
   type ServiceProvider,
   type InsertServiceProvider,
   type ProviderListing,
-  type InsertProviderListing
+  type InsertProviderListing,
+  type LeadService,
+  type InsertLeadService,
+  type AmbassadorPoints,
+  type InsertAmbassadorPoints,
+  type AmbassadorAction,
+  type InsertAmbassadorAction,
+  type AmbassadorBadge,
+  type InsertAmbassadorBadge,
+  LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ilike, or, sql } from "drizzle-orm";
+import { eq, and, ilike, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -55,6 +68,24 @@ export interface IStorage {
   searchListings(keywords: string[]): Promise<(ProviderListing & { provider: ServiceProvider })[]>;
   upsertProviderListing(listing: InsertProviderListing, sourceUrl: string): Promise<ProviderListing>;
   deleteExpiredListings(): Promise<number>;
+  
+  // Lead Services
+  createLeadService(service: InsertLeadService): Promise<LeadService>;
+  getLeadServices(leadId: number): Promise<LeadService[]>;
+  getLeadServicesByAmbassador(ambassadorId: string): Promise<LeadService[]>;
+  updateLeadServiceStatus(id: number, status: string, notes?: string): Promise<LeadService>;
+  
+  // Ambassador Gamification
+  getOrCreateAmbassadorPoints(userId: string): Promise<AmbassadorPoints>;
+  updateAmbassadorPoints(userId: string, pointsToAdd: number): Promise<AmbassadorPoints>;
+  logAmbassadorAction(action: InsertAmbassadorAction): Promise<AmbassadorAction>;
+  getAmbassadorActions(userId: string, limit?: number): Promise<AmbassadorAction[]>;
+  getLeaderboard(limit?: number): Promise<AmbassadorPoints[]>;
+  
+  // Ambassador Badges
+  awardBadge(userId: string, badgeType: string): Promise<AmbassadorBadge>;
+  getAmbassadorBadges(userId: string): Promise<AmbassadorBadge[]>;
+  hasBadge(userId: string, badgeType: string): Promise<boolean>;
 }
 
 function generateReferralCode(): string {
@@ -262,6 +293,147 @@ export class DatabaseStorage implements IStorage {
         sql`${providerListings.expiresAt} < NOW()`
       ));
     return 0;
+  }
+
+  // Lead Services
+  async createLeadService(insertService: InsertLeadService): Promise<LeadService> {
+    const [service] = await db.insert(leadServices)
+      .values(insertService)
+      .returning();
+    return service;
+  }
+
+  async getLeadServices(leadId: number): Promise<LeadService[]> {
+    return db.select()
+      .from(leadServices)
+      .where(eq(leadServices.leadId, leadId))
+      .orderBy(desc(leadServices.createdAt));
+  }
+
+  async getLeadServicesByAmbassador(ambassadorId: string): Promise<LeadService[]> {
+    return db.select()
+      .from(leadServices)
+      .where(eq(leadServices.ambassadorId, ambassadorId))
+      .orderBy(desc(leadServices.createdAt));
+  }
+
+  async updateLeadServiceStatus(id: number, status: string, notes?: string): Promise<LeadService> {
+    const updates: Partial<LeadService> = { status, updatedAt: new Date() };
+    if (notes !== undefined) {
+      updates.notes = notes;
+    }
+    const [service] = await db.update(leadServices)
+      .set(updates)
+      .where(eq(leadServices.id, id))
+      .returning();
+    return service;
+  }
+
+  // Ambassador Gamification
+  async getOrCreateAmbassadorPoints(userId: string): Promise<AmbassadorPoints> {
+    const [existing] = await db.select()
+      .from(ambassadorPoints)
+      .where(eq(ambassadorPoints.userId, userId));
+    
+    if (existing) return existing;
+    
+    const [created] = await db.insert(ambassadorPoints)
+      .values({ userId, totalPoints: 0, level: 1, currentStreak: 0, longestStreak: 0 })
+      .returning();
+    return created;
+  }
+
+  async updateAmbassadorPoints(userId: string, pointsToAdd: number): Promise<AmbassadorPoints> {
+    const current = await this.getOrCreateAmbassadorPoints(userId);
+    const newTotal = current.totalPoints + pointsToAdd;
+    
+    // Calculate new level based on thresholds
+    let newLevel = 1;
+    for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+      if (newTotal >= LEVEL_THRESHOLDS[i]) {
+        newLevel = i + 1;
+        break;
+      }
+    }
+    
+    // Update streak
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastActivity = current.lastActivityDate ? new Date(current.lastActivityDate) : null;
+    lastActivity?.setHours(0, 0, 0, 0);
+    
+    let newStreak = current.currentStreak;
+    if (lastActivity) {
+      const dayDiff = Math.floor((today.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
+      if (dayDiff === 1) {
+        newStreak = current.currentStreak + 1;
+      } else if (dayDiff > 1) {
+        newStreak = 1;
+      }
+    } else {
+      newStreak = 1;
+    }
+    
+    const [updated] = await db.update(ambassadorPoints)
+      .set({
+        totalPoints: newTotal,
+        level: newLevel,
+        currentStreak: newStreak,
+        longestStreak: Math.max(current.longestStreak, newStreak),
+        lastActivityDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(ambassadorPoints.userId, userId))
+      .returning();
+    
+    return updated;
+  }
+
+  async logAmbassadorAction(action: InsertAmbassadorAction): Promise<AmbassadorAction> {
+    const [logged] = await db.insert(ambassadorActions)
+      .values(action)
+      .returning();
+    return logged;
+  }
+
+  async getAmbassadorActions(userId: string, limit: number = 20): Promise<AmbassadorAction[]> {
+    return db.select()
+      .from(ambassadorActions)
+      .where(eq(ambassadorActions.userId, userId))
+      .orderBy(desc(ambassadorActions.createdAt))
+      .limit(limit);
+  }
+
+  async getLeaderboard(limit: number = 10): Promise<AmbassadorPoints[]> {
+    return db.select()
+      .from(ambassadorPoints)
+      .orderBy(desc(ambassadorPoints.totalPoints))
+      .limit(limit);
+  }
+
+  // Ambassador Badges
+  async awardBadge(userId: string, badgeType: string): Promise<AmbassadorBadge> {
+    const [badge] = await db.insert(ambassadorBadges)
+      .values({ userId, badgeType })
+      .returning();
+    return badge;
+  }
+
+  async getAmbassadorBadges(userId: string): Promise<AmbassadorBadge[]> {
+    return db.select()
+      .from(ambassadorBadges)
+      .where(eq(ambassadorBadges.userId, userId))
+      .orderBy(desc(ambassadorBadges.earnedAt));
+  }
+
+  async hasBadge(userId: string, badgeType: string): Promise<boolean> {
+    const [existing] = await db.select()
+      .from(ambassadorBadges)
+      .where(and(
+        eq(ambassadorBadges.userId, userId),
+        eq(ambassadorBadges.badgeType, badgeType)
+      ));
+    return !!existing;
   }
 }
 
