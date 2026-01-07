@@ -624,6 +624,108 @@ export async function registerRoutes(
     }
   });
 
+  // Support Messages ("Charlie" system) - Ambassador endpoints
+  app.get("/api/support/messages", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const messages = await storage.getSupportMessages(userId);
+      
+      // Mark support messages as read when ambassador views them
+      await storage.markMessagesAsRead(userId, "support");
+      
+      res.json(messages);
+    } catch (err) {
+      console.error("Get support messages error:", err);
+      res.status(500).json({ message: "Failed to get messages" });
+    }
+  });
+
+  app.post("/api/support/messages", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      const userClaims = user?.claims;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { content } = req.body;
+      if (!content || typeof content !== "string" || content.trim().length === 0) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      const ambassadorName = [userClaims?.first_name, userClaims?.last_name].filter(Boolean).join(" ") || userClaims?.email || "Ambassador";
+
+      const message = await storage.createSupportMessage({
+        ambassadorUserId: userId,
+        ambassadorName,
+        content: content.trim(),
+        sender: "ambassador",
+        isRead: false,
+      });
+
+      res.status(201).json(message);
+    } catch (err) {
+      console.error("Create support message error:", err);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Admin endpoints for support inbox
+  app.get("/api/admin/support/conversations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const conversations = await storage.getAllSupportConversations();
+      res.json(conversations);
+    } catch (err) {
+      console.error("Get support conversations error:", err);
+      res.status(500).json({ message: "Failed to get conversations" });
+    }
+  });
+
+  app.get("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { ambassadorUserId } = req.params;
+      const messages = await storage.getSupportMessages(ambassadorUserId);
+      
+      // Mark ambassador messages as read when admin views them
+      await storage.markMessagesAsRead(ambassadorUserId, "ambassador");
+      
+      res.json(messages);
+    } catch (err) {
+      console.error("Get admin support messages error:", err);
+      res.status(500).json({ message: "Failed to get messages" });
+    }
+  });
+
+  app.post("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { ambassadorUserId } = req.params;
+      const { content, ambassadorName } = req.body;
+      
+      if (!content || typeof content !== "string" || content.trim().length === 0) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      const message = await storage.createSupportMessage({
+        ambassadorUserId,
+        ambassadorName: ambassadorName || "Ambassador",
+        content: content.trim(),
+        sender: "support",
+        isRead: false,
+      });
+
+      res.status(201).json(message);
+    } catch (err) {
+      console.error("Create admin support message error:", err);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   setTimeout(async () => {
     try {
