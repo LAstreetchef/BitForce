@@ -28,8 +28,10 @@ import {
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import SubscriptionRequired from "@/pages/SubscriptionRequired";
 
 const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
@@ -44,11 +46,26 @@ interface PortalLayoutProps {
   children: React.ReactNode;
 }
 
+interface SubscriptionStatus {
+  isAmbassador: boolean;
+  subscriptionStatus: string;
+  referralCode: string | null;
+}
+
 export function PortalLayout({ children }: PortalLayoutProps) {
   const [location] = useLocation();
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
+
+  const { data: subscriptionStatus, isLoading: subscriptionLoading } = useQuery<SubscriptionStatus>({
+    queryKey: ["/api/ambassador/subscription-status", user?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/ambassador/subscription-status?userId=${user?.id}`);
+      return res.json();
+    },
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -68,7 +85,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     "--sidebar-width-icon": "3rem",
   };
 
-  if (isLoading) {
+  if (isLoading || subscriptionLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
@@ -88,6 +105,10 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         </div>
       </div>
     );
+  }
+
+  if (!subscriptionStatus?.isAmbassador || subscriptionStatus?.subscriptionStatus !== "active") {
+    return <SubscriptionRequired userId={user?.id || ""} />;
   }
 
   const userInitials = user?.firstName && user?.lastName 
