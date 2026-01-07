@@ -28,15 +28,22 @@ import {
   Loader2,
   ClipboardList
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { LeadService } from "@shared/schema";
 
+interface ScraperStatus {
+  leadId: number;
+  status: "idle" | "running" | "completed" | "error";
+  canTrigger: boolean;
+}
+
 interface LeadServicesManagerProps {
   leadId: number;
   recommendations?: { id: number; title: string; providerName: string }[];
+  onRecommendationsRefresh?: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -54,13 +61,52 @@ const POINT_VALUES = {
   sold: 50,
 };
 
-export default function LeadServicesManager({ leadId, recommendations = [] }: LeadServicesManagerProps) {
+export default function LeadServicesManager({ leadId, recommendations = [], onRecommendationsRefresh }: LeadServicesManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newServiceName, setNewServiceName] = useState("");
   const [newServiceNotes, setNewServiceNotes] = useState("");
   const [selectedListing, setSelectedListing] = useState<string>("");
+  const [isScraperRunning, setIsScraperRunning] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const checkScraperStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/scraper/status/${leadId}`, { credentials: "include" });
+      if (response.ok) {
+        const status: ScraperStatus = await response.json();
+        if (status.status === "completed") {
+          setIsScraperRunning(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+          onRecommendationsRefresh?.();
+          toast({
+            title: "Recommendations Updated",
+            description: "Fresh service listings are now available!",
+          });
+          return true;
+        } else if (status.status === "error") {
+          setIsScraperRunning(false);
+          return true;
+        }
+        return false;
+      }
+      return true;
+    } catch {
+      setIsScraperRunning(false);
+      return true;
+    }
+  }, [leadId, queryClient, onRecommendationsRefresh, toast]);
+
+  useEffect(() => {
+    if (!isScraperRunning) return;
+    
+    const interval = setInterval(async () => {
+      const done = await checkScraperStatus();
+      if (done) clearInterval(interval);
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [isScraperRunning, checkScraperStatus]);
 
   const { data: services = [], isLoading } = useQuery<LeadService[]>({
     queryKey: [`/api/leads/${leadId}/services`],
@@ -70,17 +116,26 @@ export default function LeadServicesManager({ leadId, recommendations = [] }: Le
     mutationFn: async (data: { serviceName: string; listingId?: number; notes?: string }) => {
       return apiRequest("POST", `/api/leads/${leadId}/services`, data);
     },
-    onSuccess: () => {
+    onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/leads/${leadId}/services`] });
       queryClient.invalidateQueries({ queryKey: ["/api/gamification/stats"] });
       setNewServiceName("");
       setNewServiceNotes("");
       setSelectedListing("");
       setIsAddDialogOpen(false);
-      toast({
-        title: "Service Added",
-        description: `+${POINT_VALUES.suggested} points earned!`,
-      });
+      
+      if (response?.scraperTriggered) {
+        setIsScraperRunning(true);
+        toast({
+          title: "Service Added",
+          description: `+${POINT_VALUES.suggested} points! Refreshing recommendations...`,
+        });
+      } else {
+        toast({
+          title: "Service Added",
+          description: `+${POINT_VALUES.suggested} points earned!`,
+        });
+      }
     },
     onError: () => {
       toast({
@@ -150,6 +205,12 @@ export default function LeadServicesManager({ leadId, recommendations = [] }: Le
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <ClipboardList className="w-4 h-4" />
             Assigned Services ({services.length})
+            {isScraperRunning && (
+              <Badge variant="outline" className="ml-2 text-xs">
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                Updating
+              </Badge>
+            )}
           </CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>

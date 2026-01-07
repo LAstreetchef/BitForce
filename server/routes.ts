@@ -6,6 +6,7 @@ import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
+import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
@@ -414,6 +415,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/scraper/status/:leadId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const leadId = parseInt(req.params.leadId);
+      const status = getScraperJobStatus(leadId);
+      res.json(status);
+    } catch (err) {
+      console.error("Get scraper status error:", err);
+      res.status(500).json({ message: "Failed to get scraper status" });
+    }
+  });
+
   // Lead Services API - Add/manage services for leads
   app.post("/api/leads/:leadId/services", isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -456,7 +468,14 @@ export async function registerRoutes(
         await storage.awardBadge(userId, "FIRST_LEAD");
       }
 
-      res.status(201).json(leadService);
+      // Trigger background scrape to refresh recommendations
+      const scraperTriggered = enqueueScrapeJob(leadId);
+
+      res.status(201).json({ 
+        ...leadService, 
+        scraperTriggered,
+        scraperStatus: getScraperJobStatus(leadId).status 
+      });
     } catch (err) {
       console.error("Create lead service error:", err);
       res.status(500).json({ message: "Failed to create lead service" });

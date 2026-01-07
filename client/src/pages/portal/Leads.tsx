@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import LocalSolutions from "@/components/LocalSolutions";
 import LeadServicesManager from "@/components/LeadServicesManager";
 import type { Lead } from "@shared/schema";
@@ -27,6 +27,7 @@ import { formatDistanceToNow } from "date-fns";
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedLeadId, setExpandedLeadId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: leads = [], isLoading, isError } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
@@ -162,7 +163,12 @@ export default function Leads() {
                             </TabsTrigger>
                           </TabsList>
                           <TabsContent value="services">
-                            <LeadServicesManager leadId={lead.id} />
+                            <LeadServicesManager 
+                              leadId={lead.id} 
+                              onRecommendationsRefresh={() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+                              }}
+                            />
                           </TabsContent>
                           <TabsContent value="recommendations">
                             <LocalSolutions interests={lead.interests} />
