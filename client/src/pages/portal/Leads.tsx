@@ -19,10 +19,13 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-  Plus
+  Plus,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
+import LocalSolutions from "@/components/LocalSolutions";
 
 const leads = [
   { 
@@ -93,6 +96,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedLeadId, setExpandedLeadId] = useState<number | null>(null);
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,6 +160,8 @@ export default function Leads() {
               filteredLeads.map((lead) => {
                 const status = statusConfig[lead.status];
                 const StatusIcon = status.icon;
+                const isExpanded = expandedLeadId === lead.id;
+                const interests = lead.services.join(", ");
                 return (
                   <Card key={lead.id} className="p-4" data-testid={`lead-${lead.id}`}>
                     <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -201,9 +207,26 @@ export default function Leads() {
                           <Button size="sm" variant="outline" data-testid={`button-email-${lead.id}`}>
                             <Mail className="w-4 h-4" />
                           </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => setExpandedLeadId(isExpanded ? null : lead.id)}
+                            data-testid={`button-solutions-${lead.id}`}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </div>
+                    {isExpanded && (
+                      <div className="mt-4 pt-4 border-t">
+                        <LocalSolutions interests={interests} />
+                      </div>
+                    )}
                   </Card>
                 );
               })

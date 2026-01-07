@@ -382,6 +382,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/recommendations", async (req: Request, res: Response) => {
+    try {
+      const interests = (req.query.interests as string) || "";
+      const recommendations = await getRecommendationsForLead(interests);
+      res.json(recommendations);
+    } catch (err) {
+      console.error("Get recommendations error:", err);
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
   app.post("/api/scraper/run", isAuthenticated, async (_req: Request, res: Response) => {
     try {
       const result = await runScraper();
@@ -392,8 +403,16 @@ export async function registerRoutes(
     }
   });
 
-  // Initialize providers on startup
-  initializeProviders().catch(err => console.error("Failed to initialize providers:", err));
+  // Initialize providers and run scraper asynchronously after startup
+  setTimeout(async () => {
+    try {
+      await initializeProviders();
+      const result = await runScraper();
+      console.log(`Scraper completed: ${result.listingsCount} listings scraped`);
+    } catch (err) {
+      console.error("Scraper initialization failed (will retry on manual trigger):", err);
+    }
+  }, 1000);
 
   return httpServer;
 }
