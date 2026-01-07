@@ -288,3 +288,22 @@ export const BADGE_DEFINITIONS = {
 } as const;
 
 export type BadgeType = keyof typeof BADGE_DEFINITIONS;
+
+// Support Messages - "Charlie" style communication between ambassadors and management
+export const supportMessages = pgTable("support_messages", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  ambassadorName: text("ambassador_name").notNull(),
+  content: text("content").notNull(),
+  sender: text("sender").notNull(), // "ambassador" or "support"
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type SupportMessage = typeof supportMessages.$inferSelect;
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;

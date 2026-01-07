@@ -10,6 +10,7 @@ import {
   ambassadorPoints,
   ambassadorActions,
   ambassadorBadges,
+  supportMessages,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -32,6 +33,8 @@ import {
   type InsertAmbassadorAction,
   type AmbassadorBadge,
   type InsertAmbassadorBadge,
+  type SupportMessage,
+  type InsertSupportMessage,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { db } from "./db";
@@ -86,6 +89,12 @@ export interface IStorage {
   awardBadge(userId: string, badgeType: string): Promise<AmbassadorBadge>;
   getAmbassadorBadges(userId: string): Promise<AmbassadorBadge[]>;
   hasBadge(userId: string, badgeType: string): Promise<boolean>;
+  
+  // Support Messages ("Charlie" system)
+  createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage>;
+  getSupportMessages(ambassadorUserId: string): Promise<SupportMessage[]>;
+  getAllSupportConversations(): Promise<{ ambassadorUserId: string; ambassadorName: string; lastMessage: SupportMessage; unreadCount: number }[]>;
+  markMessagesAsRead(ambassadorUserId: string, sender: string): Promise<void>;
 }
 
 function generateReferralCode(): string {
@@ -434,6 +443,54 @@ export class DatabaseStorage implements IStorage {
         eq(ambassadorBadges.badgeType, badgeType)
       ));
     return !!existing;
+  }
+
+  // Support Messages ("Charlie" system)
+  async createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage> {
+    const [created] = await db.insert(supportMessages)
+      .values(message)
+      .returning();
+    return created;
+  }
+
+  async getSupportMessages(ambassadorUserId: string): Promise<SupportMessage[]> {
+    return db.select()
+      .from(supportMessages)
+      .where(eq(supportMessages.ambassadorUserId, ambassadorUserId))
+      .orderBy(supportMessages.createdAt);
+  }
+
+  async getAllSupportConversations(): Promise<{ ambassadorUserId: string; ambassadorName: string; lastMessage: SupportMessage; unreadCount: number }[]> {
+    const allMessages = await db.select()
+      .from(supportMessages)
+      .orderBy(desc(supportMessages.createdAt));
+
+    const conversationMap = new Map<string, { ambassadorUserId: string; ambassadorName: string; lastMessage: SupportMessage; unreadCount: number }>();
+    
+    for (const msg of allMessages) {
+      if (!conversationMap.has(msg.ambassadorUserId)) {
+        const unreadMessages = allMessages.filter(
+          m => m.ambassadorUserId === msg.ambassadorUserId && m.sender === "ambassador" && !m.isRead
+        );
+        conversationMap.set(msg.ambassadorUserId, {
+          ambassadorUserId: msg.ambassadorUserId,
+          ambassadorName: msg.ambassadorName,
+          lastMessage: msg,
+          unreadCount: unreadMessages.length,
+        });
+      }
+    }
+    
+    return Array.from(conversationMap.values());
+  }
+
+  async markMessagesAsRead(ambassadorUserId: string, sender: string): Promise<void> {
+    await db.update(supportMessages)
+      .set({ isRead: true })
+      .where(and(
+        eq(supportMessages.ambassadorUserId, ambassadorUserId),
+        eq(supportMessages.sender, sender)
+      ));
   }
 }
 
