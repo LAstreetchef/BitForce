@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wand2, Download, RefreshCw, Home, Palette } from "lucide-react";
+import { Loader2, Wand2, Download, RefreshCw, Home, Palette, Upload, X, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -19,6 +19,7 @@ interface GeneratedDesign {
   mimeType: string;
   roomType: string;
   style: string;
+  usedSourceImage?: boolean;
 }
 
 interface DesignVisualizationProps {
@@ -33,20 +34,21 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
   const [selectedStyle, setSelectedStyle] = useState<string>("");
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [generatedDesign, setGeneratedDesign] = useState<GeneratedDesign | null>(null);
+  const [sourceImage, setSourceImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: options, isLoading: optionsLoading } = useQuery<DesignOptions>({
     queryKey: ["/api/design-options"],
   });
 
   const generateMutation = useMutation({
-    mutationFn: async (params: { roomType: string; style: string; additionalDetails?: string }) => {
+    mutationFn: async (params: { roomType: string; style: string; additionalDetails?: string; sourceImage?: string }) => {
       const response = await apiRequest("POST", "/api/generate-renovation-design", params);
       return response.json();
     },
     onSuccess: async (data: GeneratedDesign) => {
       setGeneratedDesign(data);
       
-      // Track design generation for gamification points
       let pointsAwarded = false;
       try {
         const trackResponse = await apiRequest("POST", "/api/design-generated", {
@@ -76,6 +78,35 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
     },
   });
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file (JPG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image under 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSourceImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleGenerate = () => {
     if (!selectedRoom || !selectedStyle) {
       toast({
@@ -90,6 +121,7 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
       roomType: selectedRoom,
       style: selectedStyle,
       additionalDetails: additionalDetails || undefined,
+      sourceImage: sourceImage || undefined,
     });
   };
 
@@ -116,6 +148,13 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
       .join(" ");
   };
 
+  const clearSourceImage = () => {
+    setSourceImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   if (optionsLoading) {
     return (
       <Card>
@@ -139,10 +178,68 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
           )}
         </div>
         <CardDescription>
-          Generate renovation concept images to show customers what their space could look like
+          Upload a photo of the current space or generate a new concept design
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <Camera className="h-4 w-4" />
+            Room Photo (optional)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            ref={fileInputRef}
+            className="hidden"
+            data-testid="input-room-photo"
+          />
+          {sourceImage ? (
+            <div className="relative rounded-md border overflow-hidden">
+              <img
+                src={sourceImage}
+                alt="Uploaded room"
+                className="w-full h-48 object-cover"
+                data-testid="img-source-preview"
+              />
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={clearSourceImage}
+                data-testid="button-remove-photo"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="absolute bottom-2 left-2">
+                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                  Source Photo
+                </Badge>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full h-24 border-dashed"
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="button-upload-photo"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Click to upload room photo
+                </span>
+              </div>
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {sourceImage 
+              ? "The AI will transform this photo into your chosen design style" 
+              : "Without a photo, the AI will generate a brand new concept image"}
+          </p>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
@@ -204,12 +301,12 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
           {generateMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating Design...
+              {sourceImage ? "Transforming Room..." : "Generating Design..."}
             </>
           ) : (
             <>
               <Wand2 className="mr-2 h-4 w-4" />
-              Generate Design
+              {sourceImage ? "Transform This Room" : "Generate Design"}
             </>
           )}
         </Button>
@@ -217,9 +314,12 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
         {generatedDesign && (
           <div className="space-y-3 pt-4 border-t">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge>{formatLabel(generatedDesign.roomType)}</Badge>
                 <Badge variant="outline">{formatLabel(generatedDesign.style)}</Badge>
+                {generatedDesign.usedSourceImage && (
+                  <Badge variant="secondary">From Photo</Badge>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -243,14 +343,43 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
                 </Button>
               </div>
             </div>
-            <div className="rounded-md overflow-hidden border">
-              <img
-                src={`data:${generatedDesign.mimeType};base64,${generatedDesign.b64_json}`}
-                alt={`${generatedDesign.roomType} with ${generatedDesign.style} design`}
-                className="w-full h-auto"
-                data-testid="img-generated-design"
-              />
-            </div>
+            
+            {sourceImage && generatedDesign.usedSourceImage && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground text-center">Before</p>
+                  <div className="rounded-md overflow-hidden border">
+                    <img
+                      src={sourceImage}
+                      alt="Original room"
+                      className="w-full h-auto"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground text-center">After</p>
+                  <div className="rounded-md overflow-hidden border">
+                    <img
+                      src={`data:${generatedDesign.mimeType};base64,${generatedDesign.b64_json}`}
+                      alt={`${generatedDesign.roomType} with ${generatedDesign.style} design`}
+                      className="w-full h-auto"
+                      data-testid="img-generated-design"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!generatedDesign.usedSourceImage && (
+              <div className="rounded-md overflow-hidden border">
+                <img
+                  src={`data:${generatedDesign.mimeType};base64,${generatedDesign.b64_json}`}
+                  alt={`${generatedDesign.roomType} with ${generatedDesign.style} design`}
+                  className="w-full h-auto"
+                  data-testid="img-generated-design"
+                />
+              </div>
+            )}
           </div>
         )}
       </CardContent>

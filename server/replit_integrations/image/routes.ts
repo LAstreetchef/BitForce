@@ -62,7 +62,7 @@ export function registerImageRoutes(app: Express): void {
   // Renovation design visualization endpoint
   app.post("/api/generate-renovation-design", async (req: Request, res: Response) => {
     try {
-      const { roomType, style, additionalDetails } = req.body;
+      const { roomType, style, additionalDetails, sourceImage } = req.body;
 
       if (!roomType || !style) {
         return res.status(400).json({ error: "Room type and style are required" });
@@ -71,13 +71,39 @@ export function registerImageRoutes(app: Express): void {
       const roomDesc = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES] || `a renovated ${roomType}`;
       const styleDesc = DESIGN_STYLES[style as keyof typeof DESIGN_STYLES] || style;
 
-      const prompt = `Generate a photorealistic interior design visualization of ${roomDesc} with ${styleDesc}. ${additionalDetails || ""} The image should be high quality, professionally lit, and showcase the renovation beautifully. Make it look like a real photograph from an interior design magazine.`;
+      let prompt: string;
+      const parts: any[] = [];
 
-      console.log("[Design Generation] Generating design:", { roomType, style, prompt });
+      if (sourceImage) {
+        // Extract base64 data and mime type from data URL
+        const matches = sourceImage.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+          return res.status(400).json({ error: "Invalid image format" });
+        }
+        const imageMimeType = matches[1];
+        const imageData = matches[2];
+
+        prompt = `Transform this room photo into ${roomDesc} with ${styleDesc}. Redesign the space while keeping the same room layout and perspective. ${additionalDetails || ""} Make it look like a professional interior design rendering showing what the renovated space could look like. Keep the same camera angle and room dimensions.`;
+
+        parts.push({
+          inlineData: {
+            mimeType: imageMimeType,
+            data: imageData,
+          },
+        });
+        parts.push({ text: prompt });
+
+        console.log("[Design Generation] Generating from uploaded image:", { roomType, style, hasSourceImage: true });
+      } else {
+        prompt = `Generate a photorealistic interior design visualization of ${roomDesc} with ${styleDesc}. ${additionalDetails || ""} The image should be high quality, professionally lit, and showcase the renovation beautifully. Make it look like a real photograph from an interior design magazine.`;
+        parts.push({ text: prompt });
+
+        console.log("[Design Generation] Generating new design:", { roomType, style, prompt });
+      }
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        contents: [{ role: "user", parts }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
@@ -96,6 +122,7 @@ export function registerImageRoutes(app: Express): void {
         mimeType,
         roomType,
         style,
+        usedSourceImage: !!sourceImage,
       });
     } catch (error) {
       console.error("Error generating renovation design:", error);
