@@ -9,7 +9,7 @@ import { runScraper, getRecommendationsForLead, initializeProviders } from "./se
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
-import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail } from "./services/email";
+import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail } from "./services/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -746,6 +746,10 @@ export async function registerRoutes(
 
       const ambassadorName = [userClaims?.first_name, userClaims?.last_name].filter(Boolean).join(" ") || userClaims?.email || "Ambassador";
 
+      // Check if this is a new chat (first message from this ambassador)
+      const existingMessages = await storage.getSupportMessages(userId);
+      const isNewChat = existingMessages.length === 0;
+
       const message = await storage.createSupportMessage({
         ambassadorUserId: userId,
         ambassadorName,
@@ -753,6 +757,12 @@ export async function registerRoutes(
         sender: "ambassador",
         isRead: false,
       });
+
+      // Send email notification to admin if this is a new chat initiation
+      if (isNewChat) {
+        sendSupportChatInitiatedEmail(ambassadorName, userId, content.trim())
+          .catch(err => console.error("Failed to send support chat notification:", err));
+      }
 
       res.status(201).json(message);
     } catch (err) {

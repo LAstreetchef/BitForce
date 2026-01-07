@@ -164,6 +164,65 @@ export async function sendLeadStatusUpdateEmail(
   }
 }
 
+export async function sendSupportChatInitiatedEmail(
+  ambassadorName: string,
+  ambassadorUserId: string,
+  firstMessageContent: string
+): Promise<boolean> {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("GMAIL_APP_PASSWORD not configured - skipping support chat notification");
+    return false;
+  }
+
+  const mailOptions = {
+    from: `"${FROM_NAME}" <${GMAIL_USER}>`,
+    to: GMAIL_USER,
+    subject: `New Support Chat: ${ambassadorName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 20px; text-align: center;">
+          <h1 style="color: white; margin: 0;">New Support Chat Initiated</h1>
+        </div>
+        
+        <div style="padding: 30px; background: #ffffff;">
+          <p style="color: #374151; line-height: 1.6;">
+            An ambassador has started a new support conversation and is waiting for assistance.
+          </p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #1e40af; margin: 0 0 10px 0;"><strong>Ambassador:</strong> ${ambassadorName}</p>
+            <p style="color: #1e40af; margin: 0 0 10px 0;"><strong>User ID:</strong> ${ambassadorUserId}</p>
+            <p style="color: #374151; margin: 0;"><strong>Message:</strong></p>
+            <p style="color: #374151; margin: 10px 0 0 0; padding: 15px; background: white; border-radius: 4px; border-left: 3px solid #3b82f6;">
+              ${firstMessageContent}
+            </p>
+          </div>
+          
+          <p style="color: #374151; line-height: 1.6;">
+            Please log in to the admin portal to respond to this support request.
+          </p>
+        </div>
+        
+        <div style="background: #1e293b; padding: 20px; text-align: center;">
+          <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+            This is an automated notification from the Bit Force support system.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Support chat notification sent for ambassador: ${ambassadorName}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send support chat notification email:", error);
+    return false;
+  }
+}
+
 export async function sendAdminNotificationEmail(lead: Lead): Promise<boolean> {
   const transporter = createTransporter();
   if (!transporter) {
