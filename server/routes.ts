@@ -633,11 +633,10 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const messages = await storage.getSupportMessages(userId);
-      
-      // Mark support messages as read when ambassador views them
+      // Mark support messages as read BEFORE fetching so badge clears immediately
       await storage.markMessagesAsRead(userId, "support");
       
+      const messages = await storage.getSupportMessages(userId);
       res.json(messages);
     } catch (err) {
       console.error("Get support messages error:", err);
@@ -676,8 +675,26 @@ export async function registerRoutes(
     }
   });
 
+  // Admin check middleware - uses ADMIN_USER_IDS env var (comma-separated Replit user IDs)
+  const isAdmin = async (req: Request, res: Response, next: Function) => {
+    const user = req.user as any;
+    const userId = user?.claims?.sub;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const adminUserIds = (process.env.ADMIN_USER_IDS || "").split(",").map(id => id.trim()).filter(Boolean);
+    
+    if (adminUserIds.length === 0 || adminUserIds.includes(userId)) {
+      next();
+    } else {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+  };
+
   // Admin endpoints for support inbox
-  app.get("/api/admin/support/conversations", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/admin/support/conversations", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {
       const conversations = await storage.getAllSupportConversations();
       res.json(conversations);
@@ -687,14 +704,14 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {
       const { ambassadorUserId } = req.params;
-      const messages = await storage.getSupportMessages(ambassadorUserId);
       
-      // Mark ambassador messages as read when admin views them
+      // Mark ambassador messages as read BEFORE fetching
       await storage.markMessagesAsRead(ambassadorUserId, "ambassador");
       
+      const messages = await storage.getSupportMessages(ambassadorUserId);
       res.json(messages);
     } catch (err) {
       console.error("Get admin support messages error:", err);
@@ -702,7 +719,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/admin/support/messages/:ambassadorUserId", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {
       const { ambassadorUserId } = req.params;
       const { content, ambassadorName } = req.body;
