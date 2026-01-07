@@ -6,6 +6,7 @@ import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
+import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -410,6 +411,161 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Scraper error:", err);
       res.status(500).json({ message: "Failed to run scraper" });
+    }
+  });
+
+  // Lead Services API - Add/manage services for leads
+  app.post("/api/leads/:leadId/services", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const leadId = parseInt(req.params.leadId);
+      const { serviceName, listingId, notes } = req.body;
+      
+      if (!serviceName) {
+        return res.status(400).json({ message: "serviceName is required" });
+      }
+
+      const leadService = await storage.createLeadService({
+        leadId,
+        listingId: listingId || null,
+        serviceName,
+        status: "suggested",
+        notes: notes || null,
+        ambassadorId: userId,
+      });
+
+      // Award points for suggesting service
+      await storage.updateAmbassadorPoints(userId, ACTION_POINTS.SUGGEST_SERVICE);
+      await storage.logAmbassadorAction({
+        userId,
+        actionType: "SUGGEST_SERVICE",
+        pointsAwarded: ACTION_POINTS.SUGGEST_SERVICE,
+        leadId,
+        leadServiceId: leadService.id,
+        description: `Suggested ${serviceName}`,
+      });
+
+      // Check for first lead badge
+      const hasBadge = await storage.hasBadge(userId, "FIRST_LEAD");
+      if (!hasBadge) {
+        await storage.awardBadge(userId, "FIRST_LEAD");
+      }
+
+      res.status(201).json(leadService);
+    } catch (err) {
+      console.error("Create lead service error:", err);
+      res.status(500).json({ message: "Failed to create lead service" });
+    }
+  });
+
+  app.get("/api/leads/:leadId/services", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const leadId = parseInt(req.params.leadId);
+      const services = await storage.getLeadServices(leadId);
+      res.json(services);
+    } catch (err) {
+      console.error("Get lead services error:", err);
+      res.status(500).json({ message: "Failed to get lead services" });
+    }
+  });
+
+  app.patch("/api/lead-services/:id/status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { status, notes } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "status is required" });
+      }
+
+      const updatedService = await storage.updateLeadServiceStatus(id, status, notes);
+
+      // Award points based on status change
+      let pointsToAward = 0;
+      let actionType = "";
+      
+      if (status === "contacted") {
+        pointsToAward = ACTION_POINTS.CONTACT_LEAD;
+        actionType = "CONTACT_LEAD";
+      } else if (status === "interested") {
+        pointsToAward = ACTION_POINTS.LEAD_INTERESTED;
+        actionType = "LEAD_INTERESTED";
+      } else if (status === "sold") {
+        pointsToAward = ACTION_POINTS.MAKE_SALE;
+        actionType = "MAKE_SALE";
+        
+        // Check for first sale badge
+        const hasBadge = await storage.hasBadge(userId, "FIRST_SALE");
+        if (!hasBadge) {
+          await storage.awardBadge(userId, "FIRST_SALE");
+        }
+      }
+
+      if (pointsToAward > 0) {
+        await storage.updateAmbassadorPoints(userId, pointsToAward);
+        await storage.logAmbassadorAction({
+          userId,
+          actionType,
+          pointsAwarded: pointsToAward,
+          leadId: updatedService.leadId,
+          leadServiceId: id,
+          description: `Status changed to ${status}`,
+        });
+      }
+
+      res.json(updatedService);
+    } catch (err) {
+      console.error("Update lead service status error:", err);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
+  // Gamification API
+  app.get("/api/gamification/stats", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const points = await storage.getOrCreateAmbassadorPoints(userId);
+      const badges = await storage.getAmbassadorBadges(userId);
+      const recentActions = await storage.getAmbassadorActions(userId, 10);
+
+      res.json({
+        points,
+        badges: badges.map(b => ({
+          ...b,
+          definition: BADGE_DEFINITIONS[b.badgeType as BadgeType] || null,
+        })),
+        recentActions,
+      });
+    } catch (err) {
+      console.error("Get gamification stats error:", err);
+      res.status(500).json({ message: "Failed to get stats" });
+    }
+  });
+
+  app.get("/api/gamification/leaderboard", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const leaderboard = await storage.getLeaderboard(limit);
+      res.json(leaderboard);
+    } catch (err) {
+      console.error("Get leaderboard error:", err);
+      res.status(500).json({ message: "Failed to get leaderboard" });
     }
   });
 
