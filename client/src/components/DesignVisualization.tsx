@@ -47,19 +47,23 @@ export function DesignVisualization({ leadId, leadName, onDesignGenerated }: Des
       setGeneratedDesign(data);
       
       // Track design generation for gamification points
+      let pointsAwarded = false;
       try {
-        await apiRequest("POST", "/api/design-generated", {
+        const trackResponse = await apiRequest("POST", "/api/design-generated", {
           leadId,
           roomType: data.roomType,
           style: data.style,
         });
+        if (trackResponse.ok) {
+          pointsAwarded = true;
+        }
       } catch (e) {
         console.error("Failed to track design generation:", e);
       }
       
       onDesignGenerated?.();
       toast({
-        title: "Design Generated (+15 points)",
+        title: pointsAwarded ? "Design Generated (+15 points)" : "Design Generated",
         description: `${formatLabel(data.roomType)} with ${formatLabel(data.style)} style is ready!`,
       });
     },
