@@ -178,6 +178,16 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  app.get("/api/leads", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const leads = await storage.getLeads();
+      res.json(leads);
+    } catch (err) {
+      console.error("Error fetching leads:", err);
+      res.status(500).json({ message: "Failed to fetch leads" });
+    }
+  });
+
   app.post(api.leads.create.path, async (req, res) => {
     try {
       const input = api.leads.create.input.parse(req.body);
