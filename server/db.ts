@@ -10,5 +10,17 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+function extractDbInfo(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const port = parsed.port || "5432";
+    return `${parsed.protocol}//${parsed.hostname}:${port}/${parsed.pathname.slice(1)}`;
+  } catch {
+    return "unknown";
+  }
+}
+
+console.log(`[database] Connecting to: ${extractDbInfo(process.env.DATABASE_URL)}`);
+
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
