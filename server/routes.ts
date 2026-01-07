@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import Stripe from "stripe";
+import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -333,6 +334,66 @@ export async function registerRoutes(
       monthlyPassivePerReferral: (AMBASSADOR_PRICES.monthlySubscription * AMBASSADOR_PRICES.recurringOverridePercent / 100) / 100,
     });
   });
+
+  // Service Provider & Recommendations Routes
+  app.get("/api/providers", async (_req: Request, res: Response) => {
+    try {
+      const providers = await storage.getServiceProviders();
+      res.json(providers);
+    } catch (err) {
+      console.error("Get providers error:", err);
+      res.status(500).json({ message: "Failed to get providers" });
+    }
+  });
+
+  app.get("/api/providers/:id/listings", async (req: Request, res: Response) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const listings = await storage.getProviderListings(providerId);
+      res.json(listings);
+    } catch (err) {
+      console.error("Get listings error:", err);
+      res.status(500).json({ message: "Failed to get listings" });
+    }
+  });
+
+  app.get("/api/listings", async (_req: Request, res: Response) => {
+    try {
+      const listings = await storage.getProviderListings();
+      res.json(listings);
+    } catch (err) {
+      console.error("Get all listings error:", err);
+      res.status(500).json({ message: "Failed to get listings" });
+    }
+  });
+
+  app.post("/api/recommendations", async (req: Request, res: Response) => {
+    try {
+      const { interests } = req.body;
+      if (!interests || typeof interests !== "string") {
+        return res.status(400).json({ message: "interests field is required" });
+      }
+      
+      const recommendations = await getRecommendationsForLead(interests);
+      res.json(recommendations);
+    } catch (err) {
+      console.error("Get recommendations error:", err);
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
+  app.post("/api/scraper/run", isAuthenticated, async (_req: Request, res: Response) => {
+    try {
+      const result = await runScraper();
+      res.json(result);
+    } catch (err) {
+      console.error("Scraper error:", err);
+      res.status(500).json({ message: "Failed to run scraper" });
+    }
+  });
+
+  // Initialize providers on startup
+  initializeProviders().catch(err => console.error("Failed to initialize providers:", err));
 
   return httpServer;
 }

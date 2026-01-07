@@ -100,3 +100,59 @@ export const insertEventRegistrationSchema = createInsertSchema(eventRegistratio
 
 export type EventRegistration = typeof eventRegistrations.$inferSelect;
 export type InsertEventRegistration = z.infer<typeof insertEventRegistrationSchema>;
+
+// Service Providers (Goodsmith, Mr. Handyman, United Home Services, Kingwood.com)
+export const serviceProviders = pgTable("service_providers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  website: text("website").notNull(),
+  description: text("description"),
+  serviceArea: text("service_area").default("Houston"),
+  categories: text("categories").array(),
+  logoUrl: text("logo_url"),
+  isActive: boolean("is_active").default(true),
+  lastScrapedAt: timestamp("last_scraped_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertServiceProviderSchema = createInsertSchema(serviceProviders).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  lastScrapedAt: true
+});
+
+export type ServiceProvider = typeof serviceProviders.$inferSelect;
+export type InsertServiceProvider = z.infer<typeof insertServiceProviderSchema>;
+
+// Provider Listings (scraped services/classifieds)
+export const providerListings = pgTable("provider_listings", {
+  id: serial("id").primaryKey(),
+  providerId: integer("provider_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull(),
+  subcategory: text("subcategory"),
+  price: text("price"),
+  priceNote: text("price_note"),
+  bookingUrl: text("booking_url"),
+  contactPhone: text("contact_phone"),
+  contactEmail: text("contact_email"),
+  serviceArea: text("service_area"),
+  keywords: text("keywords").array(),
+  sourceUrl: text("source_url"),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"),
+  scrapedAt: timestamp("scraped_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertProviderListingSchema = createInsertSchema(providerListings).omit({ 
+  id: true, 
+  createdAt: true, 
+  scrapedAt: true 
+});
+
+export type ProviderListing = typeof providerListings.$inferSelect;
+export type InsertProviderListing = z.infer<typeof insertProviderListingSchema>;

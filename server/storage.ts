@@ -4,6 +4,8 @@ import {
   ambassadorSubscriptions,
   referralBonuses,
   recurringOverrides,
+  serviceProviders,
+  providerListings,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -13,10 +15,14 @@ import {
   type ReferralBonus,
   type InsertReferralBonus,
   type RecurringOverride,
-  type InsertRecurringOverride
+  type InsertRecurringOverride,
+  type ServiceProvider,
+  type InsertServiceProvider,
+  type ProviderListing,
+  type InsertProviderListing
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ilike, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -34,6 +40,20 @@ export interface IStorage {
   
   createRecurringOverride(override: InsertRecurringOverride): Promise<RecurringOverride>;
   getRecurringOverridesByAmbassador(ambassadorId: number): Promise<RecurringOverride[]>;
+  
+  // Service Providers
+  createServiceProvider(provider: InsertServiceProvider): Promise<ServiceProvider>;
+  getServiceProviders(): Promise<ServiceProvider[]>;
+  getServiceProviderById(id: number): Promise<ServiceProvider | null>;
+  updateServiceProvider(id: number, updates: Partial<ServiceProvider>): Promise<ServiceProvider>;
+  
+  // Provider Listings
+  createProviderListing(listing: InsertProviderListing): Promise<ProviderListing>;
+  getProviderListings(providerId?: number): Promise<ProviderListing[]>;
+  getListingsByCategory(category: string): Promise<ProviderListing[]>;
+  searchListings(keywords: string[]): Promise<(ProviderListing & { provider: ServiceProvider })[]>;
+  upsertProviderListing(listing: InsertProviderListing, sourceUrl: string): Promise<ProviderListing>;
+  deleteExpiredListings(): Promise<number>;
 }
 
 function generateReferralCode(): string {
@@ -125,6 +145,118 @@ export class DatabaseStorage implements IStorage {
     return db.select()
       .from(recurringOverrides)
       .where(eq(recurringOverrides.ambassadorId, ambassadorId));
+  }
+
+  // Service Providers
+  async createServiceProvider(insertProvider: InsertServiceProvider): Promise<ServiceProvider> {
+    const [provider] = await db.insert(serviceProviders)
+      .values(insertProvider)
+      .returning();
+    return provider;
+  }
+
+  async getServiceProviders(): Promise<ServiceProvider[]> {
+    return db.select()
+      .from(serviceProviders)
+      .where(eq(serviceProviders.isActive, true));
+  }
+
+  async getServiceProviderById(id: number): Promise<ServiceProvider | null> {
+    const [provider] = await db.select()
+      .from(serviceProviders)
+      .where(eq(serviceProviders.id, id));
+    return provider || null;
+  }
+
+  async updateServiceProvider(id: number, updates: Partial<ServiceProvider>): Promise<ServiceProvider> {
+    const [provider] = await db.update(serviceProviders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(serviceProviders.id, id))
+      .returning();
+    return provider;
+  }
+
+  // Provider Listings
+  async createProviderListing(insertListing: InsertProviderListing): Promise<ProviderListing> {
+    const [listing] = await db.insert(providerListings)
+      .values(insertListing)
+      .returning();
+    return listing;
+  }
+
+  async getProviderListings(providerId?: number): Promise<ProviderListing[]> {
+    if (providerId) {
+      return db.select()
+        .from(providerListings)
+        .where(and(
+          eq(providerListings.providerId, providerId),
+          eq(providerListings.isActive, true)
+        ));
+    }
+    return db.select()
+      .from(providerListings)
+      .where(eq(providerListings.isActive, true));
+  }
+
+  async getListingsByCategory(category: string): Promise<ProviderListing[]> {
+    return db.select()
+      .from(providerListings)
+      .where(and(
+        ilike(providerListings.category, `%${category}%`),
+        eq(providerListings.isActive, true)
+      ));
+  }
+
+  async searchListings(keywords: string[]): Promise<(ProviderListing & { provider: ServiceProvider })[]> {
+    const results = await db.select({
+      listing: providerListings,
+      provider: serviceProviders
+    })
+      .from(providerListings)
+      .innerJoin(serviceProviders, eq(providerListings.providerId, serviceProviders.id))
+      .where(and(
+        eq(providerListings.isActive, true),
+        eq(serviceProviders.isActive, true),
+        or(
+          ...keywords.map(keyword => 
+            or(
+              ilike(providerListings.title, `%${keyword}%`),
+              ilike(providerListings.description, `%${keyword}%`),
+              ilike(providerListings.category, `%${keyword}%`)
+            )
+          )
+        )
+      ));
+    
+    return results.map(r => ({ ...r.listing, provider: r.provider }));
+  }
+
+  async upsertProviderListing(listing: InsertProviderListing, sourceUrl: string): Promise<ProviderListing> {
+    const existing = await db.select()
+      .from(providerListings)
+      .where(eq(providerListings.sourceUrl, sourceUrl));
+    
+    if (existing.length > 0) {
+      const [updated] = await db.update(providerListings)
+        .set({ ...listing, scrapedAt: new Date() })
+        .where(eq(providerListings.sourceUrl, sourceUrl))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(providerListings)
+      .values({ ...listing, sourceUrl })
+      .returning();
+    return created;
+  }
+
+  async deleteExpiredListings(): Promise<number> {
+    const result = await db.delete(providerListings)
+      .where(and(
+        sql`${providerListings.expiresAt} IS NOT NULL`,
+        sql`${providerListings.expiresAt} < NOW()`
+      ));
+    return 0;
   }
 }
 
