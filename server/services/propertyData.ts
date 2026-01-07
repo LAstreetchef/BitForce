@@ -1,4 +1,12 @@
 import pRetry from "p-retry";
+import pLimit from "p-limit";
+
+const nominatimLimiter = pLimit(1);
+let lastNominatimCall = 0;
+const NOMINATIM_DELAY_MS = 1100;
+
+const geocodeCache = new Map<string, { lat: number; lon: number; display_name: string; timestamp: number }>();
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export interface WeatherData {
   location: {
@@ -85,36 +93,132 @@ export interface PropertyReport {
   serviceRecommendations: string[];
 }
 
-async function geocodeAddress(address: string): Promise<{ lat: number; lon: number; display_name: string } | null> {
+function normalizeAddress(address: string): string {
+  return address
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s,.-]/g, '')
+    .trim();
+}
+
+async function rateLimitedNominatimCall<T>(fn: () => Promise<T>): Promise<T> {
+  return nominatimLimiter(async () => {
+    const now = Date.now();
+    const elapsed = now - lastNominatimCall;
+    if (elapsed < NOMINATIM_DELAY_MS) {
+      await new Promise(resolve => setTimeout(resolve, NOMINATIM_DELAY_MS - elapsed));
+    }
+    lastNominatimCall = Date.now();
+    return fn();
+  });
+}
+
+async function geocodeWithNominatim(address: string): Promise<{ lat: number; lon: number; display_name: string } | null> {
   try {
-    const encoded = encodeURIComponent(address);
-    const response = await pRetry(
-      () => fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`, {
+    const normalized = normalizeAddress(address);
+    const encoded = encodeURIComponent(normalized);
+    
+    const response = await rateLimitedNominatimCall(() => 
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&countrycodes=us&addressdetails=1&limit=1`, {
         headers: {
-          "User-Agent": "BitForce-Ambassador-Tools/1.0"
+          "User-Agent": "BitForce-Ambassador-Tools/1.0 (contact@bitforce.com)"
         }
-      }),
-      { retries: 3 }
+      })
     );
     
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`[Geocode] Nominatim returned ${response.status}`);
+      return null;
+    }
     
     const data = await response.json();
-    if (data.length === 0) return null;
+    if (data.length === 0) {
+      console.log(`[Geocode] Nominatim returned no results for: ${normalized}`);
+      return null;
+    }
     
+    console.log(`[Geocode] Nominatim found: ${data[0].display_name}`);
     return {
       lat: parseFloat(data[0].lat),
       lon: parseFloat(data[0].lon),
       display_name: data[0].display_name
     };
   } catch (error) {
-    console.error("Geocoding error:", error);
+    console.error("[Geocode] Nominatim error:", error);
     return null;
   }
 }
 
+async function geocodeWithCensusBureau(address: string): Promise<{ lat: number; lon: number; display_name: string } | null> {
+  try {
+    const normalized = normalizeAddress(address);
+    const encoded = encodeURIComponent(normalized);
+    
+    const response = await pRetry(
+      () => fetch(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`),
+      { retries: 2 }
+    );
+    
+    if (!response.ok) {
+      console.log(`[Geocode] Census Bureau returned ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    const matches = data.result?.addressMatches || [];
+    
+    if (matches.length === 0) {
+      console.log(`[Geocode] Census Bureau returned no matches for: ${normalized}`);
+      return null;
+    }
+    
+    const match = matches[0];
+    const coords = match.coordinates;
+    const matchedAddress = match.matchedAddress || normalized;
+    
+    console.log(`[Geocode] Census Bureau found: ${matchedAddress}`);
+    return {
+      lat: coords.y,
+      lon: coords.x,
+      display_name: matchedAddress
+    };
+  } catch (error) {
+    console.error("[Geocode] Census Bureau error:", error);
+    return null;
+  }
+}
+
+async function geocodeAddress(address: string): Promise<{ lat: number; lon: number; display_name: string } | null> {
+  const cacheKey = normalizeAddress(address).toLowerCase();
+  
+  const cached = geocodeCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+    console.log(`[Geocode] Cache hit for: ${cacheKey}`);
+    return { lat: cached.lat, lon: cached.lon, display_name: cached.display_name };
+  }
+  
+  console.log(`[Geocode] Looking up address: ${address}`);
+  
+  let result = await geocodeWithNominatim(address);
+  
+  if (!result) {
+    console.log(`[Geocode] Nominatim failed, trying Census Bureau...`);
+    result = await geocodeWithCensusBureau(address);
+  }
+  
+  if (result) {
+    geocodeCache.set(cacheKey, { ...result, timestamp: Date.now() });
+    console.log(`[Geocode] Success: ${result.lat}, ${result.lon}`);
+  } else {
+    console.log(`[Geocode] All geocoding methods failed for: ${address}`);
+  }
+  
+  return result;
+}
+
 async function fetchNOAAWeather(lat: number, lon: number): Promise<Partial<WeatherData> | null> {
   try {
+    console.log(`[Weather] Fetching NOAA data for ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+    
     const pointsResponse = await pRetry(
       () => fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, {
         headers: {
@@ -122,10 +226,13 @@ async function fetchNOAAWeather(lat: number, lon: number): Promise<Partial<Weath
           "Accept": "application/geo+json"
         }
       }),
-      { retries: 3 }
+      { retries: 2 }
     );
     
-    if (!pointsResponse.ok) return null;
+    if (!pointsResponse.ok) {
+      console.log(`[Weather] NOAA points endpoint returned ${pointsResponse.status} - falling back to Open-Meteo`);
+      return null;
+    }
     
     const pointsData = await pointsResponse.json();
     const forecastUrl = pointsData.properties?.forecast;
@@ -209,6 +316,8 @@ async function fetchNOAAWeather(lat: number, lon: number): Promise<Partial<Weath
 
 async function fetchOpenMeteoWeather(lat: number, lon: number): Promise<Partial<WeatherData> | null> {
   try {
+    console.log(`[Weather] Fetching Open-Meteo data for ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+    
     const response = await pRetry(
       () => fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
@@ -216,7 +325,10 @@ async function fetchOpenMeteoWeather(lat: number, lon: number): Promise<Partial<
       { retries: 3 }
     );
     
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`[Weather] Open-Meteo returned ${response.status}`);
+      return null;
+    }
     
     const data = await response.json();
     
@@ -259,6 +371,8 @@ async function fetchOpenMeteoWeather(lat: number, lon: number): Promise<Partial<
 
     const homeMaintenanceTips = generateMaintenanceTipsFromOpenMeteo(data);
 
+    console.log(`[Weather] Open-Meteo returned ${forecast.length} forecast days, temp: ${data.current?.temperature_2m}°F`);
+    
     return {
       current: {
         temperature: data.current?.temperature_2m || 0,
@@ -273,7 +387,7 @@ async function fetchOpenMeteoWeather(lat: number, lon: number): Promise<Partial<
       homeMaintenanceTips
     };
   } catch (error) {
-    console.error("Open-Meteo weather error:", error);
+    console.error("[Weather] Open-Meteo error:", error);
     return null;
   }
 }
@@ -367,12 +481,15 @@ function generateMaintenanceTipsFromOpenMeteo(data: any): string[] {
 
 async function fetchCensusData(lat: number, lon: number): Promise<CensusData | null> {
   try {
+    console.log(`[Census] Fetching FIPS codes for ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+    
     const fipsResponse = await pRetry(
       () => fetch(`https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&layers=10&format=json`),
       { retries: 3 }
     );
     
     if (!fipsResponse.ok) {
+      console.log(`[Census] FIPS lookup returned ${fipsResponse.status}`);
       return getDefaultCensusData();
     }
     
@@ -380,8 +497,11 @@ async function fetchCensusData(lat: number, lon: number): Promise<CensusData | n
     const geographies = fipsData.result?.geographies?.["Census Tracts"]?.[0];
     
     if (!geographies) {
+      console.log(`[Census] No census tract found for coordinates`);
       return getDefaultCensusData();
     }
+    
+    console.log(`[Census] Found tract: State=${geographies.STATE}, County=${geographies.COUNTY}, Tract=${geographies.TRACT}`);
     
     const state = geographies.STATE;
     const county = geographies.COUNTY;
@@ -444,6 +564,8 @@ async function fetchCensusData(lat: number, lon: number): Promise<CensusData | n
     const employmentRate = laborForce > 0
       ? Math.min(100, Math.max(0, Math.round(((laborForce - unemployed) / laborForce) * 100)))
       : 0;
+    
+    console.log(`[Census] Data retrieved: pop=${population}, income=$${parseInt(values[2]) || 0}, homeValue=$${parseInt(values[3]) || 0}`);
     
     return {
       neighborhood: {
