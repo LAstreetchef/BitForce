@@ -6,6 +6,25 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
+// Health check endpoint - responds immediately for deployment health checks
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: Date.now() });
+});
+
+// In production, add a fast root health check that deployment probes use
+// In development, let Vite serve the frontend at "/"
+if (process.env.NODE_ENV === "production") {
+  app.get("/", (_req, res, next) => {
+    // If this is a health check (no accept header for HTML), respond quickly
+    const accept = _req.headers.accept || "";
+    if (!accept.includes("text/html")) {
+      return res.status(200).send("OK");
+    }
+    // Otherwise, pass through to static file serving
+    next();
+  });
+}
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
