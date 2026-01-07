@@ -24,7 +24,8 @@ import {
   DollarSign,
   LogOut,
   Loader2,
-  CalendarDays
+  CalendarDays,
+  Wrench
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { SupportChat } from "@/components/SupportChat";
@@ -37,6 +38,7 @@ import SubscriptionRequired from "@/pages/SubscriptionRequired";
 const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
   { title: "Leads", url: "/portal/leads", icon: ClipboardList },
+  { title: "Tools", url: "/portal/tools", icon: Wrench },
   { title: "My Team", url: "/portal/team", icon: Users },
   { title: "Events", url: "/portal/events", icon: CalendarDays },
   { title: "Resources", url: "/portal/resources", icon: BookOpen },

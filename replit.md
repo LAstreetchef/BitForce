@@ -5,7 +5,8 @@
 This is a full-stack web application for "Bit Force" (formerly Digital Intelligence Marketing) designed to help brand ambassadors sign up new customers for various home and digital services. The app features:
 
 - **Lead Generation**: Customer information forms with AI-powered service suggestions (client-side keyword matching)
-- **Ambassador Portal**: Dashboard, Leads, Team, Events, Resources, and Settings pages for authenticated ambassadors
+- **Ambassador Portal**: Dashboard, Leads, Tools, Team, Events, Resources, and Settings pages for authenticated ambassadors
+- **Property Intelligence Tools**: Real-time property data from open APIs (NOAA weather, Open-Meteo, US Census, OpenStreetMap) for homeowner-focused insights
 - **Public Events Page**: Accessible at `/events` for potential ambassadors to learn about and register for events
 - **Ambassador Subscription Program**: Hybrid pricing model with Stripe integration
 - **Referral System**: Track referrals, bonuses, and passive income earnings
@@ -61,6 +62,16 @@ Preferred communication style: Simple, everyday language.
 
 ### Service Suggestion Logic
 The application uses client-side keyword matching (not actual AI) to suggest relevant services based on customer interests. Service data with keywords is defined in `/client/src/data/services.ts`.
+
+### Property Intelligence Tools
+Located at `/portal/tools`, this feature provides ambassadors with access to free, open APIs:
+- **Weather Data**: Real-time weather, forecasts, and alerts from NOAA and Open-Meteo APIs (no API key required)
+- **Neighborhood Data**: Census statistics (population, income, home values) from US Census Bureau API
+- **Location Intelligence**: Geocoding and mapping via OpenStreetMap Nominatim API
+- **Service Recommendations**: AI-generated suggestions based on weather conditions and property data
+
+Backend service: `server/services/propertyData.ts`
+Frontend page: `client/src/pages/portal/Tools.tsx`
 
 ## External Dependencies
 

@@ -7,6 +7,7 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
+import { getPropertyReport } from "./services/propertyData";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail } from "./services/email";
@@ -836,6 +837,23 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Create admin support message error:", err);
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Property Intelligence Tools - Property Report endpoint
+  app.post("/api/property-report", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { address } = req.body;
+      
+      if (!address || typeof address !== "string" || address.trim().length === 0) {
+        return res.status(400).json({ message: "Address is required" });
+      }
+
+      const report = await getPropertyReport(address.trim());
+      res.json(report);
+    } catch (err) {
+      console.error("Property report error:", err);
+      res.status(500).json({ message: "Failed to generate property report" });
     }
   });
 

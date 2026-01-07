@@ -12,6 +12,7 @@ import Team from "@/pages/portal/Team";
 import Resources from "@/pages/portal/Resources";
 import Settings from "@/pages/portal/Settings";
 import Events from "@/pages/portal/Events";
+import Tools from "@/pages/portal/Tools";
 import PublicEvents from "@/pages/PublicEvents";
 import SupportInbox from "@/pages/admin/SupportInbox";
 
@@ -48,6 +49,11 @@ function Router() {
       <Route path="/portal/events">
         <PortalLayout>
           <Events />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/tools">
+        <PortalLayout>
+          <Tools />
         </PortalLayout>
       </Route>
       <Route path="/admin/support" component={SupportInbox} />
