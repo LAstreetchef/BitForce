@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export * from "./models/auth";
+export * from "./models/chat";
 
 // Ambassador subscription and payout system
 export const ambassadorSubscriptions = pgTable("ambassador_subscriptions", {
@@ -241,6 +242,7 @@ export const ACTION_POINTS = {
   DAILY_LOGIN: 2,
   STREAK_BONUS_7: 25,
   STREAK_BONUS_30: 100,
+  GENERATE_DESIGN: 15,
 } as const;
 
 // Level thresholds

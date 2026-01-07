@@ -8,6 +8,7 @@ import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
+import { registerImageRoutes } from "./replit_integrations/image";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -54,6 +55,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Register image generation routes (Gemini AI)
+  registerImageRoutes(app);
+
   app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
     const sig = req.headers["stripe-signature"] as string;
     let event: Stripe.Event;
@@ -412,6 +416,38 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Scraper error:", err);
       res.status(500).json({ message: "Failed to run scraper" });
+    }
+  });
+
+  // Track design generation for gamification
+  app.post("/api/design-generated", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { leadId, roomType, style } = req.body;
+
+      // Award points for generating design
+      await storage.updateAmbassadorPoints(userId, ACTION_POINTS.GENERATE_DESIGN);
+      await storage.logAmbassadorAction({
+        userId,
+        actionType: "GENERATE_DESIGN",
+        pointsAwarded: ACTION_POINTS.GENERATE_DESIGN,
+        leadId: leadId || null,
+        leadServiceId: null,
+        description: `Generated ${roomType} design with ${style} style`,
+      });
+
+      res.json({ 
+        success: true, 
+        pointsAwarded: ACTION_POINTS.GENERATE_DESIGN,
+      });
+    } catch (err) {
+      console.error("Track design generation error:", err);
+      res.status(500).json({ message: "Failed to track design generation" });
     }
   });
 

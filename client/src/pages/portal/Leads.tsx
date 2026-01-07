@@ -14,13 +14,15 @@ import {
   ChevronUp,
   Loader2,
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  Wand2
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import LocalSolutions from "@/components/LocalSolutions";
 import LeadServicesManager from "@/components/LeadServicesManager";
+import { DesignVisualization } from "@/components/DesignVisualization";
 import type { Lead } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 
@@ -161,6 +163,10 @@ export default function Leads() {
                               <Sparkles className="w-4 h-4 mr-2" />
                               Recommendations
                             </TabsTrigger>
+                            <TabsTrigger value="design" data-testid={`tab-design-${lead.id}`}>
+                              <Wand2 className="w-4 h-4 mr-2" />
+                              AI Design
+                            </TabsTrigger>
                           </TabsList>
                           <TabsContent value="services">
                             <LeadServicesManager 
@@ -172,6 +178,15 @@ export default function Leads() {
                           </TabsContent>
                           <TabsContent value="recommendations">
                             <LocalSolutions interests={lead.interests} />
+                          </TabsContent>
+                          <TabsContent value="design">
+                            <DesignVisualization 
+                              leadId={lead.id} 
+                              leadName={lead.fullName}
+                              onDesignGenerated={() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/gamification/stats"] });
+                              }}
+                            />
                           </TabsContent>
                         </Tabs>
                       </div>
