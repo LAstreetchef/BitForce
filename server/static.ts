@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  // In production, server runs from dist/server, static files are in dist/public
-  const distPath = path.resolve(__dirname, "..", "public");
+  // In production, server runs from dist/index.cjs, static files are in dist/public
+  const distPath = path.resolve(__dirname, "public");
   
   console.log(`[static] Looking for static files at: ${distPath}`);
   
