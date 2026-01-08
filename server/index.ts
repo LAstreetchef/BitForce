@@ -17,7 +17,8 @@ app.get("/api/health", (_req, res) => {
 // Load index.html into memory at startup for fast serving
 let cachedIndexHtml: string | null = null;
 if (process.env.NODE_ENV === "production") {
-  const indexPath = path.resolve(__dirname, "public", "index.html");
+  // In production, server runs from dist/server, static files are in dist/public
+  const indexPath = path.resolve(__dirname, "..", "public", "index.html");
   try {
     if (fs.existsSync(indexPath)) {
       cachedIndexHtml = fs.readFileSync(indexPath, "utf-8");
