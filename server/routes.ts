@@ -10,7 +10,7 @@ import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { getPropertyReport } from "./services/propertyData";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
-import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail } from "./services/email";
+import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail } from "./services/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -837,6 +837,75 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Create admin support message error:", err);
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Ambassador Invitations
+  app.post("/api/ambassador/invite", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const inviteSchema = z.object({
+        inviteeName: z.string().min(2, "Name must be at least 2 characters"),
+        inviteeEmail: z.string().email("Please enter a valid email"),
+      });
+
+      const parseResult = inviteSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ message: parseResult.error.errors[0].message });
+      }
+
+      const { inviteeName, inviteeEmail } = parseResult.data;
+
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      let referralCode = ambassador?.referralCode;
+      
+      if (!referralCode) {
+        referralCode = "BFTEAM" + user.id.substring(0, 6).toUpperCase();
+      }
+
+      const invitation = await storage.createAmbassadorInvitation({
+        inviterUserId: user.id,
+        inviterName: user.username || user.email || "Ambassador",
+        inviteeEmail,
+        inviteeName,
+        referralCode,
+        status: "pending",
+      });
+
+      const emailSent = await sendAmbassadorInviteEmail(
+        inviteeName,
+        inviteeEmail,
+        user.username || user.email || "Ambassador",
+        referralCode
+      );
+
+      res.status(201).json({ 
+        invitation, 
+        emailSent,
+        message: emailSent ? "Invitation sent successfully!" : "Invitation saved (email not configured)"
+      });
+    } catch (err) {
+      console.error("Ambassador invite error:", err);
+      res.status(500).json({ message: "Failed to send invitation" });
+    }
+  });
+
+  app.get("/api/ambassador/invitations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const invitations = await storage.getInvitationsByInviter(user.id);
+      res.json(invitations);
+    } catch (err) {
+      console.error("Get invitations error:", err);
+      res.status(500).json({ message: "Failed to get invitations" });
     }
   });
 

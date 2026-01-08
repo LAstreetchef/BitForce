@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   Mail,
   Phone
 } from "lucide-react";
+import { InviteAmbassadorModal } from "@/components/InviteAmbassadorModal";
 
 const teamStats = {
   totalRecruits: 8,
@@ -115,6 +117,8 @@ const recruitmentMilestones = [
 ];
 
 export default function Team() {
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
   return (
     <div className="space-y-6" data-testid="page-team">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -122,11 +126,16 @@ export default function Team() {
           <h1 className="text-2xl font-bold" data-testid="text-page-title">My Team</h1>
           <p className="text-muted-foreground">Manage and track your recruited ambassadors</p>
         </div>
-        <Button data-testid="button-invite-ambassador">
+        <Button onClick={() => setInviteModalOpen(true)} data-testid="button-invite-ambassador">
           <UserPlus className="w-4 h-4 mr-2" />
           Invite Ambassador
         </Button>
       </div>
+
+      <InviteAmbassadorModal 
+        open={inviteModalOpen} 
+        onOpenChange={setInviteModalOpen} 
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="stat-total-recruits">

@@ -223,6 +223,95 @@ export async function sendSupportChatInitiatedEmail(
   }
 }
 
+export async function sendAmbassadorInviteEmail(
+  inviteeName: string,
+  inviteeEmail: string,
+  inviterName: string,
+  referralCode: string
+): Promise<boolean> {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("GMAIL_APP_PASSWORD not configured - skipping ambassador invite email");
+    return false;
+  }
+
+  const signupUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] ? 'https://' + process.env.REPLIT_DOMAINS?.split(',')[0] : ''}/ambassador-signup?ref=${referralCode}`;
+
+  const mailOptions = {
+    from: `"${FROM_NAME}" <${GMAIL_USER}>`,
+    to: inviteeEmail,
+    subject: `${inviterName} invited you to join Bit Force - Earn While Learning AI!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #06b6d4 100%); padding: 40px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">You're Invited!</h1>
+          <p style="color: #e0f2fe; margin: 15px 0 0 0; font-size: 16px;">Join the Bit Force Ambassador Team</p>
+        </div>
+        
+        <div style="padding: 35px; background: #ffffff;">
+          <h2 style="color: #1e40af; margin-top: 0;">Hi ${inviteeName}!</h2>
+          
+          <p style="color: #374151; line-height: 1.7; font-size: 16px;">
+            <strong>${inviterName}</strong> thinks you'd be a great fit for the Bit Force Ambassador Program and personally invited you to join our growing team!
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #10b981;">
+            <h3 style="color: #059669; margin: 0 0 15px 0;">What You'll Get:</h3>
+            <ul style="color: #374151; margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li><strong>Earn $20-$50</strong> per customer you help</li>
+              <li><strong>$50 instant bonus</strong> for each ambassador you recruit</li>
+              <li><strong>20% recurring income</strong> from your team's subscriptions</li>
+              <li><strong>Free AI training</strong> - learn valuable skills while you earn</li>
+              <li><strong>Flexible schedule</strong> - work on your own time</li>
+            </ul>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 25px; border-radius: 12px; margin: 25px 0;">
+            <h3 style="color: #1e40af; margin: 0 0 10px 0;">Our Mission</h3>
+            <p style="color: #374151; margin: 0; line-height: 1.7;">
+              We help everyday people with technology - from backing up family photos to setting up smart home devices. 
+              No tech degree required! If you're patient, friendly, and love helping others, you'll thrive here.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${signupUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              Join the Team - Get Started
+            </a>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; text-align: center;">
+            Just <strong>$29</strong> to get started (+ $19.99/month) - your first sale pays for itself!
+          </p>
+          
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px;">
+            <p style="color: #374151; line-height: 1.7; font-size: 14px;">
+              <strong>${inviterName}</strong> will be your mentor and earn a bonus when you join - so they're invested in your success! 
+              Feel free to reach out to them with any questions.
+            </p>
+          </div>
+        </div>
+        
+        <div style="background: #1e293b; padding: 25px; text-align: center;">
+          <p style="color: white; margin: 0 0 10px 0; font-weight: bold;">Bitforce AI Buddies</p>
+          <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+            Help others and get paid to learn AI
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Ambassador invite email sent to ${inviteeEmail} from ${inviterName}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send ambassador invite email:", error);
+    return false;
+  }
+}
+
 export async function sendAdminNotificationEmail(lead: Lead): Promise<boolean> {
   const transporter = createTransporter();
   if (!transporter) {

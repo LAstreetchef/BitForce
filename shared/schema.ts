@@ -307,3 +307,25 @@ export const insertSupportMessageSchema = createInsertSchema(supportMessages).om
 
 export type SupportMessage = typeof supportMessages.$inferSelect;
 export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+
+// Ambassador Invitations - track referral invites sent by ambassadors
+export const ambassadorInvitations = pgTable("ambassador_invitations", {
+  id: serial("id").primaryKey(),
+  inviterUserId: text("inviter_user_id").notNull(),
+  inviterName: text("inviter_name").notNull(),
+  inviteeEmail: text("invitee_email").notNull(),
+  inviteeName: text("invitee_name").notNull(),
+  referralCode: text("referral_code").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, expired
+  sentAt: timestamp("sent_at").defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+});
+
+export const insertAmbassadorInvitationSchema = createInsertSchema(ambassadorInvitations).omit({ 
+  id: true, 
+  sentAt: true,
+  acceptedAt: true
+});
+
+export type AmbassadorInvitation = typeof ambassadorInvitations.$inferSelect;
+export type InsertAmbassadorInvitation = z.infer<typeof insertAmbassadorInvitationSchema>;

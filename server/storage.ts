@@ -11,6 +11,7 @@ import {
   ambassadorActions,
   ambassadorBadges,
   supportMessages,
+  ambassadorInvitations,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -35,6 +36,8 @@ import {
   type InsertAmbassadorBadge,
   type SupportMessage,
   type InsertSupportMessage,
+  type AmbassadorInvitation,
+  type InsertAmbassadorInvitation,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -96,6 +99,10 @@ export interface IStorage {
   getSupportMessages(ambassadorUserId: string): Promise<SupportMessage[]>;
   getAllSupportConversations(): Promise<{ ambassadorUserId: string; ambassadorName: string; lastMessage: SupportMessage; unreadCount: number }[]>;
   markMessagesAsRead(ambassadorUserId: string, sender: string): Promise<void>;
+  
+  // Ambassador Invitations
+  createAmbassadorInvitation(invitation: InsertAmbassadorInvitation): Promise<AmbassadorInvitation>;
+  getInvitationsByInviter(inviterUserId: string): Promise<AmbassadorInvitation[]>;
 }
 
 function generateReferralCode(): string {
@@ -497,6 +504,21 @@ export class DatabaseStorage implements IStorage {
         eq(supportMessages.ambassadorUserId, ambassadorUserId),
         eq(supportMessages.sender, sender)
       ));
+  }
+
+  // Ambassador Invitations
+  async createAmbassadorInvitation(invitation: InsertAmbassadorInvitation): Promise<AmbassadorInvitation> {
+    const [created] = await getDb().insert(ambassadorInvitations)
+      .values(invitation)
+      .returning();
+    return created;
+  }
+
+  async getInvitationsByInviter(inviterUserId: string): Promise<AmbassadorInvitation[]> {
+    return getDb().select()
+      .from(ambassadorInvitations)
+      .where(eq(ambassadorInvitations.inviterUserId, inviterUserId))
+      .orderBy(desc(ambassadorInvitations.sentAt));
   }
 }
 
