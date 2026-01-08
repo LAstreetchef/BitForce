@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
@@ -11,6 +11,17 @@ import { getPropertyReport } from "./services/propertyData";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail } from "./services/email";
+import { isDatabaseAvailable } from "./db";
+
+function requireDatabase(req: Request, res: Response, next: NextFunction) {
+  if (!isDatabaseAvailable()) {
+    return res.status(503).json({ 
+      message: "Service temporarily unavailable. Database connection is being established.",
+      retryAfter: 5
+    });
+  }
+  next();
+}
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -57,6 +68,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Apply database check middleware to all API routes that need database access
+  // Exclude health check, program-info, and static routes
+  app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+    const dbFreeRoutes = ["/api/health", "/api/ambassador/program-info"];
+    if (dbFreeRoutes.some(route => req.path.startsWith(route.replace("/api", "")))) {
+      return next();
+    }
+    return requireDatabase(req, res, next);
+  });
+  
   // Register image generation routes (Gemini AI)
   registerImageRoutes(app);
 

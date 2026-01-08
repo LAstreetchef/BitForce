@@ -4,13 +4,23 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import fs from "fs";
 import path from "path";
+import { initializeDatabase, isDatabaseAvailable } from "./db";
+
+console.log("[server] Starting server initialization...");
+console.log("[server] NODE_ENV:", process.env.NODE_ENV);
+console.log("[server] PORT:", process.env.PORT || "5000 (default)");
 
 const app = express();
 const httpServer = createServer(app);
 
 // Health check endpoint - responds immediately for deployment health checks
+// This MUST be the first route registered
 app.get("/api/health", (_req, res) => {
-  res.status(200).json({ status: "ok", timestamp: Date.now() });
+  res.status(200).json({ 
+    status: "ok", 
+    timestamp: Date.now(),
+    database: isDatabaseAvailable() ? "connected" : "unavailable"
+  });
 });
 
 // In production, root "/" must respond immediately with 200 OK for deployment health checks
@@ -101,7 +111,15 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Initialize database (non-blocking - won't crash if unavailable)
+    console.log("[server] Initializing database...");
+    const dbAvailable = initializeDatabase();
+    console.log(`[server] Database available: ${dbAvailable}`);
+    
+    // Register routes (may use database if available)
+    console.log("[server] Registering routes...");
     await registerRoutes(httpServer, app);
+    console.log("[server] Routes registered");
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
@@ -115,17 +133,20 @@ app.use((req, res, next) => {
     // setting up all the other routes so the catch-all route
     // doesn't interfere with the other routes
     if (process.env.NODE_ENV === "production") {
+      console.log("[server] Setting up static file serving...");
       serveStatic(app);
+      console.log("[server] Static file serving configured");
     } else {
+      console.log("[server] Setting up Vite dev server...");
       const { setupVite } = await import("./vite");
       await setupVite(httpServer, app);
+      console.log("[server] Vite dev server configured");
     }
-
-    // ALWAYS serve the app on the port specified in the environment variable PORT
-    // Other ports are firewalled. Default to 5000 if not specified.
-    // this serves both the API and the client.
-    // It is the only port that is not firewalled.
+    
+    // Start listening AFTER everything is initialized
+    // Health check endpoints are already registered above, routes are ready
     const port = parseInt(process.env.PORT || "5000", 10);
+    
     httpServer.listen(
       {
         port,
@@ -134,6 +155,7 @@ app.use((req, res, next) => {
       },
       () => {
         log(`serving on port ${port}`);
+        console.log("[server] Server initialization complete! Ready to accept connections.");
       },
     );
   } catch (err) {

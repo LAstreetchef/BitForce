@@ -37,7 +37,7 @@ import {
   type InsertSupportMessage,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
-import { db } from "./db";
+import { getDb, isDatabaseAvailable } from "./db";
 import { eq, and, ilike, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
@@ -109,55 +109,55 @@ function generateReferralCode(): string {
 
 export class DatabaseStorage implements IStorage {
   async createLead(insertLead: InsertLead): Promise<Lead> {
-    const [lead] = await db.insert(leads).values(insertLead).returning();
+    const [lead] = await getDb().insert(leads).values(insertLead).returning();
     return lead;
   }
 
   async getLead(id: number): Promise<Lead | null> {
-    const [lead] = await db.select().from(leads).where(eq(leads.id, id));
+    const [lead] = await getDb().select().from(leads).where(eq(leads.id, id));
     return lead || null;
   }
 
   async getLeads(): Promise<Lead[]> {
-    return db.select().from(leads).orderBy(sql`${leads.createdAt} DESC`);
+    return getDb().select().from(leads).orderBy(sql`${leads.createdAt} DESC`);
   }
 
   async createEventRegistration(insertRegistration: InsertEventRegistration): Promise<EventRegistration> {
-    const [registration] = await db.insert(eventRegistrations).values(insertRegistration).returning();
+    const [registration] = await getDb().insert(eventRegistrations).values(insertRegistration).returning();
     return registration;
   }
 
   async createAmbassadorSubscription(insertSubscription: InsertAmbassadorSubscription): Promise<AmbassadorSubscription> {
     const referralCode = insertSubscription.referralCode || generateReferralCode();
-    const [subscription] = await db.insert(ambassadorSubscriptions)
+    const [subscription] = await getDb().insert(ambassadorSubscriptions)
       .values({ ...insertSubscription, referralCode })
       .returning();
     return subscription;
   }
 
   async getAmbassadorByUserId(userId: string): Promise<AmbassadorSubscription | null> {
-    const [subscription] = await db.select()
+    const [subscription] = await getDb().select()
       .from(ambassadorSubscriptions)
       .where(eq(ambassadorSubscriptions.userId, userId));
     return subscription || null;
   }
 
   async getAmbassadorByReferralCode(code: string): Promise<AmbassadorSubscription | null> {
-    const [subscription] = await db.select()
+    const [subscription] = await getDb().select()
       .from(ambassadorSubscriptions)
       .where(eq(ambassadorSubscriptions.referralCode, code));
     return subscription || null;
   }
 
   async getAmbassadorByStripeCustomerId(customerId: string): Promise<AmbassadorSubscription | null> {
-    const [subscription] = await db.select()
+    const [subscription] = await getDb().select()
       .from(ambassadorSubscriptions)
       .where(eq(ambassadorSubscriptions.stripeCustomerId, customerId));
     return subscription || null;
   }
 
   async updateAmbassadorSubscription(id: number, updates: Partial<AmbassadorSubscription>): Promise<AmbassadorSubscription> {
-    const [subscription] = await db.update(ambassadorSubscriptions)
+    const [subscription] = await getDb().update(ambassadorSubscriptions)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(ambassadorSubscriptions.id, id))
       .returning();
@@ -165,20 +165,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReferralBonus(insertBonus: InsertReferralBonus): Promise<ReferralBonus> {
-    const [bonus] = await db.insert(referralBonuses)
+    const [bonus] = await getDb().insert(referralBonuses)
       .values(insertBonus)
       .returning();
     return bonus;
   }
 
   async getReferralBonusesByAmbassador(ambassadorId: number): Promise<ReferralBonus[]> {
-    return db.select()
+    return getDb().select()
       .from(referralBonuses)
       .where(eq(referralBonuses.ambassadorId, ambassadorId));
   }
 
   async updateReferralBonusStatus(id: number, status: string, paidAt?: Date): Promise<ReferralBonus> {
-    const [bonus] = await db.update(referralBonuses)
+    const [bonus] = await getDb().update(referralBonuses)
       .set({ status, paidAt })
       .where(eq(referralBonuses.id, id))
       .returning();
@@ -186,41 +186,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRecurringOverride(insertOverride: InsertRecurringOverride): Promise<RecurringOverride> {
-    const [override] = await db.insert(recurringOverrides)
+    const [override] = await getDb().insert(recurringOverrides)
       .values(insertOverride)
       .returning();
     return override;
   }
 
   async getRecurringOverridesByAmbassador(ambassadorId: number): Promise<RecurringOverride[]> {
-    return db.select()
+    return getDb().select()
       .from(recurringOverrides)
       .where(eq(recurringOverrides.ambassadorId, ambassadorId));
   }
 
   // Service Providers
   async createServiceProvider(insertProvider: InsertServiceProvider): Promise<ServiceProvider> {
-    const [provider] = await db.insert(serviceProviders)
+    const [provider] = await getDb().insert(serviceProviders)
       .values(insertProvider)
       .returning();
     return provider;
   }
 
   async getServiceProviders(): Promise<ServiceProvider[]> {
-    return db.select()
+    return getDb().select()
       .from(serviceProviders)
       .where(eq(serviceProviders.isActive, true));
   }
 
   async getServiceProviderById(id: number): Promise<ServiceProvider | null> {
-    const [provider] = await db.select()
+    const [provider] = await getDb().select()
       .from(serviceProviders)
       .where(eq(serviceProviders.id, id));
     return provider || null;
   }
 
   async updateServiceProvider(id: number, updates: Partial<ServiceProvider>): Promise<ServiceProvider> {
-    const [provider] = await db.update(serviceProviders)
+    const [provider] = await getDb().update(serviceProviders)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(serviceProviders.id, id))
       .returning();
@@ -229,7 +229,7 @@ export class DatabaseStorage implements IStorage {
 
   // Provider Listings
   async createProviderListing(insertListing: InsertProviderListing): Promise<ProviderListing> {
-    const [listing] = await db.insert(providerListings)
+    const [listing] = await getDb().insert(providerListings)
       .values(insertListing)
       .returning();
     return listing;
@@ -237,20 +237,20 @@ export class DatabaseStorage implements IStorage {
 
   async getProviderListings(providerId?: number): Promise<ProviderListing[]> {
     if (providerId) {
-      return db.select()
+      return getDb().select()
         .from(providerListings)
         .where(and(
           eq(providerListings.providerId, providerId),
           eq(providerListings.isActive, true)
         ));
     }
-    return db.select()
+    return getDb().select()
       .from(providerListings)
       .where(eq(providerListings.isActive, true));
   }
 
   async getListingsByCategory(category: string): Promise<ProviderListing[]> {
-    return db.select()
+    return getDb().select()
       .from(providerListings)
       .where(and(
         ilike(providerListings.category, `%${category}%`),
@@ -259,7 +259,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchListings(keywords: string[]): Promise<(ProviderListing & { provider: ServiceProvider })[]> {
-    const results = await db.select({
+    const results = await getDb().select({
       listing: providerListings,
       provider: serviceProviders
     })
@@ -283,26 +283,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertProviderListing(listing: InsertProviderListing, sourceUrl: string): Promise<ProviderListing> {
-    const existing = await db.select()
+    const existing = await getDb().select()
       .from(providerListings)
       .where(eq(providerListings.sourceUrl, sourceUrl));
     
     if (existing.length > 0) {
-      const [updated] = await db.update(providerListings)
+      const [updated] = await getDb().update(providerListings)
         .set({ ...listing, scrapedAt: new Date() })
         .where(eq(providerListings.sourceUrl, sourceUrl))
         .returning();
       return updated;
     }
     
-    const [created] = await db.insert(providerListings)
+    const [created] = await getDb().insert(providerListings)
       .values({ ...listing, sourceUrl })
       .returning();
     return created;
   }
 
   async deleteExpiredListings(): Promise<number> {
-    const result = await db.delete(providerListings)
+    const result = await getDb().delete(providerListings)
       .where(and(
         sql`${providerListings.expiresAt} IS NOT NULL`,
         sql`${providerListings.expiresAt} < NOW()`
@@ -312,21 +312,21 @@ export class DatabaseStorage implements IStorage {
 
   // Lead Services
   async createLeadService(insertService: InsertLeadService): Promise<LeadService> {
-    const [service] = await db.insert(leadServices)
+    const [service] = await getDb().insert(leadServices)
       .values(insertService)
       .returning();
     return service;
   }
 
   async getLeadServices(leadId: number): Promise<LeadService[]> {
-    return db.select()
+    return getDb().select()
       .from(leadServices)
       .where(eq(leadServices.leadId, leadId))
       .orderBy(desc(leadServices.createdAt));
   }
 
   async getLeadServicesByAmbassador(ambassadorId: string): Promise<LeadService[]> {
-    return db.select()
+    return getDb().select()
       .from(leadServices)
       .where(eq(leadServices.ambassadorId, ambassadorId))
       .orderBy(desc(leadServices.createdAt));
@@ -337,7 +337,7 @@ export class DatabaseStorage implements IStorage {
     if (notes !== undefined) {
       updates.notes = notes;
     }
-    const [service] = await db.update(leadServices)
+    const [service] = await getDb().update(leadServices)
       .set(updates)
       .where(eq(leadServices.id, id))
       .returning();
@@ -346,13 +346,13 @@ export class DatabaseStorage implements IStorage {
 
   // Ambassador Gamification
   async getOrCreateAmbassadorPoints(userId: string): Promise<AmbassadorPoints> {
-    const [existing] = await db.select()
+    const [existing] = await getDb().select()
       .from(ambassadorPoints)
       .where(eq(ambassadorPoints.userId, userId));
     
     if (existing) return existing;
     
-    const [created] = await db.insert(ambassadorPoints)
+    const [created] = await getDb().insert(ambassadorPoints)
       .values({ userId, totalPoints: 0, level: 1, currentStreak: 0, longestStreak: 0 })
       .returning();
     return created;
@@ -389,7 +389,7 @@ export class DatabaseStorage implements IStorage {
       newStreak = 1;
     }
     
-    const [updated] = await db.update(ambassadorPoints)
+    const [updated] = await getDb().update(ambassadorPoints)
       .set({
         totalPoints: newTotal,
         level: newLevel,
@@ -405,14 +405,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async logAmbassadorAction(action: InsertAmbassadorAction): Promise<AmbassadorAction> {
-    const [logged] = await db.insert(ambassadorActions)
+    const [logged] = await getDb().insert(ambassadorActions)
       .values(action)
       .returning();
     return logged;
   }
 
   async getAmbassadorActions(userId: string, limit: number = 20): Promise<AmbassadorAction[]> {
-    return db.select()
+    return getDb().select()
       .from(ambassadorActions)
       .where(eq(ambassadorActions.userId, userId))
       .orderBy(desc(ambassadorActions.createdAt))
@@ -420,7 +420,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLeaderboard(limit: number = 10): Promise<AmbassadorPoints[]> {
-    return db.select()
+    return getDb().select()
       .from(ambassadorPoints)
       .orderBy(desc(ambassadorPoints.totalPoints))
       .limit(limit);
@@ -428,21 +428,21 @@ export class DatabaseStorage implements IStorage {
 
   // Ambassador Badges
   async awardBadge(userId: string, badgeType: string): Promise<AmbassadorBadge> {
-    const [badge] = await db.insert(ambassadorBadges)
+    const [badge] = await getDb().insert(ambassadorBadges)
       .values({ userId, badgeType })
       .returning();
     return badge;
   }
 
   async getAmbassadorBadges(userId: string): Promise<AmbassadorBadge[]> {
-    return db.select()
+    return getDb().select()
       .from(ambassadorBadges)
       .where(eq(ambassadorBadges.userId, userId))
       .orderBy(desc(ambassadorBadges.earnedAt));
   }
 
   async hasBadge(userId: string, badgeType: string): Promise<boolean> {
-    const [existing] = await db.select()
+    const [existing] = await getDb().select()
       .from(ambassadorBadges)
       .where(and(
         eq(ambassadorBadges.userId, userId),
@@ -453,21 +453,21 @@ export class DatabaseStorage implements IStorage {
 
   // Support Messages ("Charlie" system)
   async createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage> {
-    const [created] = await db.insert(supportMessages)
+    const [created] = await getDb().insert(supportMessages)
       .values(message)
       .returning();
     return created;
   }
 
   async getSupportMessages(ambassadorUserId: string): Promise<SupportMessage[]> {
-    return db.select()
+    return getDb().select()
       .from(supportMessages)
       .where(eq(supportMessages.ambassadorUserId, ambassadorUserId))
       .orderBy(supportMessages.createdAt);
   }
 
   async getAllSupportConversations(): Promise<{ ambassadorUserId: string; ambassadorName: string; lastMessage: SupportMessage; unreadCount: number }[]> {
-    const allMessages = await db.select()
+    const allMessages = await getDb().select()
       .from(supportMessages)
       .orderBy(desc(supportMessages.createdAt));
 
@@ -491,7 +491,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessagesAsRead(ambassadorUserId: string, sender: string): Promise<void> {
-    await db.update(supportMessages)
+    await getDb().update(supportMessages)
       .set({ isRead: true })
       .where(and(
         eq(supportMessages.ambassadorUserId, ambassadorUserId),
