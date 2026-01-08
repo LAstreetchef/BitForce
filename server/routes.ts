@@ -888,9 +888,15 @@ export async function registerRoutes(
         emailSent,
         message: emailSent ? "Invitation sent successfully!" : "Invitation saved (email not configured)"
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Ambassador invite error:", err);
-      res.status(500).json({ message: "Failed to send invitation" });
+      if (err.message?.includes("ambassador_invitations") || err.code === "42P01") {
+        return res.status(503).json({ 
+          message: "Invitations feature is being set up. Please try again in a few minutes.",
+          error: "table_not_ready"
+        });
+      }
+      res.status(500).json({ message: "Failed to send invitation. Please try again." });
     }
   });
 
@@ -903,8 +909,11 @@ export async function registerRoutes(
 
       const invitations = await storage.getInvitationsByInviter(user.id);
       res.json(invitations);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Get invitations error:", err);
+      if (err.message?.includes("ambassador_invitations") || err.code === "42P01") {
+        return res.json([]);
+      }
       res.status(500).json({ message: "Failed to get invitations" });
     }
   });
