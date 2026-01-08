@@ -1,4 +1,5 @@
 import { useState } from "react";
+import bitforceLogo from "@assets/Bitforce_1767872339442.jpg";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLeadSchema } from "@shared/schema";
@@ -129,9 +130,12 @@ export default function Home() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              B
-            </div>
+            <img 
+              src={bitforceLogo} 
+              alt="Bitforce AI Buddies" 
+              className="w-8 h-8 rounded-lg object-cover"
+              data-testid="img-logo"
+            />
             <span className="font-display font-bold text-xl text-slate-900 tracking-tight">
               Bit Force
             </span>
