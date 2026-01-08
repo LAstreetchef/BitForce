@@ -864,12 +864,17 @@ export async function registerRoutes(
       let referralCode = ambassador?.referralCode;
       
       if (!referralCode) {
-        referralCode = "BFTEAM" + user.id.substring(0, 6).toUpperCase();
+        const idStr = String(user.id || "");
+        referralCode = "BFTEAM" + idStr.substring(0, 6).toUpperCase();
       }
 
+      const inviterName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}`.trim()
+        : user.email || "Ambassador";
+
       const invitation = await storage.createAmbassadorInvitation({
-        inviterUserId: user.id,
-        inviterName: user.username || user.email || "Ambassador",
+        inviterUserId: String(user.id),
+        inviterName,
         inviteeEmail,
         inviteeName,
         referralCode,
@@ -879,7 +884,7 @@ export async function registerRoutes(
       const emailSent = await sendAmbassadorInviteEmail(
         inviteeName,
         inviteeEmail,
-        user.username || user.email || "Ambassador",
+        inviterName,
         referralCode
       );
 
