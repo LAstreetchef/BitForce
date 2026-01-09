@@ -1,0 +1,147 @@
+Here's a prompt for your Replit Agent to create the **Digital Footprint Scanner** product:
+
+```markdown
+**Task:** Create a new "Digital Footprint Scanner" security product for our AI buddy website that helps users check if their personal information has been compromised in data breaches.
+
+**Product Name:** "AI Security Buddy: Digital Footprint Scan"
+
+**Core Functionality:**
+1. User enters their email address
+2. System checks against known data breach databases
+3. Returns a simple, easy-to-understand security report
+4. Option to sign up for monthly monitoring
+
+**Technical Requirements:**
+
+**Frontend (Add to /products page):**
+- Create a new product card with:
+  * Title: "Digital Footprint Scanner"
+  * Subtitle: "Free Security Check"
+  * Description: "See if your email has been leaked in data breaches"
+  * Professional security-themed image/icon
+  * Two clear call-to-action buttons:
+    - "Run Free Scan" (opens modal/simple interface)
+    - "Learn More" (expanded description)
+
+- Modal/Simple Interface for scanning:
+  * Clean input field: "Enter your email to check for breaches"
+  * Privacy notice: "We don't store your email after scanning"
+  * Submit button
+  * Loading animation while checking
+  * Results display area
+
+**Backend Implementation:**
+- Create `/api/check-breaches` endpoint using Python/Flask
+- Integrate with HaveIBeenPwned API (free tier - https://haveibeenpwned.com/API/v3)
+- Handle API calls securely (respect rate limits, use proper headers)
+- Return structured JSON with:
+  * Number of breaches found
+  * List of breach names and dates
+  * Types of data exposed (passwords, usernames, etc.)
+  * Overall risk level (Low/Medium/High)
+
+**Results Page/Modal Content:**
+After scan completes, show:
+1. **Risk Score Visual:** Simple color-coded indicator (Green/Yellow/Red)
+2. **Summary:** "Your email was found in [X] data breaches"
+3. **Breach List:** Bulleted list with:
+   - Breach name
+   - Date occurred
+   - Data compromised
+4. **Action Steps:** (Choose 3-5)
+   - "Change passwords on affected sites"
+   - "Enable two-factor authentication"
+   - "Use a password manager"
+   - "Consider our AI Security Buddy for ongoing monitoring"
+   - "Check password strength with our tool"
+
+**Additional Features to Include:**
+1. **Monthly Monitoring Upsell:**
+   - After free scan, offer: "Get alerted about new breaches - $5/month"
+   - Simple subscription form in modal
+
+2. **Password Strength Checker (Optional Add-on):**
+   - Add: "Check your password strength" tool
+   - Client-side only (no passwords sent to server)
+   - Visual strength meter
+
+3. **Security Tips Section:**
+   - Expandable "How to Protect Yourself" guide
+   - Links to reputable security resources
+
+**Design Requirements:**
+- Match existing site theme/colors
+- Mobile-responsive interface
+- Clean, trustworthy aesthetic
+- Use security icons (shield, lock, checkmark)
+- Progress indicators for scanning process
+
+**Privacy & Compliance:**
+- **Do NOT store user emails** (process in memory only)
+- Add clear privacy disclaimer
+- Link to full privacy policy
+- Use HTTPS for all API calls
+- Respect HaveIBeenPwned API terms
+
+**API Integration Details:**
+```python
+# Example endpoint structure:
+POST /api/check-breaches
+Request: { "email": "user@example.com" }
+Response: {
+  "status": "found/not_found",
+  "breach_count": 3,
+  "breaches": [
+    {"name": "Adobe", "date": "2013-10-04", "data_classes": ["Email", "Password"]},
+    # ... more breaches
+  ],
+  "risk_level": "medium",
+  "recommendations": ["Change passwords", "Enable 2FA"]
+}
+```
+
+**Monetization Strategy:**
+1. **Free:** One-time scan with basic results
+2. **Premium:** Monthly monitoring ($5/month) features:
+   - Automatic weekly scans
+   - Email alerts for new breaches
+   - Detailed reports
+   - Priority support
+   - Access to "AI Security Buddy" companion
+
+**Implementation Steps:**
+1. Create backend endpoint for breach checking
+2. Design and implement frontend interface
+3. Add product to /products page
+4. Test with sample emails
+5. Add privacy disclaimers
+6. Create upsell flow for monthly monitoring
+
+**Timeline:** MVP in 2-3 days
+
+**Deliverables:**
+1. Fully functional breach checking tool
+2. New product listing on /products page
+3. Backend API endpoint
+4. Mobile-responsive interface
+5. Privacy-compliant data handling
+6. Upsell path to premium monitoring
+
+**Testing:** Use test emails like "test@example.com" or real breach-checking services to verify API integration works correctly.
+
+**Note:** This tool should complement our existing AI buddies - position as "Your AI Security Buddy that watches your digital back."
+```
+
+**Additional prompt for the agent if needed:**
+```markdown
+**Quick Start Instructions:**
+1. First, sign up for HaveIBeenPwned API key (free): https://haveibeenpwned.com/API/Key
+2. Create simple Flask endpoint that accepts email and queries the API
+3. Build minimal frontend that calls this endpoint
+4. Style to match our existing site
+5. Test thoroughly before deploying
+
+**Remember:** This is a lead generation tool - the goal is to get users to try our security product, then potentially upgrade to monthly monitoring or purchase an AI Security Buddy.
+```
+
+This prompt gives your Replit Agent clear, actionable instructions to build a simple but valuable security product that fits with your AI buddy theme and is easy for ambassadors to explain and sell.

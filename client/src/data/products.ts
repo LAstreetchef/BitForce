@@ -1,6 +1,7 @@
 import subscriptionImage from "@assets/generated_images/friendly_tech_buddy_subscription_portrait.png";
 import sessionImage from "@assets/generated_images/tech_mentor_one-time_session_portrait.png";
 import bundleImage from "@assets/generated_images/tech_companion_bundle_package_portrait.png";
+import securityScannerImage from "@assets/generated_images/digital_security_shield_scanner_illustration.png";
 
 export interface ProductFeature {
   text: string;
@@ -22,7 +23,8 @@ export interface Product {
   badge?: string;
   badgeType?: "popular" | "bestValue" | "new";
   commissionInfo: string;
-  category: "subscription" | "session" | "bundle";
+  category: "subscription" | "session" | "bundle" | "security";
+  hasInteractiveFeature?: boolean;
 }
 
 export const products: Product[] = [
@@ -110,6 +112,36 @@ export const products: Product[] = [
     badgeType: "bestValue",
     commissionInfo: "Earn $50 commission per bundle sold",
     category: "bundle"
+  },
+  {
+    id: "security-scanner",
+    name: "Digital Footprint Scanner",
+    tagline: "Free security check for your email",
+    price: "Free",
+    priceDetail: "instant scan",
+    description: "See if your email has been exposed in data breaches. Our AI Security Buddy scans known breach databases and gives you a clear, easy-to-understand security report.",
+    valueProposition: "Knowledge is power! Find out if your personal information has been compromised so you can take action to protect yourself and your family.",
+    backstory: "Your AI Security Buddy watches your digital back. In today's world, data breaches happen constantly - our scanner helps you stay one step ahead of the bad guys.",
+    bestFor: ["Privacy Conscious", "Everyone", "Security Beginners"],
+    useCases: [
+      "Check if your email was in a data breach",
+      "See what personal data may have been exposed",
+      "Get actionable security recommendations",
+      "Sign up for ongoing breach monitoring"
+    ],
+    features: [
+      { text: "Instant email breach scan" },
+      { text: "Clear risk assessment (Low/Medium/High)" },
+      { text: "List of breaches your email appeared in" },
+      { text: "Personalized security recommendations" },
+      { text: "Optional password strength checker" }
+    ],
+    image: securityScannerImage,
+    badge: "Free Tool",
+    badgeType: "new",
+    commissionInfo: "Earn $2 per monthly monitoring signup",
+    category: "security",
+    hasInteractiveFeature: true
   }
 ];
 
@@ -192,5 +224,6 @@ export const categories = [
   { id: "all", name: "All Services" },
   { id: "subscription", name: "Subscriptions" },
   { id: "session", name: "Single Sessions" },
-  { id: "bundle", name: "Bundles" }
+  { id: "bundle", name: "Bundles" },
+  { id: "security", name: "Security Tools" }
 ];

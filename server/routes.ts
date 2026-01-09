@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
+import { createHash } from "crypto";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
@@ -1170,6 +1171,230 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Property report error:", err);
       res.status(500).json({ message: "Failed to generate property report" });
+    }
+  });
+
+  // Digital Footprint Scanner - Breach Check API
+  const HIBP_API_KEY = process.env.HIBP_API_KEY || "00000000000000000000000000000000"; // Test key for development
+
+  app.post("/api/check-breaches", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== "string" || !email.includes("@")) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+
+      const encodedEmail = encodeURIComponent(email.toLowerCase().trim());
+      
+      try {
+        const response = await fetch(
+          `https://haveibeenpwned.com/api/v3/breachedaccount/${encodedEmail}?truncateResponse=false`,
+          {
+            headers: {
+              "hibp-api-key": HIBP_API_KEY,
+              "user-agent": "BitForce-SecurityScanner",
+            },
+          }
+        );
+
+        if (response.status === 404) {
+          // No breaches found
+          return res.json({
+            status: "not_found",
+            breachCount: 0,
+            breaches: [],
+            riskLevel: "low",
+            recommendations: [
+              "Continue using strong, unique passwords for each account",
+              "Enable two-factor authentication where available",
+              "Keep your software and apps updated",
+            ],
+          });
+        }
+
+        if (response.status === 401) {
+          console.error("HIBP API key invalid");
+          return res.status(500).json({ 
+            status: "error",
+            message: "Security scan temporarily unavailable",
+          });
+        }
+
+        if (response.status === 429) {
+          return res.status(429).json({
+            status: "error", 
+            message: "Too many requests. Please try again in a moment.",
+          });
+        }
+
+        if (!response.ok) {
+          throw new Error(`HIBP API returned ${response.status}`);
+        }
+
+        const breaches = await response.json();
+        const breachCount = breaches.length;
+        
+        // Determine risk level
+        let riskLevel: "low" | "medium" | "high" = "low";
+        const hasPasswordBreach = breaches.some((b: any) => 
+          b.DataClasses?.some((dc: string) => dc.toLowerCase().includes("password"))
+        );
+        
+        if (breachCount >= 5 || hasPasswordBreach) {
+          riskLevel = "high";
+        } else if (breachCount >= 2) {
+          riskLevel = "medium";
+        }
+
+        // Format breaches for response
+        const formattedBreaches = breaches.map((b: any) => ({
+          name: b.Name,
+          title: b.Title,
+          domain: b.Domain,
+          breachDate: b.BreachDate,
+          dataClasses: b.DataClasses || [],
+          description: b.Description,
+          pwnCount: b.PwnCount,
+          isVerified: b.IsVerified,
+        }));
+
+        // Generate recommendations based on breaches
+        const recommendations: string[] = [];
+        if (hasPasswordBreach) {
+          recommendations.push("Change passwords immediately on affected sites");
+          recommendations.push("Use a password manager to generate strong, unique passwords");
+        }
+        recommendations.push("Enable two-factor authentication on all important accounts");
+        if (breachCount > 0) {
+          recommendations.push("Monitor your accounts for suspicious activity");
+          recommendations.push("Consider signing up for breach monitoring alerts");
+        }
+        recommendations.push("Never reuse passwords across multiple sites");
+
+        res.json({
+          status: "found",
+          breachCount,
+          breaches: formattedBreaches,
+          riskLevel,
+          recommendations: recommendations.slice(0, 5),
+        });
+
+      } catch (fetchError: any) {
+        console.error("HIBP fetch error:", fetchError);
+        return res.status(500).json({
+          status: "error",
+          message: "Unable to complete security scan. Please try again later.",
+        });
+      }
+
+    } catch (err) {
+      console.error("Check breaches error:", err);
+      res.status(500).json({ message: "Failed to check breaches" });
+    }
+  });
+
+  // Password strength and breach check using Pwned Passwords API (free, no API key required)
+  app.post("/api/check-password", async (req: Request, res: Response) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password || typeof password !== "string") {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
+      // Calculate password strength locally
+      let score = 0;
+      const suggestions: string[] = [];
+      
+      if (password.length >= 8) score += 20;
+      else suggestions.push("Use at least 8 characters");
+      
+      if (password.length >= 12) score += 10;
+      if (password.length >= 16) score += 10;
+      
+      if (/[a-z]/.test(password)) score += 10;
+      else suggestions.push("Add lowercase letters");
+      
+      if (/[A-Z]/.test(password)) score += 15;
+      else suggestions.push("Add uppercase letters");
+      
+      if (/[0-9]/.test(password)) score += 15;
+      else suggestions.push("Add numbers");
+      
+      if (/[^a-zA-Z0-9]/.test(password)) score += 20;
+      else suggestions.push("Add special characters (!@#$%^&*)");
+
+      // Check for common patterns
+      if (/(.)\1{2,}/.test(password)) {
+        score -= 10;
+        suggestions.push("Avoid repeating characters");
+      }
+      if (/^[a-zA-Z]+$/.test(password)) {
+        score -= 5;
+        suggestions.push("Mix different character types");
+      }
+      if (/^[0-9]+$/.test(password)) {
+        score -= 15;
+        suggestions.push("Don't use only numbers");
+      }
+
+      score = Math.max(0, Math.min(100, score));
+
+      let strength: "weak" | "moderate" | "strong" | "very_strong" = "weak";
+      if (score >= 80) strength = "very_strong";
+      else if (score >= 60) strength = "strong";
+      else if (score >= 40) strength = "moderate";
+
+      // Check if password has been compromised using k-anonymity
+      // We only send first 5 chars of SHA-1 hash to HIBP
+      const sha1Hash = createHash("sha1").update(password).digest("hex").toUpperCase();
+      const prefix = sha1Hash.substring(0, 5);
+      const suffix = sha1Hash.substring(5);
+
+      let compromised = false;
+      let occurrences = 0;
+
+      try {
+        const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+          headers: { "user-agent": "BitForce-SecurityScanner" },
+        });
+
+        if (response.ok) {
+          const text = await response.text();
+          const lines = text.split("\n");
+          
+          for (const line of lines) {
+            const [hashSuffix, count] = line.split(":");
+            if (hashSuffix.trim() === suffix) {
+              compromised = true;
+              occurrences = parseInt(count.trim(), 10);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Pwned Passwords API error:", err);
+        // Continue without breach check
+      }
+
+      if (compromised) {
+        suggestions.unshift("This password has been found in data breaches - choose a different one");
+        if (strength !== "weak") strength = "weak";
+        score = Math.min(score, 25);
+      }
+
+      res.json({
+        strength,
+        score,
+        compromised,
+        occurrences: compromised ? occurrences : undefined,
+        suggestions: suggestions.slice(0, 4),
+      });
+
+    } catch (err) {
+      console.error("Check password error:", err);
+      res.status(500).json({ message: "Failed to check password" });
     }
   });
 

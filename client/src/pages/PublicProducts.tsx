@@ -31,12 +31,14 @@ import {
   type Product 
 } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
+import { BreachScannerModal } from "@/components/BreachScannerModal";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PublicProducts() {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
@@ -81,10 +83,14 @@ export default function PublicProducts() {
   };
 
   const handleLearnMore = (product: Product) => {
-    toast({
-      title: "Coming Soon!",
-      description: `We'll help you get started with ${product.name}. Contact us to learn more!`,
-    });
+    if (product.hasInteractiveFeature && product.id === "security-scanner") {
+      setScannerOpen(true);
+    } else {
+      toast({
+        title: "Coming Soon!",
+        description: `We'll help you get started with ${product.name}. Contact us to learn more!`,
+      });
+    }
   };
 
   return (
@@ -348,6 +354,9 @@ export default function PublicProducts() {
           </div>
         </div>
       </footer>
+
+      {/* Breach Scanner Modal */}
+      <BreachScannerModal open={scannerOpen} onOpenChange={setScannerOpen} />
     </div>
   );
 }
