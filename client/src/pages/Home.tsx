@@ -1,128 +1,35 @@
 import { useState } from "react";
 import bitforceLogo from "@assets/Bitforce_1767872339442.jpg";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertLeadSchema } from "@shared/schema";
-import { useCreateLead } from "@/hooks/use-leads";
 import { services } from "@/data/services";
 import { ServiceCard } from "@/components/ServiceCard";
-import { QuestionnaireWizard } from "@/components/QuestionnaireWizard";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
 import { useAuth } from "@/hooks/use-auth";
 import { 
   Loader2, 
   Sparkles, 
-  Send, 
   CheckCircle,
   Shield, 
   Globe, 
   Clock, 
   Star,
   ClipboardList,
-  FileText,
   DollarSign,
   Brain,
-  HelpCircle,
   LogOut,
   LogIn
 } from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import type { z } from "zod";
-
-type LeadFormValues = z.infer<typeof insertLeadSchema>;
-
-type IntakeMode = "wizard" | "form";
 
 export default function Home() {
-  const [intakeMode, setIntakeMode] = useState<IntakeMode>("wizard");
-  const [suggestedServiceIds, setSuggestedServiceIds] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
   const { isAuthenticated, isLoading: authLoading, logout, isLoggingOut } = useAuth();
-  
-  const createLead = useCreateLead();
-
-  const form = useForm<LeadFormValues>({
-    resolver: zodResolver(insertLeadSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      interests: "",
-    },
-  });
-
-  const handleSuggest = () => {
-    const interests = form.getValues("interests").toLowerCase();
-    
-    if (!interests) {
-      setSuggestedServiceIds([]);
-      return;
-    }
-
-    const matches = services
-      .filter((service) => 
-        service.keywords.some((keyword) => interests.includes(keyword))
-      )
-      .map((s) => s.id);
-
-    setSuggestedServiceIds(matches.length > 0 ? matches : ["custom"]);
-    setShowSuggestions(true);
-  };
-
-  const onSubmit = (data: LeadFormValues) => {
-    createLead.mutate(data, {
-      onSuccess: () => {
-        form.reset();
-        setShowSuggestions(false);
-        setSuggestedServiceIds([]);
-      },
-    });
-  };
 
   const handleMembershipClick = () => {
     alert("Premium Membership signup coming soon! We're putting the finishing touches on our exclusive portal.");
   };
-
-  const handleWizardComplete = (recommendedServices: string[], interestsSummary: string) => {
-    setSuggestedServiceIds(recommendedServices);
-    setShowSuggestions(true);
-    form.setValue("interests", interestsSummary);
-    setIntakeMode("form");
-  };
-
-  const handleWizardSkip = () => {
-    setIntakeMode("form");
-  };
-
-  const handleStartWizard = () => {
-    setIntakeMode("wizard");
-    setSuggestedServiceIds([]);
-    setShowSuggestions(false);
-  };
-
-  // Sort services to put suggestions first
-  const sortedServices = [...services].sort((a, b) => {
-    const aSuggested = suggestedServiceIds.includes(a.id);
-    const bSuggested = suggestedServiceIds.includes(b.id);
-    if (aSuggested && !bSuggested) return -1;
-    if (!aSuggested && bSuggested) return 1;
-    return 0;
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -268,186 +175,61 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right Column: Wizard or Form */}
-              <AnimatePresence mode="wait">
-                {intakeMode === "wizard" ? (
-                  <motion.div
-                    key="wizard"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+              {/* Right Column: Ambassador CTA */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-2xl p-6 lg:p-8 shadow-2xl shadow-blue-900/20"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <ClipboardList className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">Ambassador Portal</h2>
+                  <p className="text-slate-500">
+                    Access our AI-powered lead intake tools, track customers, and grow your business.
+                  </p>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                    <Sparkles className="w-5 h-5 text-blue-600 shrink-0" />
+                    <span className="text-slate-700">AI-powered service recommendations</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-green-600 shrink-0" />
+                    <span className="text-slate-700">Earn commissions on every sale</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                    <Brain className="w-5 h-5 text-purple-600 shrink-0" />
+                    <span className="text-slate-700">Free AI training & resources</span>
+                  </div>
+                </div>
+
+                {isAuthenticated ? (
+                  <Button 
+                    onClick={() => window.location.href = "/portal"}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold shadow-lg shadow-blue-600/20"
+                    data-testid="button-go-to-portal"
                   >
-                    <QuestionnaireWizard
-                      onComplete={handleWizardComplete}
-                      onSkip={handleWizardSkip}
-                    />
-                  </motion.div>
+                    Go to Portal
+                  </Button>
                 ) : (
-                  <motion.div
-                    key="form"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="bg-white rounded-2xl p-6 lg:p-8 shadow-2xl shadow-blue-900/20"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-2xl font-bold text-slate-900">New Client Intake</h2>
-                        <p className="text-slate-500">
-                          {showSuggestions 
-                            ? "Review recommendations and complete the form." 
-                            : "Fill out the details below to generate service matches."}
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleStartWizard}
-                        className="shrink-0"
-                        data-testid="button-restart-wizard"
-                      >
-                        <ClipboardList className="w-4 h-4 mr-1" />
-                        Guided
-                      </Button>
-                    </div>
-
-                    {showSuggestions && suggestedServiceIds.length > 0 && (
-                      <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                        <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-blue-600" />
-                          Recommended Services
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {suggestedServiceIds.map((id) => {
-                            const service = services.find((s) => s.id === id);
-                            if (!service) return null;
-                            return (
-                              <span
-                                key={id}
-                                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full"
-                              >
-                                {service.name}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                        <div className="grid md:grid-cols-2 gap-5">
-                          <FormField
-                            control={form.control}
-                            name="fullName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Doe" className="input-field" data-testid="input-fullname" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="(555) 123-4567" className="input-field" data-testid="input-phone" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="john@example.com" className="input-field" data-testid="input-email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Home Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="123 Main St, City, State" className="input-field" data-testid="input-address" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="interests"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Client Interests & Needs</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Describe what the client is looking for (e.g., 'needs roof repair after storm' or 'wants to digitize old vhs tapes')..." 
-                                  className="input-field min-h-[100px] resize-none" 
-                                  data-testid="textarea-interests"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="flex gap-3 pt-2">
-                          <Button 
-                            type="button" 
-                            onClick={handleSuggest}
-                            variant="secondary"
-                            className="flex-1 bg-blue-50 text-blue-700 border-blue-200"
-                            data-testid="button-analyze"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Analyze Needs
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={createLead.isPending}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
-                            data-testid="button-submit-lead"
-                          >
-                            {createLead.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Submitting...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-4 h-4 mr-2" />
-                                Submit Lead
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </motion.div>
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => window.location.href = "/api/login"}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold shadow-lg shadow-blue-600/20"
+                      data-testid="button-login-portal"
+                    >
+                      <LogIn className="w-5 h-5 mr-2" />
+                      Log In to Portal
+                    </Button>
+                    <p className="text-center text-sm text-slate-500">
+                      New here? Login to start your ambassador journey
+                    </p>
+                  </div>
                 )}
-              </AnimatePresence>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -460,12 +242,7 @@ export default function Home() {
                 Available Services
               </h2>
               <p className="text-lg text-slate-600">
-                Browse our comprehensive catalog of home and digital services. 
-                {showSuggestions && (
-                  <span className="block mt-2 font-medium text-blue-600">
-                    Showing suggested services based on client interests.
-                  </span>
-                )}
+                Browse our comprehensive catalog of home and digital services.
               </p>
             </div>
 
@@ -474,7 +251,7 @@ export default function Home() {
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
             >
               <AnimatePresence>
-                {sortedServices.map((service) => (
+                {services.map((service) => (
                   <motion.div
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -485,7 +262,7 @@ export default function Home() {
                   >
                     <ServiceCard 
                       service={service} 
-                      isSuggested={suggestedServiceIds.includes(service.id)} 
+                      isSuggested={false} 
                     />
                   </motion.div>
                 ))}

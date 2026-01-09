@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import { PortalLayout } from "@/pages/portal/PortalLayout";
 import Dashboard from "@/pages/portal/Dashboard";
 import Leads from "@/pages/portal/Leads";
+import NewLead from "@/pages/portal/NewLead";
 import Team from "@/pages/portal/Team";
 import Resources from "@/pages/portal/Resources";
 import Settings from "@/pages/portal/Settings";
@@ -29,6 +30,11 @@ function Router() {
       <Route path="/portal/leads">
         <PortalLayout>
           <Leads />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/leads/new">
+        <PortalLayout>
+          <NewLead />
         </PortalLayout>
       </Route>
       <Route path="/portal/team">

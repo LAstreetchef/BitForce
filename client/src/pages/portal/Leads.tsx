@@ -49,7 +49,7 @@ export default function Leads() {
           <h1 className="text-2xl font-bold" data-testid="text-page-title">Lead Management</h1>
           <p className="text-muted-foreground">Track and manage your customer leads</p>
         </div>
-        <Link href="/">
+        <Link href="/portal/leads/new">
           <Button data-testid="button-new-lead">
             <Plus className="w-4 h-4 mr-2" />
             New Lead
