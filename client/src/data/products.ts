@@ -22,6 +22,25 @@ export interface Product {
 
 export const products: Product[] = [
   {
+    id: "monthly-subscription",
+    name: "Monthly AI Buddy Subscription",
+    tagline: "Your go-to tech support, always there",
+    price: "$29",
+    priceDetail: "per month",
+    description: "Unlimited quick check-ins (via email or phone) plus one 30-minute session each month for any ongoing tech questions.",
+    valueProposition: "Affordable ongoing support so you never feel stuck - perfect for seniors or busy families who want a reliable \"go-to\" person as technology evolves.",
+    features: [
+      { text: "Unlimited email/phone check-ins" },
+      { text: "One 30-minute session each month" },
+      { text: "Ongoing support as tech evolves" },
+      { text: "Never feel stuck or overwhelmed" },
+      { text: "Cancel anytime" }
+    ],
+    image: subscriptionImage,
+    badge: "Popular",
+    commissionInfo: "Earn $8/month recurring commission"
+  },
+  {
     id: "one-time-session",
     name: "One-Time AI Buddy Session",
     tagline: "Quick wins, lasting confidence",
@@ -57,24 +76,5 @@ export const products: Product[] = [
     image: bundleImage,
     badge: "Best Value",
     commissionInfo: "Earn $50 commission per bundle sold"
-  },
-  {
-    id: "monthly-subscription",
-    name: "Monthly AI Buddy Subscription",
-    tagline: "Your go-to tech support, always there",
-    price: "$29",
-    priceDetail: "per month",
-    description: "Unlimited quick check-ins (via email or phone) plus one 30-minute session each month for any ongoing tech questions.",
-    valueProposition: "Affordable ongoing support so you never feel stuck - perfect for seniors or busy families who want a reliable \"go-to\" person as technology evolves.",
-    features: [
-      { text: "Unlimited email/phone check-ins" },
-      { text: "One 30-minute session each month" },
-      { text: "Ongoing support as tech evolves" },
-      { text: "Never feel stuck or overwhelmed" },
-      { text: "Cancel anytime" }
-    ],
-    image: subscriptionImage,
-    badge: "Popular",
-    commissionInfo: "Earn $8/month recurring commission"
   }
 ];
