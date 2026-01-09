@@ -983,10 +983,11 @@ export async function registerRoutes(
   app.post("/api/ambassador/contacts/bulk", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!user) {
+      if (!user || !user.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
+      const userId = String(user.id);
       const { contacts } = req.body;
       if (!Array.isArray(contacts)) {
         return res.status(400).json({ message: "Contacts must be an array" });
@@ -999,8 +1000,11 @@ export async function registerRoutes(
         const parsed = contactSchema.safeParse(contacts[i]);
         if (parsed.success) {
           validContacts.push({
-            ...parsed.data,
-            ambassadorUserId: user.id,
+            fullName: parsed.data.fullName,
+            email: parsed.data.email,
+            phone: parsed.data.phone || null,
+            notes: parsed.data.notes || null,
+            ambassadorUserId: userId,
           });
         } else {
           errors.push({ index: i, errors: parsed.error.errors });
