@@ -44,9 +44,10 @@ const scenes: Scene[] = [
   { id: 2, title: "BitForce Enters", duration: 4, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
   { id: 3, title: "Our Solutions", duration: 6, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
   { id: 4, title: "Ambassador Tools", duration: 8, bgGradient: "from-cyan-900 via-teal-800 to-emerald-900" },
-  { id: 5, title: "Our Products", duration: 12, bgGradient: "from-emerald-900 via-green-800 to-teal-900" },
-  { id: 6, title: "The Opportunity", duration: 4, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
-  { id: 7, title: "Call to Action", duration: 4, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
+  { id: 5, title: "Join Our Team", duration: 6, bgGradient: "from-teal-900 via-emerald-800 to-green-900" },
+  { id: 6, title: "Our Products", duration: 12, bgGradient: "from-emerald-900 via-green-800 to-teal-900" },
+  { id: 7, title: "The Opportunity", duration: 4, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
+  { id: 8, title: "Call to Action", duration: 4, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
 ];
 
 const TOTAL_DURATION = scenes.reduce((sum, s) => sum + s.duration, 0);
@@ -381,6 +382,70 @@ function SceneTools({ progress }: { progress: number }) {
   );
 }
 
+function SceneMotivational({ progress }: { progress: number }) {
+  const lines = [
+    { text: "Join our team of AI experts", delay: 10 },
+    { text: "Offer valuable AI tools to your community", delay: 35 },
+    { text: "Network and connect with hi powered AI tools", delay: 60 },
+  ];
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      <ParticleField />
+      
+      <div
+        className="absolute w-[500px] h-[500px] bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-full blur-3xl"
+        style={{
+          transform: `scale(${1 + progress / 150})`,
+          opacity: 0.6,
+        }}
+      />
+      
+      <div className="text-center z-10 px-4 max-w-3xl">
+        <div className="space-y-8">
+          {lines.map((line, i) => (
+            <div
+              key={i}
+              className="transition-all duration-1000"
+              style={{
+                opacity: progress > line.delay ? 1 : 0,
+                transform: `translateY(${progress > line.delay ? 0 : 40}px) scale(${progress > line.delay ? 1 : 0.9})`,
+              }}
+            >
+              <h2 className="text-2xl md:text-4xl font-bold text-white leading-relaxed">
+                {i === 0 && (
+                  <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                    {line.text}
+                  </span>
+                )}
+                {i === 1 && (
+                  <span className="text-white">
+                    {line.text}
+                  </span>
+                )}
+                {i === 2 && (
+                  <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                    {line.text}
+                  </span>
+                )}
+              </h2>
+            </div>
+          ))}
+        </div>
+        
+        <div
+          className="mt-12 flex justify-center gap-6 transition-all duration-700"
+          style={{ opacity: progress > 80 ? 1 : 0 }}
+        >
+          <Brain className="w-8 h-8 text-emerald-400 animate-pulse" />
+          <Users className="w-8 h-8 text-teal-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
+          <Globe className="w-8 h-8 text-cyan-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SceneProducts({ progress }: { progress: number }) {
   const currentProductIndex = PRODUCT_SCREENSHOTS.findIndex((product, i) => {
     const nextProduct = PRODUCT_SCREENSHOTS[i + 1];
@@ -676,9 +741,10 @@ export default function ExplainerVideo() {
       {currentScene === 1 && <Scene2 progress={sceneProgress} />}
       {currentScene === 2 && <Scene3 progress={sceneProgress} />}
       {currentScene === 3 && <SceneTools progress={sceneProgress} />}
-      {currentScene === 4 && <SceneProducts progress={sceneProgress} />}
-      {currentScene === 5 && <Scene4 progress={sceneProgress} />}
-      {currentScene === 6 && <Scene5 progress={sceneProgress} />}
+      {currentScene === 4 && <SceneMotivational progress={sceneProgress} />}
+      {currentScene === 5 && <SceneProducts progress={sceneProgress} />}
+      {currentScene === 6 && <Scene4 progress={sceneProgress} />}
+      {currentScene === 7 && <Scene5 progress={sceneProgress} />}
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-3">
