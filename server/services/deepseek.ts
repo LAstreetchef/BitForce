@@ -1,12 +1,11 @@
-import OpenAI from "openai";
+let deepseekClient: any = null;
 
-let deepseekClient: OpenAI | null = null;
-
-function getDeepSeekClient(): OpenAI {
+async function getDeepSeekClient(): Promise<any> {
   if (!deepseekClient) {
     if (!process.env.DEEPSEEK_API_KEY) {
       throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to your secrets.");
     }
+    const { default: OpenAI } = await import("openai");
     deepseekClient = new OpenAI({
       baseURL: "https://api.deepseek.com",
       apiKey: process.env.DEEPSEEK_API_KEY,
@@ -63,12 +62,20 @@ function sanitizeConversationHistory(history: unknown): ChatMessage[] {
     .slice(-20);
 }
 
+export function isDeepSeekConfigured(): boolean {
+  return !!process.env.DEEPSEEK_API_KEY;
+}
+
 export async function askDeepSeek(
   userMessage: string,
   conversationHistory: unknown = []
 ): Promise<string> {
+  if (!isDeepSeekConfigured()) {
+    return "AI assistant is not currently available. Please contact your administrator to configure the DEEPSEEK_API_KEY.";
+  }
+  
   try {
-    const client = getDeepSeekClient();
+    const client = await getDeepSeekClient();
     const sanitizedHistory = sanitizeConversationHistory(conversationHistory);
     
     const messages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [
