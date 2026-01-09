@@ -16,8 +16,15 @@ import {
   Globe,
   ChevronRight,
   Sparkles,
+  Wrench,
 } from "lucide-react";
 import { Link } from "wouter";
+
+import toolAiAssistant from "@assets/Screenshot_2026-01-09_153919_1767991243060.png";
+import toolSecurityCheck from "@assets/Screenshot_2026-01-09_153928_1767991243060.png";
+import toolFriendFinder from "@assets/Screenshot_2026-01-09_153937_1767991243059.png";
+import toolPropertyLookup from "@assets/Screenshot_2026-01-09_153951_1767991243059.png";
+import toolIntelligence from "@assets/Screenshot_2026-01-09_154003_1767991243059.png";
 
 interface Scene {
   id: number;
@@ -27,11 +34,12 @@ interface Scene {
 }
 
 const scenes: Scene[] = [
-  { id: 1, title: "The Problem", duration: 5, bgGradient: "from-slate-900 via-slate-800 to-slate-900" },
-  { id: 2, title: "BitForce Enters", duration: 5, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
-  { id: 3, title: "Our Solutions", duration: 10, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
-  { id: 4, title: "The Opportunity", duration: 5, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
-  { id: 5, title: "Call to Action", duration: 5, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
+  { id: 1, title: "The Problem", duration: 4, bgGradient: "from-slate-900 via-slate-800 to-slate-900" },
+  { id: 2, title: "BitForce Enters", duration: 4, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
+  { id: 3, title: "Our Solutions", duration: 6, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
+  { id: 4, title: "Ambassador Tools", duration: 8, bgGradient: "from-cyan-900 via-teal-800 to-emerald-900" },
+  { id: 5, title: "The Opportunity", duration: 4, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
+  { id: 6, title: "Call to Action", duration: 4, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
 ];
 
 const TOTAL_DURATION = scenes.reduce((sum, s) => sum + s.duration, 0);
@@ -276,6 +284,89 @@ function Scene3({ progress }: { progress: number }) {
   );
 }
 
+const TOOL_SCREENSHOTS = [
+  { src: toolAiAssistant, title: "AI Sales Assistant", showAt: 5 },
+  { src: toolSecurityCheck, title: "Security Risk Check", showAt: 25 },
+  { src: toolFriendFinder, title: "Friend & Family Finder", showAt: 45 },
+  { src: toolPropertyLookup, title: "Property Lookup", showAt: 65 },
+  { src: toolIntelligence, title: "Intelligence Tools", showAt: 85 },
+];
+
+function SceneTools({ progress }: { progress: number }) {
+  const currentToolIndex = TOOL_SCREENSHOTS.findIndex((tool, i) => {
+    const nextTool = TOOL_SCREENSHOTS[i + 1];
+    if (!nextTool) return progress >= tool.showAt;
+    return progress >= tool.showAt && progress < nextTool.showAt;
+  });
+  
+  const activeIndex = currentToolIndex >= 0 ? currentToolIndex : 0;
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      <ParticleField />
+      
+      <div className="z-10 w-full max-w-5xl px-4">
+        <div
+          className="text-center mb-6 transition-all duration-500"
+          style={{
+            opacity: progress > 2 ? 1 : 0,
+            transform: `translateY(${progress > 2 ? 0 : -20}px)`,
+          }}
+        >
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-4">
+            <Wrench className="w-5 h-5 text-teal-400" />
+            <span className="text-white/80 text-sm">Ambassador Toolkit</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white">
+            Powerful Tools at Your Fingertips
+          </h2>
+        </div>
+
+        <div className="relative h-[280px] md:h-[320px] flex items-center justify-center">
+          {TOOL_SCREENSHOTS.map((tool, i) => {
+            const isActive = i === activeIndex;
+            const isPast = i < activeIndex;
+            
+            return (
+              <div
+                key={i}
+                className="absolute transition-all duration-700 ease-out"
+                style={{
+                  opacity: isActive ? 1 : isPast ? 0 : 0.3,
+                  transform: `translateX(${isActive ? 0 : isPast ? -100 : 100}px) scale(${isActive ? 1 : 0.8})`,
+                  zIndex: isActive ? 10 : 1,
+                }}
+              >
+                <div className="bg-white rounded-xl shadow-2xl overflow-hidden border-4 border-white/20">
+                  <img
+                    src={tool.src}
+                    alt={tool.title}
+                    className="w-[500px] md:w-[600px] h-auto object-contain"
+                  />
+                </div>
+                <p className="text-center text-white font-medium mt-3 text-lg">
+                  {tool.title}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-center gap-2 mt-4">
+          {TOOL_SCREENSHOTS.map((_, i) => (
+            <div
+              key={i}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === activeIndex ? "bg-teal-400 w-6" : "bg-white/30"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Scene4({ progress }: { progress: number }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -449,22 +540,28 @@ export default function ExplainerVideo() {
 
   useEffect(() => {
     let elapsed = 0;
+    let foundScene = false;
     for (let i = 0; i < scenes.length; i++) {
       if (currentTime >= elapsed && currentTime < elapsed + scenes[i].duration) {
         setCurrentScene(i);
+        foundScene = true;
         break;
       }
       elapsed += scenes[i].duration;
     }
+    if (!foundScene && currentTime >= TOTAL_DURATION) {
+      setCurrentScene(scenes.length - 1);
+    }
   }, [currentTime]);
 
   const getSceneProgress = () => {
+    const sceneDuration = scenes[currentScene]?.duration || 1;
     let elapsed = 0;
     for (let i = 0; i < currentScene; i++) {
       elapsed += scenes[i].duration;
     }
-    const sceneTime = currentTime - elapsed;
-    return (sceneTime / scenes[currentScene].duration) * 100;
+    const sceneTime = Math.max(0, currentTime - elapsed);
+    return Math.min(100, (sceneTime / sceneDuration) * 100);
   };
 
   const handleRestart = () => {
@@ -484,8 +581,9 @@ export default function ExplainerVideo() {
       {currentScene === 0 && <Scene1 progress={sceneProgress} />}
       {currentScene === 1 && <Scene2 progress={sceneProgress} />}
       {currentScene === 2 && <Scene3 progress={sceneProgress} />}
-      {currentScene === 3 && <Scene4 progress={sceneProgress} />}
-      {currentScene === 4 && <Scene5 progress={sceneProgress} />}
+      {currentScene === 3 && <SceneTools progress={sceneProgress} />}
+      {currentScene === 4 && <Scene4 progress={sceneProgress} />}
+      {currentScene === 5 && <Scene5 progress={sceneProgress} />}
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-3">
