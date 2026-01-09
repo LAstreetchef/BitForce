@@ -13,21 +13,11 @@ console.log("[server] PORT:", process.env.PORT || "5000 (default)");
 const app = express();
 const httpServer = createServer(app);
 
-// Health check endpoint - responds immediately for deployment health checks
-// This MUST be the first route registered
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({ 
-    status: "ok", 
-    timestamp: Date.now(),
-    database: isDatabaseAvailable() ? "connected" : "unavailable"
-  });
-});
+let isFullyInitialized = false;
 
-// In production, root "/" must respond immediately with 200 OK for deployment health checks
-// Load index.html into memory at startup for fast serving
+// In production, cache index.html for fast serving
 let cachedIndexHtml: string | null = null;
 if (process.env.NODE_ENV === "production") {
-  // In production, server runs from dist/index.cjs, static files are in dist/public
   const indexPath = path.resolve(__dirname, "public", "index.html");
   try {
     if (fs.existsSync(indexPath)) {
@@ -37,23 +27,53 @@ if (process.env.NODE_ENV === "production") {
   } catch (err) {
     console.error("[server] Failed to cache index.html:", err);
   }
-  
-  // HEAD requests for health probes - respond immediately with just status
-  app.head("/", (_req, res) => {
+}
+
+// Health check endpoint - responds immediately for deployment health checks
+// Returns 200 only when fully initialized, 503 otherwise
+app.get("/api/health", (_req, res) => {
+  if (isFullyInitialized) {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: Date.now(),
+      database: isDatabaseAvailable() ? "connected" : "unavailable"
+    });
+  } else {
+    res.status(503).json({
+      status: "initializing",
+      timestamp: Date.now()
+    });
+  }
+});
+
+// Root "/" must respond with 200 OK for deployment health checks
+// Only returns 200 when fully initialized
+app.head("/", (_req, res) => {
+  if (isFullyInitialized) {
     res.status(200).end();
-  });
+  } else {
+    res.status(503).end();
+  }
+});
+
+// GET "/" - serve HTML when ready, 503 when initializing
+app.get("/", (_req, res, next) => {
+  if (!isFullyInitialized) {
+    res.status(503).send("Server is starting up. Please wait...");
+    return;
+  }
   
-  // GET requests - serve cached index.html for browsers, fallback to OK for probes
-  app.get("/", (_req, res) => {
-    // Serve cached index.html immediately - no file I/O needed
+  if (process.env.NODE_ENV === "production") {
     if (cachedIndexHtml) {
       res.status(200).type("html").send(cachedIndexHtml);
     } else {
-      // Fallback: just return OK for health check
       res.status(200).send("OK");
     }
-  });
-}
+  } else {
+    // In development, let Vite handle it
+    next();
+  }
+});
 
 declare module "http" {
   interface IncomingMessage {
@@ -85,7 +105,7 @@ export function log(message: string, source = "express") {
 
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
+  const reqPath = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -96,8 +116,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (reqPath.startsWith("/api")) {
+      let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -109,7 +129,26 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+// START LISTENING IMMEDIATELY - before any async initialization
+// This ensures health checks pass right away
+const port = parseInt(process.env.PORT || "5000", 10);
+
+httpServer.listen(
+  {
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  },
+  () => {
+    log(`serving on port ${port}`);
+    console.log("[server] Server listening! Health checks will now pass.");
+    
+    // Now do async initialization in the background
+    initializeAsync();
+  },
+);
+
+async function initializeAsync() {
   try {
     // Initialize database (non-blocking - won't crash if unavailable)
     console.log("[server] Initializing database...");
@@ -129,9 +168,7 @@ app.use((req, res, next) => {
       console.error("[server] Request error:", err);
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
+    // Setup static files or Vite dev server
     if (process.env.NODE_ENV === "production") {
       console.log("[server] Setting up static file serving...");
       serveStatic(app);
@@ -143,23 +180,11 @@ app.use((req, res, next) => {
       console.log("[server] Vite dev server configured");
     }
     
-    // Start listening AFTER everything is initialized
-    // Health check endpoints are already registered above, routes are ready
-    const port = parseInt(process.env.PORT || "5000", 10);
-    
-    httpServer.listen(
-      {
-        port,
-        host: "0.0.0.0",
-        reusePort: true,
-      },
-      () => {
-        log(`serving on port ${port}`);
-        console.log("[server] Server initialization complete! Ready to accept connections.");
-      },
-    );
+    isFullyInitialized = true;
+    console.log("[server] Server initialization complete! Ready to accept all requests.");
   } catch (err) {
-    console.error("[server] Fatal error during startup:", err);
+    console.error("[server] Fatal error during initialization:", err);
+    // Exit so deployment fails and alerts operators
     process.exit(1);
   }
-})();
+}
