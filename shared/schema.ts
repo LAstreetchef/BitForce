@@ -329,3 +329,25 @@ export const insertAmbassadorInvitationSchema = createInsertSchema(ambassadorInv
 
 export type AmbassadorInvitation = typeof ambassadorInvitations.$inferSelect;
 export type InsertAmbassadorInvitation = z.infer<typeof insertAmbassadorInvitationSchema>;
+
+// Ambassador Contacts - personal network contacts uploaded by ambassadors
+export const ambassadorContacts = pgTable("ambassador_contacts", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  notes: text("notes"),
+  emailSentType: text("email_sent_type"), // "ambassador_invite" | "customer_invite" | null
+  emailSentAt: timestamp("email_sent_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAmbassadorContactSchema = createInsertSchema(ambassadorContacts).omit({ 
+  id: true, 
+  createdAt: true,
+  emailSentAt: true
+});
+
+export type AmbassadorContact = typeof ambassadorContacts.$inferSelect;
+export type InsertAmbassadorContact = z.infer<typeof insertAmbassadorContactSchema>;

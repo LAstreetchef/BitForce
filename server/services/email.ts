@@ -312,6 +312,95 @@ export async function sendAmbassadorInviteEmail(
   }
 }
 
+export async function sendAIBuddyCustomerInviteEmail(
+  contactName: string,
+  contactEmail: string,
+  inviterName: string
+): Promise<boolean> {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("GMAIL_APP_PASSWORD not configured - skipping AI Buddy customer invite email");
+    return false;
+  }
+
+  const websiteUrl = process.env.REPLIT_DOMAINS?.split(',')[0] ? 'https://' + process.env.REPLIT_DOMAINS?.split(',')[0] : '';
+
+  const mailOptions = {
+    from: `"${FROM_NAME}" <${GMAIL_USER}>`,
+    to: contactEmail,
+    subject: `${inviterName} wants to introduce you to your personal AI & Tech Concierge!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); padding: 40px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Meet Your Personal AI Buddy</h1>
+          <p style="color: #e0e7ff; margin: 15px 0 0 0; font-size: 16px;">Your Technology & Home Services Concierge</p>
+        </div>
+        
+        <div style="padding: 35px; background: #ffffff;">
+          <h2 style="color: #1e40af; margin-top: 0;">Hi ${contactName}!</h2>
+          
+          <p style="color: #374151; line-height: 1.7; font-size: 16px;">
+            <strong>${inviterName}</strong> thought you'd love having your own personal AI & technology concierge - and wanted to introduce you to <strong>Bitforce Buddies</strong>!
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3b82f6;">
+            <h3 style="color: #1e40af; margin: 0 0 15px 0;">What is a Bitforce Buddy?</h3>
+            <p style="color: #374151; margin: 0; line-height: 1.7;">
+              Think of us as your personal tech support friend who's always available. We help with everything from setting up smart home devices to finding trusted home service professionals - all while teaching you to use AI tools that make life easier.
+            </p>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 25px; border-radius: 12px; margin: 25px 0;">
+            <h3 style="color: #7c3aed; margin: 0 0 15px 0;">Featured Services We Offer:</h3>
+            <ul style="color: #374151; margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li><strong>Photo & Video Backup</strong> - Never lose precious memories again</li>
+              <li><strong>Smart Home Setup</strong> - Thermostats, cameras, voice assistants & more</li>
+              <li><strong>Home Security</strong> - Professional installation from trusted providers</li>
+              <li><strong>Tech Support</strong> - Help with computers, phones, and gadgets</li>
+              <li><strong>Home Services</strong> - Connect with vetted local contractors</li>
+              <li><strong>AI Training</strong> - Learn to use ChatGPT, Gemini & more!</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); padding: 20px; border-radius: 12px; margin: 25px 0; text-align: center;">
+            <p style="color: #059669; margin: 0; font-size: 18px; font-weight: bold;">
+              No subscriptions. No commitments. Just help when you need it.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${websiteUrl}" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              Learn More About Bitforce Buddies
+            </a>
+          </div>
+          
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px;">
+            <p style="color: #374151; line-height: 1.7; font-size: 14px;">
+              <strong>${inviterName}</strong> is your personal Bitforce Buddy and will be your main point of contact. Feel free to reply to this email or reach out to them directly with any questions!
+            </p>
+          </div>
+        </div>
+        
+        <div style="background: #1e293b; padding: 25px; text-align: center;">
+          <p style="color: white; margin: 0 0 10px 0; font-weight: bold;">Bitforce AI Buddies</p>
+          <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+            Your Personal AI & Technology Concierge
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`AI Buddy customer invite email sent to ${contactEmail} from ${inviterName}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send AI Buddy customer invite email:", error);
+    return false;
+  }
+}
+
 export async function sendAdminNotificationEmail(lead: Lead): Promise<boolean> {
   const transporter = createTransporter();
   if (!transporter) {

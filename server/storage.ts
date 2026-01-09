@@ -12,6 +12,7 @@ import {
   ambassadorBadges,
   supportMessages,
   ambassadorInvitations,
+  ambassadorContacts,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -38,6 +39,8 @@ import {
   type InsertSupportMessage,
   type AmbassadorInvitation,
   type InsertAmbassadorInvitation,
+  type AmbassadorContact,
+  type InsertAmbassadorContact,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -103,6 +106,13 @@ export interface IStorage {
   // Ambassador Invitations
   createAmbassadorInvitation(invitation: InsertAmbassadorInvitation): Promise<AmbassadorInvitation>;
   getInvitationsByInviter(inviterUserId: string): Promise<AmbassadorInvitation[]>;
+  
+  // Ambassador Contacts
+  createAmbassadorContact(contact: InsertAmbassadorContact): Promise<AmbassadorContact>;
+  createAmbassadorContacts(contacts: InsertAmbassadorContact[]): Promise<AmbassadorContact[]>;
+  getAmbassadorContacts(ambassadorUserId: string): Promise<AmbassadorContact[]>;
+  deleteAmbassadorContact(id: number, ambassadorUserId: string): Promise<boolean>;
+  updateContactEmailSent(id: number, emailType: string): Promise<AmbassadorContact>;
 }
 
 function generateReferralCode(): string {
@@ -519,6 +529,50 @@ export class DatabaseStorage implements IStorage {
       .from(ambassadorInvitations)
       .where(eq(ambassadorInvitations.inviterUserId, inviterUserId))
       .orderBy(desc(ambassadorInvitations.sentAt));
+  }
+
+  // Ambassador Contacts
+  async createAmbassadorContact(contact: InsertAmbassadorContact): Promise<AmbassadorContact> {
+    const [created] = await getDb().insert(ambassadorContacts)
+      .values(contact)
+      .returning();
+    return created;
+  }
+
+  async createAmbassadorContacts(contacts: InsertAmbassadorContact[]): Promise<AmbassadorContact[]> {
+    if (contacts.length === 0) return [];
+    const created = await getDb().insert(ambassadorContacts)
+      .values(contacts)
+      .returning();
+    return created;
+  }
+
+  async getAmbassadorContacts(ambassadorUserId: string): Promise<AmbassadorContact[]> {
+    return getDb().select()
+      .from(ambassadorContacts)
+      .where(eq(ambassadorContacts.ambassadorUserId, ambassadorUserId))
+      .orderBy(desc(ambassadorContacts.createdAt));
+  }
+
+  async deleteAmbassadorContact(id: number, ambassadorUserId: string): Promise<boolean> {
+    const result = await getDb().delete(ambassadorContacts)
+      .where(and(
+        eq(ambassadorContacts.id, id),
+        eq(ambassadorContacts.ambassadorUserId, ambassadorUserId)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async updateContactEmailSent(id: number, emailType: string): Promise<AmbassadorContact> {
+    const [updated] = await getDb().update(ambassadorContacts)
+      .set({ 
+        emailSentType: emailType,
+        emailSentAt: new Date()
+      })
+      .where(eq(ambassadorContacts.id, id))
+      .returning();
+    return updated;
   }
 }
 

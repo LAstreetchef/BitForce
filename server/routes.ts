@@ -11,7 +11,7 @@ import { getPropertyReport } from "./services/propertyData";
 import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
-import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail } from "./services/email";
+import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail, sendAIBuddyCustomerInviteEmail } from "./services/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -921,6 +921,194 @@ export async function registerRoutes(
         return res.json([]);
       }
       res.status(500).json({ message: "Failed to get invitations" });
+    }
+  });
+
+  // Ambassador Contacts - upload and manage personal network
+  const contactSchema = z.object({
+    fullName: z.string().min(1),
+    email: z.string().email(),
+    phone: z.string().optional(),
+    notes: z.string().optional(),
+  });
+
+  app.get("/api/ambassador/contacts", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const contacts = await storage.getAmbassadorContacts(user.id);
+      res.json(contacts);
+    } catch (err: any) {
+      console.error("Get contacts error:", err);
+      if (err.message?.includes("ambassador_contacts") || err.code === "42P01") {
+        return res.json([]);
+      }
+      res.status(500).json({ message: "Failed to get contacts" });
+    }
+  });
+
+  app.post("/api/ambassador/contacts", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const parsed = contactSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid contact data", errors: parsed.error.errors });
+      }
+
+      const contact = await storage.createAmbassadorContact({
+        ...parsed.data,
+        ambassadorUserId: user.id,
+      });
+      res.status(201).json(contact);
+    } catch (err: any) {
+      console.error("Create contact error:", err);
+      res.status(500).json({ message: "Failed to create contact" });
+    }
+  });
+
+  app.post("/api/ambassador/contacts/bulk", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { contacts } = req.body;
+      if (!Array.isArray(contacts)) {
+        return res.status(400).json({ message: "Contacts must be an array" });
+      }
+
+      const validContacts: any[] = [];
+      const errors: any[] = [];
+
+      for (let i = 0; i < contacts.length; i++) {
+        const parsed = contactSchema.safeParse(contacts[i]);
+        if (parsed.success) {
+          validContacts.push({
+            ...parsed.data,
+            ambassadorUserId: user.id,
+          });
+        } else {
+          errors.push({ index: i, errors: parsed.error.errors });
+        }
+      }
+
+      if (validContacts.length === 0) {
+        return res.status(400).json({ message: "No valid contacts found", errors });
+      }
+
+      const created = await storage.createAmbassadorContacts(validContacts);
+      res.status(201).json({ 
+        contacts: created, 
+        imported: created.length,
+        errors: errors.length > 0 ? errors : undefined 
+      });
+    } catch (err: any) {
+      console.error("Bulk create contacts error:", err);
+      res.status(500).json({ message: "Failed to import contacts" });
+    }
+  });
+
+  app.delete("/api/ambassador/contacts/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid contact ID" });
+      }
+
+      const deleted = await storage.deleteAmbassadorContact(id, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Delete contact error:", err);
+      res.status(500).json({ message: "Failed to delete contact" });
+    }
+  });
+
+  // Send emails to contacts
+  app.post("/api/ambassador/contacts/send-email", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { contactIds, emailType } = req.body;
+      if (!Array.isArray(contactIds) || contactIds.length === 0) {
+        return res.status(400).json({ message: "Contact IDs required" });
+      }
+      if (!["ambassador_invite", "customer_invite"].includes(emailType)) {
+        return res.status(400).json({ message: "Invalid email type" });
+      }
+
+      // Get ambassador info for the referral code
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      const referralCode = ambassador?.referralCode || "BITFORCE";
+      const inviterName = user.username || user.firstName || "Your Friend";
+
+      // Get contacts
+      const allContacts = await storage.getAmbassadorContacts(user.id);
+      const contactsToEmail = allContacts.filter(c => contactIds.includes(c.id));
+
+      if (contactsToEmail.length === 0) {
+        return res.status(404).json({ message: "No matching contacts found" });
+      }
+
+      const results: { contactId: number; success: boolean; error?: string }[] = [];
+
+      for (const contact of contactsToEmail) {
+        try {
+          let emailSent = false;
+          
+          if (emailType === "ambassador_invite") {
+            emailSent = await sendAmbassadorInviteEmail(
+              contact.fullName,
+              contact.email,
+              inviterName,
+              referralCode
+            );
+          } else {
+            emailSent = await sendAIBuddyCustomerInviteEmail(
+              contact.fullName,
+              contact.email,
+              inviterName
+            );
+          }
+
+          if (emailSent) {
+            await storage.updateContactEmailSent(contact.id, emailType);
+            results.push({ contactId: contact.id, success: true });
+          } else {
+            results.push({ contactId: contact.id, success: false, error: "Email not configured" });
+          }
+        } catch (err: any) {
+          results.push({ contactId: contact.id, success: false, error: err.message });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      res.json({ 
+        results, 
+        sent: successCount,
+        message: `Sent ${successCount} of ${contactsToEmail.length} emails`
+      });
+    } catch (err: any) {
+      console.error("Send contact emails error:", err);
+      res.status(500).json({ message: "Failed to send emails" });
     }
   });
 
