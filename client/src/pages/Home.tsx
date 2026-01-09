@@ -240,7 +240,7 @@ export default function Home() {
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <ClipboardList className="w-8 h-8 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">Ambassador Portal</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">BitForce Ambassador Portal</h2>
                   <p className="text-slate-500">
                     Access our AI-powered lead intake tools, track customers, and grow your business.
                   </p>
