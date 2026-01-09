@@ -15,15 +15,11 @@ import {
   Trophy,
   Star,
   Crown,
-  Sparkles,
-  Package
+  Sparkles
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { LEVEL_THRESHOLDS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
-import { products, type Product } from "@/data/products";
-import { ProductCard } from "@/components/ProductCard";
-import { useToast } from "@/hooks/use-toast";
 
 interface GamificationStats {
   points: {
@@ -67,8 +63,6 @@ const badgeIcons: Record<string, typeof Star> = {
 };
 
 export default function Dashboard() {
-  const { toast } = useToast();
-  
   const { data: stats, isLoading: statsLoading } = useQuery<GamificationStats>({
     queryKey: ["/api/gamification/stats"],
   });
@@ -76,39 +70,6 @@ export default function Dashboard() {
   const { data: leaderboard = [], isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/gamification/leaderboard"],
   });
-
-  const handleShareProduct = async (product: Product) => {
-    const shareText = `Check out ${product.name}! ${product.tagline} - Only ${product.price} (${product.priceDetail}). ${product.valueProposition}`;
-    
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: product.name,
-          text: shareText,
-        });
-        toast({
-          title: "Shared successfully!",
-          description: "Product info shared with your customer.",
-        });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Copied to clipboard!",
-          description: "Product info ready to share with your customer.",
-        });
-      } else {
-        toast({
-          title: "Share text",
-          description: shareText,
-        });
-      }
-    } catch {
-      toast({
-        title: "Product info",
-        description: shareText,
-      });
-    }
-  };
 
   const currentLevel = stats?.points?.level || 1;
   const totalPoints = stats?.points?.totalPoints || 0;
@@ -393,27 +354,6 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      <div data-testid="section-featured-products">
-        <div className="flex items-center gap-2 mb-4">
-          <Package className="w-6 h-6 text-primary" />
-          <h2 className="text-xl font-bold">Featured Products</h2>
-          <Badge variant="secondary">Core Offerings</Badge>
-        </div>
-        <p className="text-muted-foreground mb-6">
-          Our AI Buddy services are 100% in-house, sold through dedicated ambassadors. 
-          Help others and get paid to learn AI!
-        </p>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onShare={handleShareProduct}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );
