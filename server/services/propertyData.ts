@@ -483,8 +483,9 @@ async function fetchCensusData(lat: number, lon: number): Promise<CensusData | n
   try {
     console.log(`[Census] Fetching FIPS codes for ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
     
+    // Use layers=8 for Census Tracts (layers=10 returns Block Groups which doesn't include tract data)
     const fipsResponse = await pRetry(
-      () => fetch(`https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&layers=10&format=json`),
+      () => fetch(`https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lon}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&layers=8&format=json`),
       { retries: 3 }
     );
     
@@ -497,7 +498,7 @@ async function fetchCensusData(lat: number, lon: number): Promise<CensusData | n
     const geographies = fipsData.result?.geographies?.["Census Tracts"]?.[0];
     
     if (!geographies) {
-      console.log(`[Census] No census tract found for coordinates`);
+      console.log(`[Census] No census tract found for coordinates. Available keys:`, Object.keys(fipsData.result?.geographies || {}));
       return getDefaultCensusData();
     }
     
