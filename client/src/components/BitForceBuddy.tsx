@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import buddyImage from "@assets/bitforcebuddy_1767995159680.png";
+import buddyFullBody from "@assets/bitforcebuddy_1767995159680.png";
+import buddyCloseUp from "@assets/bitboy2_1767995536336.png";
 
 interface BuddyAction {
   sceneId: number;
@@ -8,19 +9,20 @@ interface BuddyAction {
   visible: boolean;
   speechBubble?: string;
   position?: "right" | "left";
+  imageType?: "fullBody" | "closeUp";
 }
 
 const BUDDY_TIMELINE: BuddyAction[] = [
-  { sceneId: 2, progressStart: 30, progressEnd: 100, visible: true, speechBubble: "Welcome to BitForce!", position: "right" },
+  { sceneId: 2, progressStart: 30, progressEnd: 100, visible: true, speechBubble: "Welcome to BitForce!", position: "right", imageType: "fullBody" },
   
-  { sceneId: 5, progressStart: 10, progressEnd: 90, visible: true, speechBubble: "Join the team!", position: "right" },
+  { sceneId: 5, progressStart: 10, progressEnd: 90, visible: true, speechBubble: "Join the team!", position: "right", imageType: "closeUp" },
   
-  { sceneId: 6, progressStart: 5, progressEnd: 25, visible: true, speechBubble: "Check these out!", position: "left" },
-  { sceneId: 6, progressStart: 30, progressEnd: 50, visible: true, position: "right" },
-  { sceneId: 6, progressStart: 55, progressEnd: 75, visible: true, position: "left" },
-  { sceneId: 6, progressStart: 80, progressEnd: 95, visible: true, speechBubble: "Great deals!", position: "right" },
+  { sceneId: 6, progressStart: 5, progressEnd: 25, visible: true, speechBubble: "Check these out!", position: "left", imageType: "closeUp" },
+  { sceneId: 6, progressStart: 30, progressEnd: 50, visible: true, position: "right", imageType: "fullBody" },
+  { sceneId: 6, progressStart: 55, progressEnd: 75, visible: true, position: "left", imageType: "closeUp" },
+  { sceneId: 6, progressStart: 80, progressEnd: 95, visible: true, speechBubble: "Great deals!", position: "right", imageType: "fullBody" },
   
-  { sceneId: 8, progressStart: 20, progressEnd: 100, visible: true, speechBubble: "Let's go!", position: "right" },
+  { sceneId: 8, progressStart: 20, progressEnd: 100, visible: true, speechBubble: "Let's go!", position: "right", imageType: "closeUp" },
 ];
 
 function SpeechBubble({ text, position }: { text: string; position: "left" | "right" }) {
@@ -62,6 +64,8 @@ export default function BitForceBuddy({ currentScene, sceneProgress, isPlaying }
 
   const isVisible = currentAction?.visible ?? false;
   const position = currentAction?.position ?? "right";
+  const imageType = currentAction?.imageType ?? "fullBody";
+  const buddyImage = imageType === "closeUp" ? buddyCloseUp : buddyFullBody;
 
   return (
     <AnimatePresence>
