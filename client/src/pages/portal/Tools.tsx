@@ -161,11 +161,13 @@ export default function Tools() {
   return (
     <div className="space-y-6" data-testid="page-tools">
       <div>
-        <h1 className="text-2xl font-bold" data-testid="text-page-title">Property Intelligence Tools</h1>
+        <h1 className="text-2xl font-bold" data-testid="text-page-title">Ambassador Tools</h1>
         <p className="text-muted-foreground">
-          Access real-time property data, weather alerts, and neighborhood insights to better serve your leads
+          AI assistance, property data, weather alerts, and neighborhood insights to help you serve your leads
         </p>
       </div>
+
+      <AskAI />
 
       <Card>
         <CardHeader>
@@ -224,8 +226,6 @@ export default function Tools() {
           )}
         </CardContent>
       </Card>
-
-      <AskAI />
 
       {reportMutation.isPending && (
         <Card>
