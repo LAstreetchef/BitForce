@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 
-import BitForceBuddy from "@/components/BitForceBuddy";
 import toolAiAssistant from "@assets/Screenshot_2026-01-09_153919_1767991243060.png";
 import toolSecurityCheck from "@assets/Screenshot_2026-01-09_153928_1767991243060.png";
 import toolFriendFinder from "@assets/Screenshot_2026-01-09_153937_1767991243059.png";
@@ -680,12 +679,6 @@ export default function ExplainerVideo() {
       {currentScene === 4 && <SceneProducts progress={sceneProgress} />}
       {currentScene === 5 && <Scene4 progress={sceneProgress} />}
       {currentScene === 6 && <Scene5 progress={sceneProgress} />}
-
-      <BitForceBuddy 
-        currentScene={currentScene} 
-        sceneProgress={sceneProgress} 
-        isPlaying={isPlaying} 
-      />
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-3">
