@@ -3,6 +3,7 @@ import bitforceLogo from "@assets/Bitforce_1767872339442.jpg";
 import { services } from "@/data/services";
 import { ServiceCard } from "@/components/ServiceCard";
 import { HowItWorksModal } from "@/components/HowItWorksModal";
+import { TestimonialBanner } from "@/components/TestimonialBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { 
   Loader2, 
@@ -157,6 +158,8 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <TestimonialBanner />
 
       <HowItWorksModal
         open={showHowItWorksModal}
