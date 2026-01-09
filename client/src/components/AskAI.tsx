@@ -79,12 +79,12 @@ export function AskAI() {
   };
 
   return (
-    <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20" data-testid="card-ask-ai">
+    <Card className="border-blue-300 dark:border-blue-700 bg-blue-100 dark:bg-blue-950/50" data-testid="card-ask-ai">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
-              <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-blue-200 dark:bg-blue-800">
+              <Sparkles className="w-5 h-5 text-blue-700 dark:text-blue-300" />
             </div>
             <div>
               <CardTitle className="text-lg">Ask AI Assistant</CardTitle>
