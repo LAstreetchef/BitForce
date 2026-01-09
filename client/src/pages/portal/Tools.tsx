@@ -186,11 +186,11 @@ export default function Tools() {
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  Digital Footprint Scanner
-                  <Badge variant="secondary">Ambassador Tool</Badge>
+                  Security Risk Check
+                  <Badge variant="secondary">Conversation Starter</Badge>
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Help customers check if their email has been exposed in data breaches
+                  Free 2-Minute Digital Safety Review
                 </CardDescription>
               </div>
             </div>
@@ -200,37 +200,37 @@ export default function Tools() {
               data-testid="button-launch-scanner"
             >
               <Scan className="w-4 h-4" />
-              Launch Scanner
+              Start Check
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <Search className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Breach Detection</p>
-                <p className="text-xs text-muted-foreground">Scan emails against known data breaches</p>
+                <p className="font-medium text-sm">Email Exposure Scan</p>
+                <p className="text-xs text-muted-foreground">Check if email appears in data breaches</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <Shield className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Password Checker</p>
-                <p className="text-xs text-muted-foreground">Check if passwords have been compromised</p>
+                <p className="font-medium text-sm">Password Safety Check</p>
+                <p className="text-xs text-muted-foreground">See if passwords have been compromised</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <TrendingUp className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Security Recommendations</p>
-                <p className="text-xs text-muted-foreground">Get actionable tips to improve security</p>
+                <p className="font-medium text-sm">Personal Security Score</p>
+                <p className="text-xs text-muted-foreground">Get actionable steps to improve protection</p>
               </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">
-            Use this tool during customer conversations to demonstrate value and build trust. 
-            Great for identifying customers who may benefit from our security services.
+            Perfect for identifying security needs during customer conversations. 
+            Ask: "Can I show you a quick security risk check?"
           </p>
         </CardContent>
       </Card>
