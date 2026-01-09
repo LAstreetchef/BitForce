@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { Modality } from "@google/genai";
 import { ai } from "./client";
+import { generateExteriorVisualization, fetchImageAsBase64 } from "../../services/replicate";
 
 const DESIGN_STYLES = {
   modern: "modern minimalist design with clean lines, neutral colors, and contemporary furniture",
@@ -211,7 +212,7 @@ export function registerImageRoutes(app: Express): void {
     });
   });
 
-  // Home Exterior Before/After Visualization endpoint
+  // Home Exterior Before/After Visualization endpoint (using Replicate Flux Fill Pro)
   app.post("/api/generate-exterior-visualization", async (req: Request, res: Response) => {
     try {
       const { 
@@ -263,45 +264,27 @@ export function registerImageRoutes(app: Express): void {
       const imageData = matches[2];
 
       const changesDescription = changes.join(", ");
-      const prompt = `Transform this home exterior photo to show the following improvements: ${changesDescription}. 
-      
-Keep the same house structure, angle, perspective, and surroundings. Only modify the specified elements (roof, driveway, siding, paint) while maintaining photorealism. 
-${additionalDetails ? `Additional details: ${additionalDetails}` : ""}
-The result should look like a professional "after" photo from a home renovation project, showing what the house would look like with these upgrades installed.`;
+      const prompt = `Transform this exact home exterior photo to show the following improvements while preserving the original house structure, architecture, landscaping, and camera angle: ${changesDescription}. 
 
-      console.log("[Exterior Visualization] Generating transformation:", { 
+Keep all unchanged elements exactly as they appear in the original photo. Only modify the specified features (roof, driveway, siding, or paint). The result should look like a professional before/after renovation photo where the same house is shown with upgrades. Maintain photorealism, consistent lighting, and the exact same perspective. ${additionalDetails || ""}`;
+
+      console.log("[Exterior Visualization] Generating transformation with Replicate:", { 
         roofing, driveway, siding, paintColor, 
         changesDescription 
       });
 
-      const parts = [
-        {
-          inlineData: {
-            mimeType: imageMimeType,
-            data: imageData,
-          },
-        },
-        { text: prompt },
-      ];
+      // Use Replicate Flux Fill Pro for image transformation
+      const { imageUrl } = await generateExteriorVisualization(
+        imageData,
+        imageMimeType,
+        prompt
+      );
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-image",
-        contents: [{ role: "user", parts }],
-        config: {
-          responseModalities: [Modality.TEXT, Modality.IMAGE],
-        },
-      });
+      // Fetch the generated image and convert to base64
+      const { base64, mimeType } = await fetchImageAsBase64(imageUrl);
 
-      const candidate = response.candidates?.[0];
-      const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
-
-      if (!imagePart?.inlineData?.data) {
-        return res.status(500).json({ error: "Failed to generate visualization. Please try again." });
-      }
-
-      const mimeType = imagePart.inlineData.mimeType || "image/png";
       res.json({
-        b64_json: imagePart.inlineData.data,
+        b64_json: base64,
         mimeType,
         appliedChanges: {
           roofing: roofing || null,
