@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { Modality } from "@google/genai";
 import { ai } from "./client";
-import { generateExteriorVisualization, fetchImageAsBase64 } from "../../services/replicate";
 
 const DESIGN_STYLES = {
   modern: "modern minimalist design with clean lines, neutral colors, and contemporary furniture",
@@ -23,57 +22,6 @@ const ROOM_TYPES = {
   basement: "a finished basement living area",
   exterior: "an impressive home exterior",
   backyard: "a landscaped backyard oasis",
-};
-
-const ROOFING_OPTIONS = {
-  "asphalt-black": "modern black asphalt shingles",
-  "asphalt-charcoal": "elegant charcoal gray asphalt shingles",
-  "asphalt-brown": "warm brown asphalt shingles",
-  "asphalt-red": "distinctive red-toned asphalt shingles",
-  "metal-standing-seam": "sleek standing seam metal roofing",
-  "metal-silver": "contemporary silver metal roofing",
-  "clay-terracotta": "classic terracotta clay tiles",
-  "slate-gray": "premium gray slate tiles",
-};
-
-const DRIVEWAY_OPTIONS = {
-  "concrete-plain": "smooth poured concrete driveway",
-  "concrete-stamped": "decorative stamped concrete driveway",
-  "asphalt": "fresh black asphalt driveway",
-  "pavers-brick": "elegant brick paver driveway",
-  "pavers-stone": "natural stone paver driveway",
-  "gravel": "crushed gravel driveway",
-  "cobblestone": "classic cobblestone driveway",
-};
-
-const SIDING_OPTIONS = {
-  "vinyl-white": "clean white vinyl siding",
-  "vinyl-gray": "modern gray vinyl siding",
-  "vinyl-blue": "coastal blue vinyl siding",
-  "vinyl-beige": "warm beige vinyl siding",
-  "wood-natural": "natural wood siding",
-  "wood-painted": "painted wood siding",
-  "fiber-cement": "durable fiber cement siding",
-  "stone-veneer": "elegant stone veneer facade",
-  "brick": "classic red brick exterior",
-  "stucco-white": "smooth white stucco finish",
-  "stucco-tan": "warm tan stucco finish",
-};
-
-const PAINT_OPTIONS = {
-  "white": "crisp white",
-  "off-white": "warm off-white",
-  "gray-light": "light gray",
-  "gray-dark": "charcoal gray",
-  "blue-navy": "classic navy blue",
-  "blue-coastal": "soft coastal blue",
-  "green-sage": "earthy sage green",
-  "green-hunter": "deep hunter green",
-  "beige": "warm beige",
-  "tan": "golden tan",
-  "brown": "rich brown",
-  "red-barn": "traditional barn red",
-  "yellow-soft": "soft butter yellow",
 };
 
 export function registerImageRoutes(app: Express): void {
@@ -188,115 +136,6 @@ export function registerImageRoutes(app: Express): void {
       styles: Object.keys(DESIGN_STYLES),
       roomTypes: Object.keys(ROOM_TYPES),
     });
-  });
-
-  // Get available exterior options for the visualizer
-  app.get("/api/exterior-options", (req: Request, res: Response) => {
-    res.json({
-      roofing: Object.keys(ROOFING_OPTIONS).map(key => ({
-        value: key,
-        label: key.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-      })),
-      driveway: Object.keys(DRIVEWAY_OPTIONS).map(key => ({
-        value: key,
-        label: key.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-      })),
-      siding: Object.keys(SIDING_OPTIONS).map(key => ({
-        value: key,
-        label: key.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-      })),
-      paint: Object.keys(PAINT_OPTIONS).map(key => ({
-        value: key,
-        label: key.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-      })),
-    });
-  });
-
-  // Home Exterior Before/After Visualization endpoint (using Replicate Flux Fill Pro)
-  app.post("/api/generate-exterior-visualization", async (req: Request, res: Response) => {
-    try {
-      const { 
-        sourceImage, 
-        roofing, 
-        driveway, 
-        siding, 
-        paintColor,
-        additionalDetails 
-      } = req.body;
-
-      if (!sourceImage) {
-        return res.status(400).json({ error: "A photo of the home exterior is required" });
-      }
-
-      // Build the transformation description
-      const changes: string[] = [];
-      
-      if (roofing) {
-        const roofDesc = ROOFING_OPTIONS[roofing as keyof typeof ROOFING_OPTIONS] || roofing;
-        changes.push(`new ${roofDesc}`);
-      }
-      
-      if (driveway) {
-        const drivewayDesc = DRIVEWAY_OPTIONS[driveway as keyof typeof DRIVEWAY_OPTIONS] || driveway;
-        changes.push(`a ${drivewayDesc}`);
-      }
-      
-      if (siding) {
-        const sidingDesc = SIDING_OPTIONS[siding as keyof typeof SIDING_OPTIONS] || siding;
-        changes.push(`${sidingDesc}`);
-      }
-      
-      if (paintColor) {
-        const paintDesc = PAINT_OPTIONS[paintColor as keyof typeof PAINT_OPTIONS] || paintColor;
-        changes.push(`${paintDesc} exterior paint`);
-      }
-
-      if (changes.length === 0) {
-        return res.status(400).json({ error: "At least one improvement option must be selected" });
-      }
-
-      // Extract base64 data and mime type from data URL
-      const matches = sourceImage.match(/^data:(.+);base64,(.+)$/);
-      if (!matches) {
-        return res.status(400).json({ error: "Invalid image format. Please upload a valid image." });
-      }
-      const imageMimeType = matches[1];
-      const imageData = matches[2];
-
-      const changesDescription = changes.join(", ");
-      const prompt = `Transform this exact home exterior photo to show the following improvements while preserving the original house structure, architecture, landscaping, and camera angle: ${changesDescription}. 
-
-Keep all unchanged elements exactly as they appear in the original photo. Only modify the specified features (roof, driveway, siding, or paint). The result should look like a professional before/after renovation photo where the same house is shown with upgrades. Maintain photorealism, consistent lighting, and the exact same perspective. ${additionalDetails || ""}`;
-
-      console.log("[Exterior Visualization] Generating transformation with Replicate:", { 
-        roofing, driveway, siding, paintColor, 
-        changesDescription 
-      });
-
-      // Use Replicate Flux Fill Pro for image transformation
-      const { imageUrl } = await generateExteriorVisualization(
-        imageData,
-        imageMimeType,
-        prompt
-      );
-
-      // Fetch the generated image and convert to base64
-      const { base64, mimeType } = await fetchImageAsBase64(imageUrl);
-
-      res.json({
-        b64_json: base64,
-        mimeType,
-        appliedChanges: {
-          roofing: roofing || null,
-          driveway: driveway || null,
-          siding: siding || null,
-          paintColor: paintColor || null,
-        },
-      });
-    } catch (error) {
-      console.error("Error generating exterior visualization:", error);
-      res.status(500).json({ error: "Failed to generate exterior visualization. Please try again." });
-    }
   });
 }
 
