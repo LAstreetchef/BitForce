@@ -10,8 +10,16 @@ import {
   Wrench, 
   Award, 
   Zap,
-  Heart
+  Heart,
+  Bitcoin
 } from "lucide-react";
+
+export interface ChartData {
+  type: "bar" | "comparison" | "risk-scale" | "timeline" | "pie";
+  title: string;
+  data: { label: string; value: number; color?: string }[];
+  description?: string;
+}
 
 export interface Lesson {
   id: string;
@@ -20,6 +28,13 @@ export interface Lesson {
   content: string;
   keyPoints: string[];
   proTip?: string;
+  charts?: ChartData[];
+  commonSenseExample?: {
+    scenario: string;
+    badChoice: string;
+    goodChoice: string;
+    lesson: string;
+  };
 }
 
 export interface TrainingModule {
@@ -28,7 +43,7 @@ export interface TrainingModule {
   tagline: string;
   description: string;
   duration: string;
-  category: "Onboarding" | "Products" | "Skills" | "Tools" | "Leadership" | "Compliance";
+  category: "Onboarding" | "Products" | "Skills" | "Tools" | "Leadership" | "Compliance" | "Special";
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   icon: any;
   color: string;
@@ -40,6 +55,9 @@ export interface TrainingModule {
   };
   certificate: boolean;
   funFact?: string;
+  isSpecial?: boolean;
+  specialBadge?: string;
+  expiresAt?: string;
 }
 
 export const trainingModules: TrainingModule[] = [
@@ -972,11 +990,368 @@ export const trainingModules: TrainingModule[] = [
     quiz: { questions: 8, passingScore: 100 },
     certificate: true,
     funFact: "Ambassadors who score highest in 'service mindset' have the highest customer satisfaction AND income!"
+  },
+  {
+    id: 13,
+    title: "AI & Crypto: Common Sense Guide",
+    tagline: "Navigate the hype with your head on straight",
+    description: "Everyone's talking about AI and cryptocurrency – but few understand the real risks and opportunities. This special module cuts through the noise with practical wisdom, real data, and common-sense strategies that could save you thousands (or help you earn them).",
+    duration: "65 min",
+    category: "Special",
+    difficulty: "Intermediate",
+    icon: Bitcoin,
+    color: "bg-gradient-to-br from-amber-500 via-orange-500 to-red-500",
+    isSpecial: true,
+    specialBadge: "LIMITED TIME",
+    expiresAt: "2026-03-31",
+    objectives: [
+      "Understand cryptocurrency basics without the confusing jargon",
+      "Use AI tools to research investments smarter",
+      "Spot scams before they spot your wallet",
+      "Apply the 'Would I do this with cash?' test to every decision",
+      "Build a sensible approach that won't keep you up at night"
+    ],
+    lessons: [
+      {
+        id: "13-1",
+        title: "Crypto 101: What It Actually Is",
+        duration: "10 min",
+        content: "Before we talk about making (or losing) money, let's actually understand what cryptocurrency is. Spoiler: it's not magic internet money, and it's not a guaranteed path to riches. It's a technology with real uses – and real risks.",
+        keyPoints: [
+          "Cryptocurrency = digital money secured by cryptography (math puzzles)",
+          "Bitcoin was the first (2009), now there are 20,000+ different ones",
+          "Blockchain = a public ledger that records every transaction",
+          "Decentralized = no single company or government controls it",
+          "Only about 4% of Americans own any crypto – it's not as mainstream as TikTok makes it seem"
+        ],
+        charts: [
+          {
+            type: "pie",
+            title: "What Americans Actually Own",
+            data: [
+              { label: "No crypto at all", value: 84, color: "#94a3b8" },
+              { label: "Less than $1,000", value: 8, color: "#fbbf24" },
+              { label: "$1,000 - $10,000", value: 5, color: "#f97316" },
+              { label: "$10,000+", value: 3, color: "#ef4444" }
+            ],
+            description: "Despite the hype, most people have zero crypto exposure"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "Your coworker says 'I'm putting my whole savings into crypto because my cousin made $50,000 last year.'",
+          badChoice: "Thinking 'I don't want to miss out!' and doing the same thing",
+          goodChoice: "Asking 'What did your cousin's investments look like the year before? What are the actual odds?'",
+          lesson: "Survivorship bias – you only hear about the winners. The cousin's friend who lost $50,000 isn't bragging about it."
+        },
+        proTip: "Think of crypto like a very volatile stock, not like a savings account. Would you put your emergency fund in Tesla stock? Then don't put it in Bitcoin either."
+      },
+      {
+        id: "13-2",
+        title: "The Volatility Reality Check",
+        duration: "8 min",
+        content: "Here's the thing nobody shows you on those 'I got rich' videos: the wild, stomach-churning swings that come with crypto. Let's look at real numbers so you know exactly what you're signing up for.",
+        keyPoints: [
+          "Bitcoin dropped 80% in 2022 – imagine $10,000 becoming $2,000",
+          "It's recovered before, but there's no guarantee it will again",
+          "Smaller coins ('altcoins') are even MORE volatile",
+          "Many people panic-sell at the bottom, locking in losses",
+          "The S&P 500's worst year was -38% (2008) – crypto does that in weeks"
+        ],
+        charts: [
+          {
+            type: "bar",
+            title: "Maximum Drawdowns (Worst Drops)",
+            data: [
+              { label: "Bitcoin (2022)", value: 77, color: "#ef4444" },
+              { label: "Ethereum (2022)", value: 82, color: "#f97316" },
+              { label: "S&P 500 (2008)", value: 38, color: "#22c55e" },
+              { label: "Gold (2013)", value: 28, color: "#eab308" },
+              { label: "Bonds (2022)", value: 13, color: "#3b82f6" }
+            ],
+            description: "Crypto crashes are in a league of their own"
+          },
+          {
+            type: "timeline",
+            title: "Your $10,000 Investment Journey",
+            data: [
+              { label: "Jan 2021 (Start)", value: 10000, color: "#3b82f6" },
+              { label: "Nov 2021 (Peak)", value: 21000, color: "#22c55e" },
+              { label: "Nov 2022 (Bottom)", value: 2600, color: "#ef4444" },
+              { label: "Dec 2024 (Now)", value: 15000, color: "#8b5cf6" }
+            ],
+            description: "Could you have held through a 75% drop without panic selling?"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "Bitcoin drops 30% in one week. Your $5,000 is now worth $3,500.",
+          badChoice: "Checking prices every hour, losing sleep, and finally selling at the bottom",
+          goodChoice: "Having invested only money you could afford to lose, and sticking to your plan (hold or cut losses based on pre-set rules)",
+          lesson: "The best time to decide your strategy is BEFORE you invest, not when you're panicking at 2 AM."
+        },
+        proTip: "Write down your plan BEFORE you buy: 'I will sell if it drops X%' or 'I will hold for 5 years no matter what.' Emotional decisions destroy portfolios."
+      },
+      {
+        id: "13-3",
+        title: "The Scam Epidemic: Protecting Yourself",
+        duration: "12 min",
+        content: "Here's an uncomfortable truth: crypto is a scammer's paradise. No chargebacks, hard to trace, and full of newcomers who don't know the warning signs. Let's make sure you're not one of them.",
+        keyPoints: [
+          "Americans lost $5.6 BILLION to crypto scams in 2023 alone",
+          "Romance scams ('pig butchering') are the #1 method – they build trust for months",
+          "Fake celebrity endorsements are everywhere (Elon Musk doesn't want to give you Bitcoin)",
+          "If someone 'guarantees' returns, it's 100% a scam – there are no guarantees",
+          "Once you send crypto, it's GONE – there's no bank to call, no fraud protection"
+        ],
+        charts: [
+          {
+            type: "bar",
+            title: "Crypto Scam Types (2023 Losses)",
+            data: [
+              { label: "Romance/Pig Butchering", value: 45, color: "#ef4444" },
+              { label: "Fake Investment Platforms", value: 25, color: "#f97316" },
+              { label: "Pump & Dump Schemes", value: 15, color: "#eab308" },
+              { label: "Fake Giveaways", value: 10, color: "#a855f7" },
+              { label: "Other", value: 5, color: "#6b7280" }
+            ],
+            description: "Nearly half of all crypto scams start with a 'relationship'"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "An attractive person on Instagram DMs you. After weeks of chatting, they mention they've made great money on a 'special' crypto platform and offer to teach you.",
+          badChoice: "Feeling flattered, trusting them because you've 'connected,' and sending money to their platform",
+          goodChoice: "Recognizing the classic pattern: attractive stranger + crypto opportunity = scam. Blocking and reporting immediately.",
+          lesson: "Real investment advisors don't slide into your DMs. Real romantic interests don't ask for your money."
+        },
+        proTip: "Red flag checklist: 1) Guaranteed high returns 2) Pressure to act NOW 3) You can't withdraw your 'profits' 4) They get defensive when you ask questions 5) The website/app is new or unverifiable."
+      },
+      {
+        id: "13-4",
+        title: "Using AI to Research (Not Gamble)",
+        duration: "10 min",
+        content: "Here's where AI actually becomes useful: as a research assistant, not a fortune-teller. AI can help you understand, analyze, and make informed decisions – but it cannot predict the future (and neither can anyone else).",
+        keyPoints: [
+          "Use ChatGPT/Claude to explain confusing crypto concepts in plain English",
+          "AI can summarize whitepapers and tokenomics documents",
+          "Never trust AI 'price predictions' – they're just pattern matching, not prophecy",
+          "AI can help you research the team behind a project (are they real? credible?)",
+          "Use AI to generate a pros/cons analysis, then verify the facts yourself"
+        ],
+        charts: [
+          {
+            type: "comparison",
+            title: "Good vs. Bad AI Uses for Crypto",
+            data: [
+              { label: "Explain blockchain concepts", value: 95, color: "#22c55e" },
+              { label: "Summarize project documentation", value: 90, color: "#22c55e" },
+              { label: "Research team backgrounds", value: 85, color: "#22c55e" },
+              { label: "Compare exchanges/wallets", value: 80, color: "#22c55e" },
+              { label: "Predict prices", value: 5, color: "#ef4444" },
+              { label: "Tell you what to buy", value: 10, color: "#ef4444" }
+            ],
+            description: "AI is great for education, terrible for fortune-telling"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "You find a new coin called 'MoonRocket' and want to know if it's legit.",
+          badChoice: "Asking ChatGPT 'Will MoonRocket go up?' and investing based on the answer",
+          goodChoice: "Asking AI: 'Summarize the MoonRocket whitepaper, who founded it, what problem does it solve, and what are the red flags?' Then verifying those facts yourself.",
+          lesson: "AI is a research assistant, not a financial advisor. It helps you gather information – YOU make the decision."
+        },
+        proTip: "Prompt that works: 'Explain [crypto project] like I'm a skeptical investor. What are the biggest risks? What would make this fail? Don't sugarcoat it.'"
+      },
+      {
+        id: "13-5",
+        title: "The 'Cash in a Briefcase' Test",
+        duration: "8 min",
+        content: "Here's the most powerful mental model for crypto decisions: Would you do this with physical cash? If you wouldn't hand a stranger $5,000 in a briefcase, don't send them $5,000 in Bitcoin.",
+        keyPoints: [
+          "Test 1: Would you give cash to someone you met online but never in person?",
+          "Test 2: Would you put your rent money in a slot machine?",
+          "Test 3: Would you trust a stranger at a bar with your 'guaranteed' investment opportunity?",
+          "Test 4: Would you invest in a company with no verifiable employees or office?",
+          "If the answer is 'NO' with cash, the answer is 'NO' with crypto"
+        ],
+        charts: [
+          {
+            type: "comparison",
+            title: "The Briefcase Test",
+            data: [
+              { label: "Sending money to verified exchange", value: 85, color: "#22c55e" },
+              { label: "Buying Bitcoin on Coinbase", value: 80, color: "#22c55e" },
+              { label: "Sending to 'friend' you met online", value: 5, color: "#ef4444" },
+              { label: "New coin 'guaranteed' to 10x", value: 2, color: "#ef4444" },
+              { label: "Platform you can't find reviews for", value: 8, color: "#ef4444" }
+            ],
+            description: "Would you hand physical cash to each of these?"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "A Telegram group admin says you can 10x your money by sending ETH to a 'presale' wallet address.",
+          badChoice: "Getting caught up in the excitement and sending money because others in the group claim they did",
+          goodChoice: "Imagining yourself handing $5,000 cash to a stranger on the street because people around you said it was a good idea. You'd NEVER do that.",
+          lesson: "The digital nature of crypto makes us forget we're dealing with real money. The briefcase test brings that reality back."
+        },
+        proTip: "Before any crypto transaction, pause and literally visualize handing that amount in cash to whoever/wherever you're sending it. Does it still feel right?"
+      },
+      {
+        id: "13-6",
+        title: "The Sensible Allocation Strategy",
+        duration: "8 min",
+        content: "If you still want to explore crypto after everything we've covered (and that's okay!), let's talk about doing it responsibly. The goal: participate in potential upside without risking your financial stability.",
+        keyPoints: [
+          "The 5% Rule: Never put more than 5% of your investable assets in crypto",
+          "The Sleep Test: If you can't sleep thinking about your crypto, you own too much",
+          "Never invest money you need within 5 years (house down payment, emergency fund)",
+          "Dollar-cost averaging: buy small amounts regularly instead of one big purchase",
+          "Have an exit strategy BEFORE you buy"
+        ],
+        charts: [
+          {
+            type: "pie",
+            title: "A Sensible Portfolio Example",
+            data: [
+              { label: "Retirement funds (401k/IRA)", value: 50, color: "#3b82f6" },
+              { label: "Emergency savings", value: 15, color: "#22c55e" },
+              { label: "Traditional investments", value: 25, color: "#8b5cf6" },
+              { label: "Crypto (high risk)", value: 5, color: "#f97316" },
+              { label: "Other", value: 5, color: "#6b7280" }
+            ],
+            description: "Even if crypto goes to zero, this person's life isn't ruined"
+          },
+          {
+            type: "risk-scale",
+            title: "Risk Levels by Investment Type",
+            data: [
+              { label: "Savings Account", value: 10, color: "#22c55e" },
+              { label: "Government Bonds", value: 20, color: "#84cc16" },
+              { label: "S&P 500 Index", value: 40, color: "#eab308" },
+              { label: "Individual Stocks", value: 60, color: "#f97316" },
+              { label: "Bitcoin", value: 80, color: "#ef4444" },
+              { label: "Altcoins", value: 95, color: "#dc2626" }
+            ],
+            description: "Higher risk should mean smaller allocation"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "You have $20,000 in savings and hear Bitcoin might go up 50% this year.",
+          badChoice: "Moving $15,000 into Bitcoin to 'maximize gains'",
+          goodChoice: "Investing $1,000 (5%) into Bitcoin. If it doubles, great – you made $1,000. If it crashes 80%, you lost $800 – painful but survivable.",
+          lesson: "Asymmetric thinking: Protect your downside first. The goal is to stay in the game."
+        },
+        proTip: "Ask yourself: 'If this went to zero tomorrow, would I be okay?' If the answer is no, you're overexposed."
+      },
+      {
+        id: "13-7",
+        title: "When Crypto Actually Makes Sense",
+        duration: "7 min",
+        content: "Let's be balanced: crypto isn't ALL scams and speculation. There are legitimate use cases where it actually solves real problems. Understanding these helps you separate signal from noise.",
+        keyPoints: [
+          "International remittances: Sending money abroad cheaply and quickly",
+          "Inflation hedge in unstable economies (Argentina, Venezuela, etc.)",
+          "Censorship-resistant donations (supporting causes governments oppose)",
+          "NFTs for digital ownership (art, tickets, credentials – not just monkey pictures)",
+          "Business use: blockchain for supply chain verification, smart contracts"
+        ],
+        charts: [
+          {
+            type: "bar",
+            title: "Legitimate Crypto Use Cases",
+            data: [
+              { label: "Cross-border payments", value: 85, color: "#22c55e" },
+              { label: "Inflation protection (emerging markets)", value: 75, color: "#22c55e" },
+              { label: "Smart contracts", value: 70, color: "#22c55e" },
+              { label: "Supply chain tracking", value: 65, color: "#22c55e" },
+              { label: "Get-rich-quick scheme", value: 5, color: "#ef4444" }
+            ],
+            description: "The best crypto uses solve real problems"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "Your friend has family in the Philippines and currently pays $50 in fees to wire $500 home.",
+          badChoice: "Telling them to speculate on random altcoins",
+          goodChoice: "Showing them how stablecoins (like USDC) can transfer value internationally for under $1 in fees – a genuine, practical use case.",
+          lesson: "Crypto is most valuable when it solves a real problem, not when it promises unrealistic returns."
+        },
+        proTip: "The best crypto investments aren't 'moonshots' – they're projects solving genuine problems that will exist regardless of market hype."
+      },
+      {
+        id: "13-8",
+        title: "Taxes & Legal: The Boring But Crucial Stuff",
+        duration: "6 min",
+        content: "Here's what the influencers don't tell you: crypto is taxed, tracked, and the IRS absolutely WILL find out. Ignoring this part can turn profits into disasters.",
+        keyPoints: [
+          "Every crypto sale is a taxable event – even trading one crypto for another",
+          "Short-term gains (held < 1 year) are taxed as regular income (up to 37%)",
+          "Long-term gains (held > 1 year) get lower rates (15-20%)",
+          "The IRS can and does subpoena exchange records",
+          "Keep records of EVERY transaction – dates, amounts, prices"
+        ],
+        charts: [
+          {
+            type: "bar",
+            title: "Tax on $10,000 Crypto Profit",
+            data: [
+              { label: "Short-term (high income)", value: 3700, color: "#ef4444" },
+              { label: "Short-term (median income)", value: 2200, color: "#f97316" },
+              { label: "Long-term (any income)", value: 1500, color: "#22c55e" }
+            ],
+            description: "Holding longer = significantly lower taxes"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "You made $20,000 trading crypto last year and spent it all on a car. Tax season comes.",
+          badChoice: "Hoping the IRS doesn't notice and not reporting it",
+          goodChoice: "Setting aside 25-30% of all crypto profits immediately for taxes, using proper tracking software, and filing correctly.",
+          lesson: "Crypto isn't a tax loophole. Exchanges report to the IRS. Get a good accountant if your gains are significant."
+        },
+        proTip: "Use Koinly, CoinTracker, or similar software to automatically track transactions. Your future self (and your accountant) will thank you."
+      },
+      {
+        id: "13-9",
+        title: "The Final Checklist: Before You Invest",
+        duration: "6 min",
+        content: "Let's bring it all together. Before you put a single dollar into crypto, run through this checklist. Print it out. Stick it on your monitor. It could save you thousands.",
+        keyPoints: [
+          "Can I afford to lose 100% of this money?",
+          "Have I done at least 5 hours of research on this specific investment?",
+          "Do I understand what I'm buying (not just 'number go up')?",
+          "Am I buying because of research or because of FOMO?",
+          "Do I have a written plan for when to sell?"
+        ],
+        charts: [
+          {
+            type: "comparison",
+            title: "Pre-Investment Checklist Score",
+            data: [
+              { label: "Emergency fund complete", value: 20, color: "#22c55e" },
+              { label: "Retirement contributions on track", value: 20, color: "#22c55e" },
+              { label: "No high-interest debt", value: 20, color: "#22c55e" },
+              { label: "Done thorough research", value: 20, color: "#22c55e" },
+              { label: "Have written exit strategy", value: 20, color: "#22c55e" }
+            ],
+            description: "Score 80+ before investing in ANY crypto"
+          }
+        ],
+        commonSenseExample: {
+          scenario: "Bitcoin just dropped 25% and everyone online says 'buy the dip!'",
+          badChoice: "Panic buying without checking your checklist because you don't want to 'miss out'",
+          goodChoice: "Pausing, reviewing your checklist, and only buying if you pass ALL criteria – regardless of what the crowd says.",
+          lesson: "Good investors are boring. They follow their plan, ignore the noise, and never act on impulse."
+        },
+        proTip: "Bookmark this module and revisit the checklist every time before making a crypto decision. Future you will be grateful."
+      }
+    ],
+    quiz: { questions: 25, passingScore: 85 },
+    certificate: true,
+    funFact: "People who take time to research before investing have 8x fewer losses than those who invest based on tips from friends or social media!"
   }
 ];
 
 export const getModulesByCategory = (category: string) => 
   trainingModules.filter(m => m.category === category);
+
+export const getSpecialModules = () => 
+  trainingModules.filter(m => m.isSpecial);
 
 export const getTotalDuration = () => {
   let minutes = 0;
@@ -994,4 +1369,5 @@ export const categories = [
   { name: "Tools", description: "Master your portal" },
   { name: "Leadership", description: "Build your team" },
   { name: "Compliance", description: "Stay safe and ethical" },
+  { name: "Special", description: "Limited-time exclusive content" },
 ];

@@ -24,8 +24,97 @@ import {
   ArrowRight,
   Trophy,
   Lock,
+  BarChart3,
+  ThumbsUp,
+  ThumbsDown,
+  Brain,
+  Flame,
+  AlertTriangle,
 } from "lucide-react";
-import type { TrainingModule, Lesson } from "@/data/trainingModules";
+import type { TrainingModule, Lesson, ChartData } from "@/data/trainingModules";
+
+function SimpleChart({ chart }: { chart: ChartData }) {
+  const maxValue = Math.max(...chart.data.filter(d => d.value > 0).map(d => d.value), 1);
+  const isPercentage = chart.type === "pie" || chart.type === "risk-scale";
+  const isTimeline = chart.type === "timeline";
+  const formatValue = (val: number) => {
+    if (isPercentage) return `${val}%`;
+    if (isTimeline) return `$${val.toLocaleString()}`;
+    return val.toString();
+  };
+  
+  return (
+    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border">
+      <h5 className="font-medium text-sm mb-3 flex items-center gap-2">
+        <BarChart3 className="w-4 h-4 text-blue-500" />
+        {chart.title}
+      </h5>
+      <div className="space-y-2">
+        {chart.data.map((item, i) => {
+          const widthPercent = Math.max(0, Math.min(100, (item.value / maxValue) * 100));
+          return (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className="font-medium">{formatValue(item.value)}</span>
+              </div>
+              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all"
+                  style={{ 
+                    width: `${widthPercent}%`,
+                    backgroundColor: item.color || "#3b82f6"
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {chart.description && (
+        <p className="text-xs text-muted-foreground mt-3 italic">{chart.description}</p>
+      )}
+    </div>
+  );
+}
+
+function CommonSenseBox({ example }: { example: { scenario: string; badChoice: string; goodChoice: string; lesson: string } }) {
+  return (
+    <div className="rounded-lg border border-blue-200 dark:border-blue-800 overflow-hidden">
+      <div className="bg-blue-50 dark:bg-blue-950/30 p-3 border-b border-blue-200 dark:border-blue-800">
+        <h5 className="font-medium text-sm flex items-center gap-2 text-blue-800 dark:text-blue-300">
+          <Brain className="w-4 h-4" />
+          Common Sense Check
+        </h5>
+        <p className="text-sm mt-1 text-blue-700 dark:text-blue-400">{example.scenario}</p>
+      </div>
+      <div className="p-3 space-y-3">
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0 mt-0.5">
+            <ThumbsDown className="w-3 h-3 text-red-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-red-700 dark:text-red-400">Bad Choice</p>
+            <p className="text-sm text-red-600 dark:text-red-300">{example.badChoice}</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mt-0.5">
+            <ThumbsUp className="w-3 h-3 text-green-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-green-700 dark:text-green-400">Good Choice</p>
+            <p className="text-sm text-green-600 dark:text-green-300">{example.goodChoice}</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2 pt-2 border-t">
+          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-700 dark:text-amber-300"><strong>The Lesson:</strong> {example.lesson}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface TrainingModuleModalProps {
   module: TrainingModule | null;
@@ -272,6 +361,18 @@ export function TrainingModuleModal({
                               ))}
                             </ul>
                           </div>
+
+                          {lesson.charts && lesson.charts.length > 0 && (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {lesson.charts.map((chart, i) => (
+                                <SimpleChart key={i} chart={chart} />
+                              ))}
+                            </div>
+                          )}
+
+                          {lesson.commonSenseExample && (
+                            <CommonSenseBox example={lesson.commonSenseExample} />
+                          )}
 
                           {lesson.proTip && (
                             <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-lg border border-purple-200 dark:border-purple-800">

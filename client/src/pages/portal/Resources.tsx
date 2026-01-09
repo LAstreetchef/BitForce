@@ -262,6 +262,87 @@ export default function Resources() {
         </Card>
       )}
 
+      {(() => {
+        const specialModule = trainingModules.find(m => m.isSpecial);
+        if (!specialModule) return null;
+        const specialProgress = getModuleProgress(specialModule);
+        const specialStatus = getModuleStatus(specialModule);
+        const SpecialIcon = specialModule.icon;
+        
+        return (
+          <Card 
+            className="relative overflow-hidden border-2 border-amber-400 dark:border-amber-600 cursor-pointer hover:shadow-lg transition-all"
+            onClick={() => openModule(specialModule)}
+            data-testid="featured-special-module"
+          >
+            <div className="absolute top-0 right-0">
+              <div className="bg-gradient-to-r from-amber-500 to-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-bl-lg flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 animate-pulse" />
+                {specialModule.specialBadge}
+              </div>
+            </div>
+            <CardContent className="p-5">
+              <div className="flex items-start gap-5">
+                <div className={`${specialModule.color} w-16 h-16 rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                  <SpecialIcon className="w-8 h-8" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h3 className="text-lg font-bold">{specialModule.title}</h3>
+                    {specialStatus === "completed" && (
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Complete
+                      </Badge>
+                    )}
+                    {specialStatus === "in-progress" && (
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        <PlayCircle className="w-3 h-3 mr-1" />
+                        In Progress
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {specialModule.description}
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap mb-3">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {specialModule.duration}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <BookOpen className="w-3 h-3" />
+                      {specialModule.lessons.length} lessons
+                    </span>
+                    <Badge className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                      Charts & Examples
+                    </Badge>
+                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+                      <Award className="w-3 h-3 mr-1" />
+                      Certificate
+                    </Badge>
+                  </div>
+                  {specialStatus !== "not-started" ? (
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span>{specialProgress.completed}/{specialProgress.total} lessons</span>
+                        <span>{specialProgress.percent}%</span>
+                      </div>
+                      <Progress value={specialProgress.percent} className="h-2" />
+                    </div>
+                  ) : (
+                    <Button size="sm">
+                      Start Learning
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card data-testid="section-training">
@@ -323,6 +404,12 @@ export default function Resources() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
                                 <h3 className="font-semibold">{module.title}</h3>
+                                {module.isSpecial && module.specialBadge && (
+                                  <Badge className="bg-gradient-to-r from-amber-500 to-red-500 text-white border-0 text-[10px]">
+                                    <Flame className="w-2.5 h-2.5 mr-1" />
+                                    {module.specialBadge}
+                                  </Badge>
+                                )}
                                 {status === "completed" && (
                                   <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                     <CheckCircle className="w-3 h-3 mr-1" />
