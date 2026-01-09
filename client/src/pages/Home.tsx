@@ -204,7 +204,7 @@ export default function Home() {
                     Portal
                   </span>
                 </h1>
-                <p className="text-lg text-slate-300 max-w-lg leading-relaxed">
+                <p className="text-lg text-slate-300 max-w-lg leading-relaxed font-semibold">
                   Learn AI. Get Paid. Empower Your Community.
                 </p>
                 
