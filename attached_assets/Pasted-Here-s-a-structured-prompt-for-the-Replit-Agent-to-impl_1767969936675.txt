@@ -1,0 +1,88 @@
+Here's a structured prompt for the Replit Agent to implement improvements to the `/products` page:
+
+```markdown
+**Task:** Improve the `/products` page at https://bitforceambassadorportal.replit.app/products based on user feedback and best practices for conversion.
+
+**Current Issues:**
+1. Stretched/unprofessional product card layout on mobile
+2. Generic placeholder-like images
+3. Missing clear value propositions and benefits
+4. No social proof or trust elements
+5. Limited product information and use cases
+
+**Required Improvements:**
+
+**1. Layout & Design Fixes:**
+- Fix responsive design issues (stretched cards on mobile)
+- Implement clean, modern product card grid with consistent sizing
+- Add proper spacing, borders, and shadow effects for visual hierarchy
+- Ensure mobile-first responsive design
+
+**2. Product Presentation:**
+- Replace current images with high-quality, AI-generated character portraits for each buddy
+- Each product card should include:
+  * Clear product name/title
+  * Professional character image
+  * 3-4 bullet points of key benefits/features
+  * Price with currency indicator
+  * Prominent "Add to Cart" or "Learn More" button
+- Add hover effects on product cards
+
+**3. Content Improvements:**
+- Rewrite product descriptions to emphasize:
+  * What problem each AI buddy solves
+  * Specific use cases (e.g., "Practice conversations," "Mental wellness support," "Learning companion")
+  * Personality traits and specialties
+- Add character backstories (2-3 sentences each)
+- Include "best for" tags (e.g., "Best for: Students, Loneliness, Social Practice")
+
+**4. New Elements to Add:**
+- Add a testimonial section with placeholder reviews (can be simulated initially)
+- Create "Comparison Table" showing features across different buddies
+- Add FAQ section addressing:
+  * "How do AI buddies work?"
+  * "Is my data private?"
+  * "Can I customize my AI buddy?"
+- Include trust badges (Privacy Guaranteed, Secure Payment)
+
+**5. Structural Enhancements:**
+- Add filtering by buddy type (Friend, Therapist, Tutor, etc.)
+- Implement search functionality
+- Create bundle/package offers section
+- Add "Most Popular" or "Staff Pick" badges
+- Include a visible cart/checkout summary widget
+
+**6. Technical Improvements:**
+- Optimize images for fast loading
+- Ensure WCAG accessibility compliance
+- Add structured data for SEO (Product schema)
+- Implement analytics tracking on product views
+
+**7. Call-to-Action Optimization:**
+- Clear "Try Free Sample" button on each product
+- "Contact for Customization" option
+- "Bundle and Save" offers
+- Money-back guarantee badge
+
+**Visual Style Guidelines:**
+- Clean, modern, trustworthy aesthetic
+- Use existing brand colors from the site
+- Professional but approachable tone
+- Consistent typography hierarchy
+- Adequate white space
+
+**Priority Order:**
+1. Fix responsive layout issues
+2. Improve product card design and content
+3. Add trust elements (testimonials, FAQs)
+4. Implement filtering/search
+5. Add additional conversion elements
+
+**Deliverables:**
+- Updated `/products` page with improved UI/UX
+- Mobile-responsive design
+- Enhanced product descriptions and presentation
+- Additional trust and conversion elements
+```
+
+**Additional note for the Replit Agent:** Please analyze the current code structure first, then implement changes incrementally to avoid breaking existing functionality. Start with CSS fixes for responsive design, then content improvements, then additional features.
