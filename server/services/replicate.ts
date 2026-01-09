@@ -1,13 +1,5 @@
 import Replicate from "replicate";
 
-if (!process.env.REPLICATE_API_KEY) {
-  console.warn("[Replicate] Warning: REPLICATE_API_KEY is not set. Exterior visualization will not work.");
-}
-
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_KEY,
-});
-
 interface FluxFillProInput {
   image: string;
   prompt: string;
@@ -16,14 +8,24 @@ interface FluxFillProInput {
   prompt_upsampling?: boolean;
 }
 
+function getReplicateClient(): Replicate {
+  const apiKey = process.env.REPLICATE_API_KEY;
+  if (!apiKey) {
+    throw new Error("REPLICATE_API_KEY is not set. Please add your Replicate API token to secrets.");
+  }
+  return new Replicate({ auth: apiKey });
+}
+
 export async function generateExteriorVisualization(
   imageBase64: string,
   mimeType: string,
   prompt: string
 ): Promise<{ imageUrl: string }> {
+  const replicate = getReplicateClient();
   const dataUri = `data:${mimeType};base64,${imageBase64}`;
   
   console.log("[Replicate] Starting Flux Fill Pro generation with prompt:", prompt.substring(0, 100) + "...");
+  console.log("[Replicate] Using API key:", process.env.REPLICATE_API_KEY?.substring(0, 10) + "...");
   
   const input: FluxFillProInput = {
     image: dataUri,
