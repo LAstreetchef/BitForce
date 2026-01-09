@@ -27,11 +27,11 @@ interface Scene {
 }
 
 const scenes: Scene[] = [
-  { id: 1, title: "The Problem", duration: 10, bgGradient: "from-slate-900 via-slate-800 to-slate-900" },
-  { id: 2, title: "BitForce Enters", duration: 10, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
-  { id: 3, title: "Our Solutions", duration: 20, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
-  { id: 4, title: "The Opportunity", duration: 10, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
-  { id: 5, title: "Call to Action", duration: 10, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
+  { id: 1, title: "The Problem", duration: 5, bgGradient: "from-slate-900 via-slate-800 to-slate-900" },
+  { id: 2, title: "BitForce Enters", duration: 5, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
+  { id: 3, title: "Our Solutions", duration: 10, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
+  { id: 4, title: "The Opportunity", duration: 5, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
+  { id: 5, title: "Call to Action", duration: 5, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
 ];
 
 const TOTAL_DURATION = scenes.reduce((sum, s) => sum + s.duration, 0);
