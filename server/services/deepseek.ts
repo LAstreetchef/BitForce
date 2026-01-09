@@ -1,9 +1,19 @@
 import OpenAI from "openai";
 
-const deepseek = new OpenAI({
-  baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
+let deepseekClient: OpenAI | null = null;
+
+function getDeepSeekClient(): OpenAI {
+  if (!deepseekClient) {
+    if (!process.env.DEEPSEEK_API_KEY) {
+      throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to your secrets.");
+    }
+    deepseekClient = new OpenAI({
+      baseURL: "https://api.deepseek.com",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+  }
+  return deepseekClient;
+}
 
 const BITFORCE_SYSTEM_PROMPT = `You are an AI assistant for Bit Force brand ambassadors. Bit Force helps ambassadors connect homeowners with home and digital services including:
 
@@ -58,6 +68,7 @@ export async function askDeepSeek(
   conversationHistory: unknown = []
 ): Promise<string> {
   try {
+    const client = getDeepSeekClient();
     const sanitizedHistory = sanitizeConversationHistory(conversationHistory);
     
     const messages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [
@@ -66,7 +77,7 @@ export async function askDeepSeek(
       { role: "user", content: userMessage.slice(0, 10000) },
     ];
 
-    const completion = await deepseek.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "deepseek-chat",
       messages: messages,
       temperature: 0.7,
