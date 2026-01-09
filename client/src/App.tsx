@@ -17,6 +17,7 @@ import Tools from "@/pages/portal/Tools";
 import Products from "@/pages/portal/Products";
 import PublicEvents from "@/pages/PublicEvents";
 import PublicProducts from "@/pages/PublicProducts";
+import ExplainerVideo from "@/pages/ExplainerVideo";
 import SupportInbox from "@/pages/admin/SupportInbox";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/" component={Home}/>
       <Route path="/events" component={PublicEvents}/>
       <Route path="/products" component={PublicProducts}/>
+      <Route path="/explainer" component={ExplainerVideo}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />

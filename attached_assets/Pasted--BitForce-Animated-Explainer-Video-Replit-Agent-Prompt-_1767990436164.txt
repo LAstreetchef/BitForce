@@ -1,0 +1,181 @@
+# **BitForce Animated Explainer Video - Replit Agent Prompt**
+
+```markdown
+**TASK:** Create an animated explainer video clip (30-60 seconds) introducing BitForce for use on our website and ambassador materials.
+
+**VIDEO SPECIFICATIONS:**
+- Duration: 30-60 seconds
+- Format: MP4 with transparent background option
+- Resolution: 1080p (1920x1080)
+- Aspect Ratio: 16:9 (with 1:1 square version for social media)
+- Style: Modern, clean tech animation
+- Color Palette: Use BitForce brand colors (or professional tech palette if brand colors unknown)
+- Music: Upbeat, professional tech/inspirational track (royalty-free)
+
+**SCRIPT CONTENT:**
+
+**SCENE 1: THE PROBLEM (0-10 seconds)**
+- Visual: Dark screen with floating data fragments, question marks, confused digital avatars
+- Text Overlay: "In today's digital world..."
+- Voiceover/Narration: "Every day, individuals and businesses face digital challenges - security threats, AI complexity, and technological overwhelm."
+
+**SCENE 2: BITFORCE ENTERS (10-20 seconds)**
+- Visual: Bright light/energy pulse, BitForce logo emerges, transforms into shield/force field
+- Text Overlay: "Introducing BitForce"
+- Voiceover: "That's where BitForce comes in - your digital empowerment partner."
+
+**SCENE 3: OUR SOLUTIONS (20-40 seconds)**
+**Visual Sequence A: Security**
+- Shield icon protecting data streams
+- Lock symbols securing devices
+- Text: "Advanced Digital Security"
+
+**Visual Sequence B: AI Integration**
+- AI characters assisting humans
+- Neural networks connecting
+- Text: "Smart AI Companions"
+
+**Visual Sequence C: Empowerment**
+- People gaining digital superpowers
+- Ambassadors growing network
+- Text: "Ambassador Opportunity"
+
+**SCENE 4: THE OPPORTUNITY (40-50 seconds)**
+- Visual: Network of connected nodes growing, ambassadors rising up
+- Text: "Join the BitForce Movement"
+- Voiceover: "Whether you need protection, AI assistance, or a new digital career path - BitForce empowers your digital future."
+
+**SCENE 5: CALL TO ACTION (50-60 seconds)**
+- Visual: Clean screen with BitForce logo, website URL, ambassador portal link
+- Text: "Start Your Journey Today"
+- Voiceover: "Visit BitForceAmbassadorPortal.replit.app to begin."
+
+**ANIMATION STYLE GUIDE:**
+
+**Visual Elements:**
+1. **Characters:** Simplified humanoid figures (gender-neutral, diverse)
+2. **Icons:** Clean line icons with smooth animations
+3. **Transitions:** Smooth wipes, fades, and morphing effects
+4. **Data Visualization:** Flowing data streams, particle effects, network grids
+5. **Text Animation:** Clean typewriter or fade-in effects
+
+**Motion Principles:**
+- Smooth easing on all movements
+- Consistent animation speed throughout
+- Purposeful transitions between concepts
+- Highlight key elements with subtle scale/pulse animations
+
+**TECHNICAL REQUIREMENTS:**
+
+**Tools to Use (Replit-Compatible):**
+1. **SVG Animation:** Create vector graphics and animate with CSS/JavaScript
+2. **Canvas Animation:** Use HTML5 Canvas for complex particle effects
+3. **Video Export:** Use FFmpeg or similar to render final MP4
+4. **Audio:** Add royalty-free background music and optional voiceover
+
+**File Structure:**
+```
+/bitforce-video/
+├── index.html (main animation)
+├── style.css (animations and styles)
+├── script.js (animation timeline)
+├── assets/
+│   ├── icons/ (SVG icons)
+│   ├── sounds/ (background music)
+│   └── fonts/ (custom fonts)
+├── render.js (FFmpeg rendering script)
+└── README.md (usage instructions)
+```
+
+**IMPLEMENTATION STEPS:**
+
+**Phase 1: Asset Creation**
+1. Design BitForce logo animation sequence
+2. Create character and icon SVGs
+3. Select color palette (tech blues, purples, accents)
+4. Choose royalty-free background music
+
+**Phase 2: Animation Development**
+1. Build HTML5/CSS3 animation framework
+2. Implement GSAP (GreenSock) or pure CSS animations
+3. Create scene transitions
+4. Sync animations with timing script
+
+**Phase 3: Audio Integration**
+1. Add background music track
+2. Implement optional voiceover system
+3. Add sound effects (optional)
+
+**Phase 4: Export & Optimization**
+1. Create rendering script using headless browser
+2. Export to MP4 with transparent option
+3. Generate compressed versions for web
+4. Create square (1:1) version for social media
+
+**FEATURES TO INCLUDE:**
+
+**Interactive Elements (Optional):**
+- Pause/Play button
+- Mute toggle
+- Progress bar
+- Language selector placeholder
+
+**Accessibility:**
+- Closed captioning support (SRT file generation)
+- High contrast mode option
+- Keyboard navigation controls
+
+**BRANDING ELEMENTS TO INCORPORATE:**
+- BitForce logo (animate entrance and exit)
+- Brand colors (if known, otherwise use professional tech palette)
+- Website URL: bitforceambassadorportal.replit.app
+- Tagline space: "Digital Empowerment Partner"
+
+**DELIVERABLES:**
+1. Complete animated video (30-60 seconds)
+2. Square social media version (60 seconds)
+3. Transparent background version
+4. All source files (HTML, CSS, JS, SVGs)
+5. Preview page with playback controls
+6. Rendering script for future modifications
+
+**TIMELINE:**
+- Days 1-2: Asset creation and basic animation
+- Days 3-4: Scene transitions and timing
+- Days 5-6: Audio integration and polish
+- Day 7: Export and optimization
+
+**TESTING:**
+- Test on multiple browsers (Chrome, Firefox, Safari)
+- Mobile responsiveness check
+- Load time optimization (< 5MB total)
+- Frame rate consistency (60fps target)
+
+**USAGE INSTRUCTIONS FOR AMBASSADORS:**
+1. Embed video on landing pages
+2. Use in presentation decks
+3. Share on social media
+4. Include in email campaigns
+5. Play during customer meetings
+
+**NOTE:** If full video rendering is complex in Replit environment, create an animated HTML page that can be screen-recorded, or use a simplified CSS/JS animation that can be converted to video via headless Chrome.
+```
+
+**ALTERNATIVE SIMPLIFIED PROMPT (if complex animation is challenging):**
+
+```markdown
+**QUICK TASK:** Create a simple animated explainer using CSS/JS that can be screen-recorded.
+
+1. Build HTML page with:
+   - Animated BitForce logo reveal
+   - 5 key message slides with transitions
+   - Automated 60-second animation cycle
+   - Call to action button
+
+2. Use CSS keyframes for smooth animations
+3. Add background music player
+4. Create auto-advancing "video-like" experience
+5. Style with tech professional aesthetics
+```
+
+This prompt gives your Replit Agent clear direction to create a professional animated explainer that communicates BitForce's value proposition effectively to both customers and potential ambassadors.
