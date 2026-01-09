@@ -79,12 +79,12 @@ export function AskAI() {
   };
 
   return (
-    <Card className="border-purple-200 dark:border-purple-800" data-testid="card-ask-ai">
+    <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20" data-testid="card-ask-ai">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
-              <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
+              <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <CardTitle className="text-lg">Ask AI Assistant</CardTitle>
@@ -139,8 +139,8 @@ export function AskAI() {
                   data-testid={`message-${msg.role}-${index}`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center shrink-0">
-                      <Bot className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
+                      <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
                   )}
                   <div
@@ -161,8 +161,8 @@ export function AskAI() {
               ))}
               {askMutation.isPending && (
                 <div className="flex gap-3 justify-start" data-testid="message-loading">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
+                    <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="bg-muted rounded-lg px-4 py-2">
                     <div className="flex items-center gap-2">
