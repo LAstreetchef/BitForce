@@ -1,0 +1,21 @@
+Generate a detailed, step-by-step prompt for our Replit AI agent to build and integrate the "Before/After Home Exterior Visualizer" tool into the existing Bitforce Ambassador Portal app (at https://bitforceambassadorportal.replit.app/). The prompt should cover:
+
+- **Tool Description**: An AI-powered visualizer where users (ambassadors) can input a property address (to pull street view/satellite imagery) or upload a photo of a home exterior. They then select service options (e.g., roof materials/colors, driveway types, siding, painting), and the tool generates realistic before/after rendered images using AI image generation.
+
+- **UI Integration**: Add this as a new card/section in the "Property Intelligence Tools" dashboard, similar to existing ones like Property Lookup, Weather Intelligence, etc. Use a clean, blue-themed UI with input fields, dropdowns for options, upload button, and a "Generate Visuals" button. Display results as side-by-side images (before/after) with download/share options.
+
+- **Functionality Breakdown**:
+  - Input: Address (integrate with existing Property Lookup for auto-pull of imagery via OpenStreetMap or Google Street View API if available).
+  - Photo Upload: Allow file upload (JPEG/PNG) for custom photos.
+  - Options Selection: Dropdowns or checkboxes for services like roofing (e.g., asphalt shingles in black/red/gray), driveway (concrete/asphalt/pavers), exterior paint colors, siding types.
+  - AI Generation: Use an accessible AI image API (e.g., Replicate's Stable Diffusion model, Hugging Face Inference API, or Replit's built-in AI tools if available). Apply edits like overlaying new roof/driveway elements realistically.
+  - Output: Photorealistic renders, with options to bundle suggestions (e.g., link to home AI services).
+  - Error Handling: Fallbacks for API failures, loading spinners.
+
+- **Tech Stack**: Build in Python (Flask/Streamlit for backend if current app uses it), HTML/CSS/JS for frontend. Handle file uploads securely. Integrate with existing leads system (e.g., select from leads like "Paulo Benedeti").
+  - For AI: Provide code snippets or instructions to set up API keys (assume user provides them for services like Replicate).
+  - Keep it mobile-responsive and simple for non-tech users.
+
+- **Testing & Deployment**: Include steps for testing with sample addresses/photos, ensuring integration doesn't break existing tools, and auto-deploy on Replit.
+
+Make the prompt self-contained, actionable, and optimized for Replit's AI agent to execute without further clarification. End the prompt with a request for the agent to confirm completion or suggest improvements.
