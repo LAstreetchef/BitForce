@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { 
   Search, 
   MapPin, 
@@ -25,11 +27,34 @@ import {
   ExternalLink,
   Wrench,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  ImageIcon,
+  Download,
+  Sparkles,
+  X
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Lead } from "@shared/schema";
+
+interface ExteriorOptions {
+  roofing: Array<{ value: string; label: string }>;
+  driveway: Array<{ value: string; label: string }>;
+  siding: Array<{ value: string; label: string }>;
+  paint: Array<{ value: string; label: string }>;
+}
+
+interface ExteriorVisualizationResult {
+  b64_json: string;
+  mimeType: string;
+  appliedChanges: {
+    roofing: string | null;
+    driveway: string | null;
+    siding: string | null;
+    paintColor: string | null;
+  };
+}
 
 interface WeatherData {
   location: {
@@ -116,9 +141,132 @@ export default function Tools() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Exterior Visualizer state
+  const [exteriorImage, setExteriorImage] = useState<string | null>(null);
+  const [selectedRoofing, setSelectedRoofing] = useState<string>("");
+  const [selectedDriveway, setSelectedDriveway] = useState<string>("");
+  const [selectedSiding, setSelectedSiding] = useState<string>("");
+  const [selectedPaint, setSelectedPaint] = useState<string>("");
+  const [visualizationResult, setVisualizationResult] = useState<ExteriorVisualizationResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { data: leads = [] } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
   });
+
+  const { data: exteriorOptions } = useQuery<ExteriorOptions>({
+    queryKey: ["/api/exterior-options"],
+  });
+
+  const exteriorMutation = useMutation({
+    mutationFn: async (data: {
+      sourceImage: string;
+      roofing?: string;
+      driveway?: string;
+      siding?: string;
+      paintColor?: string;
+    }) => {
+      const response = await apiRequest("POST", "/api/generate-exterior-visualization", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate visualization");
+      }
+      return response.json() as Promise<ExteriorVisualizationResult>;
+    },
+    onSuccess: (data) => {
+      setVisualizationResult(data);
+      toast({
+        title: "Visualization Complete",
+        description: "Your before/after visualization has been generated!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Unable to generate visualization. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload an image file (JPEG or PNG).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setExteriorImage(e.target?.result as string);
+      setVisualizationResult(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerateVisualization = () => {
+    if (!exteriorImage) {
+      toast({
+        title: "Photo Required",
+        description: "Please upload a photo of the home exterior.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedRoofing && !selectedDriveway && !selectedSiding && !selectedPaint) {
+      toast({
+        title: "Options Required",
+        description: "Please select at least one improvement option.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exteriorMutation.mutate({
+      sourceImage: exteriorImage,
+      roofing: selectedRoofing || undefined,
+      driveway: selectedDriveway || undefined,
+      siding: selectedSiding || undefined,
+      paintColor: selectedPaint || undefined,
+    });
+  };
+
+  const handleDownloadVisualization = () => {
+    if (!visualizationResult) return;
+    
+    const link = document.createElement("a");
+    link.href = `data:${visualizationResult.mimeType};base64,${visualizationResult.b64_json}`;
+    link.download = `home-visualization-${Date.now()}.png`;
+    link.click();
+  };
+
+  const clearVisualization = () => {
+    setExteriorImage(null);
+    setVisualizationResult(null);
+    setSelectedRoofing("");
+    setSelectedDriveway("");
+    setSelectedSiding("");
+    setSelectedPaint("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const reportMutation = useMutation({
     mutationFn: async (address: string) => {
@@ -218,6 +366,241 @@ export default function Tools() {
                     {lead.fullName}
                   </Button>
                 ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Home Exterior Before/After Visualizer */}
+      <Card className="border-purple-200 dark:border-purple-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-500" />
+            Home Exterior Visualizer
+            <Badge variant="secondary" className="ml-2">AI-Powered</Badge>
+          </CardTitle>
+          <CardDescription>
+            Upload a photo of a home exterior and see what it could look like with new roofing, driveway, siding, or paint
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Upload Home Photo</Label>
+            <div 
+              className="border-2 border-dashed rounded-lg p-6 text-center hover:border-purple-400 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="dropzone-exterior-image"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageUpload}
+                className="hidden"
+                data-testid="input-exterior-image"
+              />
+              {exteriorImage ? (
+                <div className="relative">
+                  <img 
+                    src={exteriorImage} 
+                    alt="Uploaded home exterior" 
+                    className="max-h-64 mx-auto rounded-md"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExteriorImage(null);
+                      setVisualizationResult(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    data-testid="button-remove-image"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
+                  <p className="font-medium">Click to upload a home exterior photo</p>
+                  <p className="text-sm text-muted-foreground">JPEG, PNG, or WebP up to 10MB</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Options Selection */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Roofing</Label>
+              <Select value={selectedRoofing} onValueChange={setSelectedRoofing}>
+                <SelectTrigger data-testid="select-roofing">
+                  <SelectValue placeholder="Select roofing type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exteriorOptions?.roofing.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Driveway</Label>
+              <Select value={selectedDriveway} onValueChange={setSelectedDriveway}>
+                <SelectTrigger data-testid="select-driveway">
+                  <SelectValue placeholder="Select driveway type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exteriorOptions?.driveway.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Siding</Label>
+              <Select value={selectedSiding} onValueChange={setSelectedSiding}>
+                <SelectTrigger data-testid="select-siding">
+                  <SelectValue placeholder="Select siding type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exteriorOptions?.siding.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Exterior Paint</Label>
+              <Select value={selectedPaint} onValueChange={setSelectedPaint}>
+                <SelectTrigger data-testid="select-paint">
+                  <SelectValue placeholder="Select paint color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exteriorOptions?.paint.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              onClick={handleGenerateVisualization}
+              disabled={exteriorMutation.isPending || !exteriorImage}
+              className="bg-purple-600 hover:bg-purple-700"
+              data-testid="button-generate-visualization"
+            >
+              {exteriorMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              {exteriorMutation.isPending ? "Generating..." : "Generate Visualization"}
+            </Button>
+            {(exteriorImage || visualizationResult) && (
+              <Button
+                variant="outline"
+                onClick={clearVisualization}
+                data-testid="button-clear-visualization"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+
+          {/* Loading State */}
+          {exteriorMutation.isPending && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="w-10 h-10 animate-spin text-purple-500" />
+              <div className="text-center">
+                <p className="font-medium">Generating Your Visualization</p>
+                <p className="text-sm text-muted-foreground">
+                  AI is transforming the home exterior with your selected options...
+                </p>
+              </div>
+              <Progress value={50} className="w-64" />
+            </div>
+          )}
+
+          {/* Results Display */}
+          {visualizationResult && !exteriorMutation.isPending && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg">Before / After Comparison</h3>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadVisualization}
+                  data-testid="button-download-visualization"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download After
+                </Button>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Badge variant="outline">Before</Badge>
+                  {exteriorImage && (
+                    <img 
+                      src={exteriorImage} 
+                      alt="Before" 
+                      className="w-full rounded-lg border"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Badge className="bg-purple-600">After</Badge>
+                  <img 
+                    src={`data:${visualizationResult.mimeType};base64,${visualizationResult.b64_json}`}
+                    alt="After visualization" 
+                    className="w-full rounded-lg border"
+                  />
+                </div>
+              </div>
+
+              {/* Applied Changes Summary */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="font-medium mb-2">Applied Improvements:</p>
+                <div className="flex gap-2 flex-wrap">
+                  {visualizationResult.appliedChanges.roofing && (
+                    <Badge variant="secondary">
+                      Roofing: {visualizationResult.appliedChanges.roofing.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    </Badge>
+                  )}
+                  {visualizationResult.appliedChanges.driveway && (
+                    <Badge variant="secondary">
+                      Driveway: {visualizationResult.appliedChanges.driveway.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    </Badge>
+                  )}
+                  {visualizationResult.appliedChanges.siding && (
+                    <Badge variant="secondary">
+                      Siding: {visualizationResult.appliedChanges.siding.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    </Badge>
+                  )}
+                  {visualizationResult.appliedChanges.paintColor && (
+                    <Badge variant="secondary">
+                      Paint: {visualizationResult.appliedChanges.paintColor.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -348,7 +731,6 @@ export default function Tools() {
                             <div className="flex items-center gap-2 mb-1">
                               <Badge 
                                 variant={alert.severity === "Extreme" || alert.severity === "Severe" ? "destructive" : "secondary"}
-                                size="sm"
                               >
                                 {alert.severity}
                               </Badge>
@@ -383,7 +765,7 @@ export default function Tools() {
                             </p>
                             <p className="text-xs mt-1 truncate">{day.conditions}</p>
                             {day.precipChance > 0 && (
-                              <Badge size="sm" variant="outline" className="mt-1">
+                              <Badge variant="outline" className="mt-1">
                                 <Droplets className="w-3 h-3 mr-1" />
                                 {day.precipChance}%
                               </Badge>
