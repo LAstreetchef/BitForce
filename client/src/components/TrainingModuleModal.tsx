@@ -167,7 +167,7 @@ export function TrainingModuleModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-4xl h-[90vh] overflow-hidden flex flex-col p-0">
         <div
           className={`${module.color} p-6 text-white`}
           data-testid="module-header"
@@ -230,8 +230,8 @@ export function TrainingModuleModal({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-6 py-4">
-          <div className="space-y-6">
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="space-y-6 px-6 py-4">
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="p-4">
                 <h3 className="font-semibold flex items-center gap-2 mb-3">
