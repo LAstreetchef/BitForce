@@ -4,6 +4,7 @@ import type { Lead } from "@shared/schema";
 const GMAIL_USER = process.env.GMAIL_USER || "kammiceli@gmail.com";
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Bit Force";
+const BASE_URL = process.env.BASE_URL || "https://bitforceambassadorportal.replit.app";
 
 function createTransporter() {
   if (!GMAIL_APP_PASSWORD) {
@@ -235,7 +236,7 @@ export async function sendAmbassadorInviteEmail(
     return false;
   }
 
-  const signupUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] ? 'https://' + process.env.REPLIT_DOMAINS?.split(',')[0] : ''}/ambassador-signup?ref=${referralCode}`;
+  const signupUrl = `${BASE_URL}/ambassador-signup?ref=${referralCode}`;
 
   const mailOptions = {
     from: `"${FROM_NAME}" <${GMAIL_USER}>`,
@@ -323,7 +324,7 @@ export async function sendAIBuddyCustomerInviteEmail(
     return false;
   }
 
-  const websiteUrl = process.env.REPLIT_DOMAINS?.split(',')[0] ? 'https://' + process.env.REPLIT_DOMAINS?.split(',')[0] : '';
+  const websiteUrl = BASE_URL;
 
   const mailOptions = {
     from: `"${FROM_NAME}" <${GMAIL_USER}>`,
