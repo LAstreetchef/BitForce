@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AskAI } from "@/components/AskAI";
 import type { Lead } from "@shared/schema";
 
 interface WeatherData {
@@ -223,6 +224,8 @@ export default function Tools() {
           )}
         </CardContent>
       </Card>
+
+      <AskAI />
 
       {reportMutation.isPending && (
         <Card>

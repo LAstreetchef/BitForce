@@ -8,6 +8,7 @@ import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { getPropertyReport } from "./services/propertyData";
+import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail } from "./services/email";
@@ -920,6 +921,37 @@ export async function registerRoutes(
         return res.json([]);
       }
       res.status(500).json({ message: "Failed to get invitations" });
+    }
+  });
+
+  // Ask AI - DeepSeek integration for ambassador Q&A
+  const askAiInputSchema = z.object({
+    message: z.string().min(1).max(10000),
+    conversationHistory: z.array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().max(10000),
+      })
+    ).max(20).optional().default([]),
+  });
+
+  app.post("/api/ask-ai", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = askAiInputSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Invalid request",
+          errors: parsed.error.errors.map(e => e.message),
+        });
+      }
+
+      const { message, conversationHistory } = parsed.data;
+      const response = await askDeepSeek(message.trim(), conversationHistory);
+      res.json({ response });
+    } catch (err: any) {
+      console.error("Ask AI error:", err);
+      res.status(500).json({ message: err.message || "Failed to get AI response" });
     }
   });
 
