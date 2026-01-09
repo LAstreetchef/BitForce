@@ -1398,6 +1398,218 @@ export async function registerRoutes(
     }
   });
 
+  // Old Friend & Family Finder - Person Search API using Whitepages Pro
+  const WHITEPAGES_API_KEY = process.env.WHITEPAGES_API_KEY || "";
+
+  const personSearchSchema = z.object({
+    firstName: z.string().min(1, "First name is required").max(100),
+    lastName: z.string().min(1, "Last name is required").max(100),
+    city: z.string().max(100).optional(),
+    state: z.string().max(2).optional(),
+    age: z.number().min(18).max(120).optional(),
+  });
+
+  app.post("/api/person-search", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = personSearchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Invalid request",
+          errors: parsed.error.errors.map(e => e.message),
+        });
+      }
+
+      const { firstName, lastName, city, state, age } = parsed.data;
+
+      if (!WHITEPAGES_API_KEY) {
+        return res.status(500).json({ 
+          status: "error",
+          message: "Person search service is not configured" 
+        });
+      }
+
+      // Build Whitepages Pro API request
+      const params = new URLSearchParams({
+        api_key: WHITEPAGES_API_KEY,
+        "name.first": firstName.trim(),
+        "name.last": lastName.trim(),
+      });
+
+      if (city && typeof city === "string") {
+        params.append("address.city", city.trim());
+      }
+      if (state && typeof state === "string") {
+        params.append("address.state_code", state.trim().toUpperCase());
+      }
+
+      try {
+        const response = await fetch(
+          `https://proapi.whitepages.com/3.0/person?${params.toString()}`,
+          {
+            headers: {
+              "Accept": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 401 || response.status === 403) {
+          console.error("Whitepages API authentication failed");
+          return res.status(500).json({
+            status: "error",
+            message: "Person search service authentication failed",
+          });
+        }
+
+        if (response.status === 429) {
+          return res.status(429).json({
+            status: "error",
+            message: "Too many requests. Please try again in a moment.",
+          });
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Whitepages API error:", response.status, errorText);
+          throw new Error(`Whitepages API returned ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Handle no results
+        if (!data.person || data.person.length === 0) {
+          return res.json({
+            status: "not_found",
+            matchCount: 0,
+            results: [],
+            message: "No matches found for your search criteria",
+          });
+        }
+
+        // Calculate confidence score based on matching criteria
+        const calculateConfidence = (person: any): { confidence: number; label: string } => {
+          let score = 40; // Base score for name match
+
+          // Location match
+          const currentAddress = person.current_addresses?.[0];
+          if (currentAddress) {
+            if (city && currentAddress.city?.toLowerCase() === city.toLowerCase()) {
+              score += 25;
+            }
+            if (state && currentAddress.state_code?.toUpperCase() === state.toUpperCase()) {
+              score += 10;
+            }
+          }
+
+          // Age match (within 3 years)
+          if (age && person.age_range && typeof person.age_range === "string") {
+            const ageRangeParts = person.age_range.split("-");
+            if (ageRangeParts.length >= 2) {
+              const minAge = parseInt(ageRangeParts[0], 10);
+              const maxAge = parseInt(ageRangeParts[1], 10);
+              if (!isNaN(minAge) && !isNaN(maxAge) && age >= minAge && age <= maxAge) {
+                score += 20;
+              }
+            }
+          }
+
+          // Has relatives (additional data point)
+          if (person.associated_people && person.associated_people.length > 0) {
+            score += 5;
+          }
+
+          score = Math.min(100, score);
+
+          let label = "Possible Match";
+          if (score >= 90) label = "Very High Confidence";
+          else if (score >= 70) label = "High Confidence";
+          else if (score >= 50) label = "Moderate Confidence";
+          else if (score >= 30) label = "Low Confidence";
+
+          return { confidence: score, label };
+        };
+
+        // Format results
+        const results = (Array.isArray(data.person) ? data.person : [data.person])
+          .slice(0, 10)
+          .map((person: any, index: number) => {
+            const { confidence, label } = calculateConfidence(person);
+            
+            // Parse name
+            const nameParts = person.name?.split(" ") || [firstName, lastName];
+            const parsedName = {
+              first: person.firstname || nameParts[0] || firstName,
+              middle: person.middlename || (nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : undefined),
+              last: person.lastname || nameParts[nameParts.length - 1] || lastName,
+            };
+
+            // Format locations
+            const locations = [
+              ...(person.current_addresses || []).map((addr: any) => ({
+                city: addr.city || "",
+                state: addr.state_code || "",
+                zip: addr.postal_code || "",
+                address: addr.street_line_1 || "",
+                isCurrent: true,
+              })),
+              ...(person.historical_addresses || []).slice(0, 2).map((addr: any) => ({
+                city: addr.city || "",
+                state: addr.state_code || "",
+                zip: addr.postal_code || "",
+                address: addr.street_line_1 || "",
+                isCurrent: false,
+              })),
+            ].filter((loc: any) => loc.city || loc.state);
+
+            // Format phones
+            const phones = (person.phones || []).slice(0, 3).map((phone: any) => ({
+              number: phone.phone_number || phone.display || "",
+              type: phone.line_type || "Unknown",
+              isCurrent: phone.is_valid !== false,
+            }));
+
+            // Format relatives/associates
+            const relatives = (person.associated_people || []).slice(0, 5).map((rel: any) => ({
+              name: rel.name || "",
+              relation: rel.relation || undefined,
+            }));
+
+            return {
+              id: person.id || `result-${index}`,
+              name: parsedName,
+              age: person.age || undefined,
+              ageRange: person.age_range || undefined,
+              locations,
+              phones,
+              relatives,
+              confidence,
+              confidenceLabel: label,
+              sources: ["Public Records"],
+            };
+          });
+
+        // Sort by confidence
+        results.sort((a: any, b: any) => b.confidence - a.confidence);
+
+        res.json({
+          status: "found",
+          matchCount: results.length,
+          results,
+        });
+
+      } catch (fetchError: any) {
+        console.error("Whitepages fetch error:", fetchError);
+        return res.status(500).json({
+          status: "error",
+          message: "Unable to complete person search. Please try again later.",
+        });
+      }
+
+    } catch (err) {
+      console.error("Person search error:", err);
+      res.status(500).json({ message: "Failed to search for person" });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   setTimeout(async () => {
     try {
