@@ -199,7 +199,7 @@ export default function Home() {
                   </Button>
                 </div>
                 <h1 className="text-4xl lg:text-6xl font-display font-bold leading-tight text-white">
-                  Brand Ambassador <br />
+                  BitForce Ambassador <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
                     Portal
                   </span>
