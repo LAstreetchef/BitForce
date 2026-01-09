@@ -9,9 +9,9 @@ interface FluxFillProInput {
 }
 
 function getReplicateClient(): Replicate {
-  const apiKey = process.env.REPLICATE_API_KEY;
+  const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
-    throw new Error("REPLICATE_API_KEY is not set. Please add your Replicate API token to secrets.");
+    throw new Error("REPLICATE_API_TOKEN is not set. Please add your Replicate API token to secrets.");
   }
   return new Replicate({ auth: apiKey });
 }
@@ -25,7 +25,7 @@ export async function generateExteriorVisualization(
   const dataUri = `data:${mimeType};base64,${imageBase64}`;
   
   console.log("[Replicate] Starting Flux Fill Pro generation with prompt:", prompt.substring(0, 100) + "...");
-  console.log("[Replicate] Using API key:", process.env.REPLICATE_API_KEY?.substring(0, 10) + "...");
+  console.log("[Replicate] Using API token:", process.env.REPLICATE_API_TOKEN?.substring(0, 10) + "...");
   
   const input: FluxFillProInput = {
     image: dataUri,
