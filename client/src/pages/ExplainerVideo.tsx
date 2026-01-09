@@ -44,7 +44,7 @@ const scenes: Scene[] = [
   { id: 2, title: "BitForce Enters", duration: 4, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
   { id: 3, title: "Our Solutions", duration: 6, bgGradient: "from-indigo-900 via-blue-800 to-cyan-900" },
   { id: 4, title: "Ambassador Tools", duration: 8, bgGradient: "from-cyan-900 via-teal-800 to-emerald-900" },
-  { id: 5, title: "Our Products", duration: 8, bgGradient: "from-emerald-900 via-green-800 to-teal-900" },
+  { id: 5, title: "Our Products", duration: 12, bgGradient: "from-emerald-900 via-green-800 to-teal-900" },
   { id: 6, title: "The Opportunity", duration: 4, bgGradient: "from-purple-900 via-violet-800 to-indigo-900" },
   { id: 7, title: "Call to Action", duration: 4, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
 ];
