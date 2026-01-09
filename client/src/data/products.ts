@@ -116,9 +116,9 @@ export const products: Product[] = [
   {
     id: "security-scanner",
     name: "Digital Footprint Scanner",
-    tagline: "Free security check for your email",
-    price: "Free",
-    priceDetail: "instant scan",
+    tagline: "Security check for your email",
+    price: "Included",
+    priceDetail: "with plan",
     description: "See if your email has been exposed in data breaches. Our AI Security Buddy scans known breach databases and gives you a clear, easy-to-understand security report.",
     valueProposition: "Knowledge is power! Find out if your personal information has been compromised so you can take action to protect yourself and your family.",
     backstory: "Your AI Security Buddy watches your digital back. In today's world, data breaches happen constantly - our scanner helps you stay one step ahead of the bad guys.",
@@ -137,7 +137,7 @@ export const products: Product[] = [
       { text: "Optional password strength checker" }
     ],
     image: securityScannerImage,
-    badge: "Free Tool",
+    badge: "Included",
     badgeType: "new",
     commissionInfo: "Earn $2 per monthly monitoring signup",
     category: "security",
