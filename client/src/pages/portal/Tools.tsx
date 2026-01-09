@@ -25,7 +25,8 @@ import {
   ExternalLink,
   Wrench,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Info
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -677,20 +678,59 @@ export default function Tools() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Using This Data</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Info className="w-5 h-5" />
+                    How Recommendations Are Generated
+                  </CardTitle>
+                  <CardDescription>
+                    Our smart algorithm analyzes real-time data to provide tailored suggestions
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    <strong className="text-foreground">Weather alerts</strong> help identify urgent needs like storm preparation or HVAC service.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Home age data</strong> from census info helps recommend appropriate maintenance and upgrades.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Neighborhood income</strong> levels help tailor service recommendations appropriately.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Homeownership rates</strong> indicate areas with more potential customers for home services.
+                <CardContent className="space-y-4 text-sm">
+                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
+                      <Cloud className="w-4 h-4" />
+                      Weather Data (NOAA & Open-Meteo APIs)
+                    </h4>
+                    <ul className="space-y-1.5 text-blue-700 dark:text-blue-400">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                        <span><strong>Extreme temperatures</strong> (below 40°F or above 90°F) → HVAC inspection</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                        <span><strong>Weather alerts</strong> (storms, etc.) → Emergency preparedness, Storm damage prevention</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                        <span><strong>Rainy conditions</strong> → Gutter cleaning, Roof inspection</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
+                    <h4 className="font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Neighborhood/Census Data (US Census Bureau)
+                    </h4>
+                    <ul className="space-y-1.5 text-green-700 dark:text-green-400">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                        <span><strong>Older homes</strong> (median year built before 1980) → Home energy audit, Electrical inspection, Plumbing assessment</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                        <span><strong>Higher value homes</strong> (median value &gt;$300k) → Smart home automation, Security systems</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                        <span><strong>High homeownership areas</strong> (&gt;70%) → Lawn care, Home renovation consultation</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p className="text-muted-foreground italic">
+                    Use these insights when speaking with homeowners to explain why specific services would benefit their property.
                   </p>
                 </CardContent>
               </Card>
