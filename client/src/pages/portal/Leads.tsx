@@ -15,7 +15,9 @@ import {
   Loader2,
   Sparkles,
   ClipboardList,
-  Wand2
+  Wand2,
+  Users,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -23,12 +25,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import LocalSolutions from "@/components/LocalSolutions";
 import LeadServicesManager from "@/components/LeadServicesManager";
 import { DesignVisualization } from "@/components/DesignVisualization";
+import ContactManager from "@/components/ContactManager";
 import type { Lead } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedLeadId, setExpandedLeadId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("leads");
   const queryClient = useQueryClient();
 
   const { data: leads = [], isLoading, isError } = useQuery<Lead[]>({
@@ -46,16 +50,42 @@ export default function Leads() {
     <div className="space-y-6" data-testid="page-leads">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Lead Management</h1>
-          <p className="text-muted-foreground">Track and manage your customer leads</p>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">
+            {activeTab === "leads" ? "Lead Management" : "Contact Network"}
+          </h1>
+          <p className="text-muted-foreground">
+            {activeTab === "leads" 
+              ? "Track and manage your customer leads" 
+              : "Import and invite contacts to join Bitforce"}
+          </p>
         </div>
-        <Link href="/portal/leads/new">
-          <Button data-testid="button-new-lead">
-            <Plus className="w-4 h-4 mr-2" />
-            New Lead
-          </Button>
-        </Link>
+        {activeTab === "leads" && (
+          <Link href="/portal/leads/new">
+            <Button data-testid="button-new-lead">
+              <Plus className="w-4 h-4 mr-2" />
+              New Lead
+            </Button>
+          </Link>
+        )}
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="leads" data-testid="tab-leads">
+            <FileText className="w-4 h-4 mr-2" />
+            Customer Leads
+          </TabsTrigger>
+          <TabsTrigger value="contacts" data-testid="tab-contacts">
+            <Users className="w-4 h-4 mr-2" />
+            My Contacts
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contacts">
+          <ContactManager />
+        </TabsContent>
+
+        <TabsContent value="leads">
 
       <Card>
         <CardHeader>
@@ -198,6 +228,8 @@ export default function Leads() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

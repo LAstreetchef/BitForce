@@ -112,7 +112,7 @@ export interface IStorage {
   createAmbassadorContacts(contacts: InsertAmbassadorContact[]): Promise<AmbassadorContact[]>;
   getAmbassadorContacts(ambassadorUserId: string): Promise<AmbassadorContact[]>;
   deleteAmbassadorContact(id: number, ambassadorUserId: string): Promise<boolean>;
-  updateContactEmailSent(id: number, emailType: string): Promise<AmbassadorContact>;
+  updateContactEmailSent(id: number, ambassadorUserId: string, emailType: string): Promise<AmbassadorContact | undefined>;
 }
 
 function generateReferralCode(): string {
@@ -564,13 +564,16 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async updateContactEmailSent(id: number, emailType: string): Promise<AmbassadorContact> {
+  async updateContactEmailSent(id: number, ambassadorUserId: string, emailType: string): Promise<AmbassadorContact | undefined> {
     const [updated] = await getDb().update(ambassadorContacts)
       .set({ 
         emailSentType: emailType,
         emailSentAt: new Date()
       })
-      .where(eq(ambassadorContacts.id, id))
+      .where(and(
+        eq(ambassadorContacts.id, id),
+        eq(ambassadorContacts.ambassadorUserId, ambassadorUserId)
+      ))
       .returning();
     return updated;
   }

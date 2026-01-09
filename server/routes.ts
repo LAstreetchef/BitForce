@@ -926,10 +926,17 @@ export async function registerRoutes(
 
   // Ambassador Contacts - upload and manage personal network
   const contactSchema = z.object({
-    fullName: z.string().min(1),
-    email: z.string().email(),
+    fullName: z.string().min(1, "Name is required"),
+    email: z.string().email("Valid email is required"),
     phone: z.string().optional(),
     notes: z.string().optional(),
+  });
+
+  const sendEmailSchema = z.object({
+    contactIds: z.array(z.number()).min(1, "At least one contact required"),
+    emailType: z.enum(["ambassador_invite", "customer_invite"], {
+      errorMap: () => ({ message: "Email type must be 'ambassador_invite' or 'customer_invite'" })
+    }),
   });
 
   app.get("/api/ambassador/contacts", isAuthenticated, async (req: Request, res: Response) => {
@@ -1047,20 +1054,22 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const { contactIds, emailType } = req.body;
-      if (!Array.isArray(contactIds) || contactIds.length === 0) {
-        return res.status(400).json({ message: "Contact IDs required" });
+      const parsed = sendEmailSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Invalid request",
+          errors: parsed.error.errors.map(e => e.message)
+        });
       }
-      if (!["ambassador_invite", "customer_invite"].includes(emailType)) {
-        return res.status(400).json({ message: "Invalid email type" });
-      }
+
+      const { contactIds, emailType } = parsed.data;
 
       // Get ambassador info for the referral code
       const ambassador = await storage.getAmbassadorByUserId(user.id);
       const referralCode = ambassador?.referralCode || "BITFORCE";
       const inviterName = user.username || user.firstName || "Your Friend";
 
-      // Get contacts
+      // Get contacts - only contacts owned by this ambassador
       const allContacts = await storage.getAmbassadorContacts(user.id);
       const contactsToEmail = allContacts.filter(c => contactIds.includes(c.id));
 
@@ -1090,7 +1099,7 @@ export async function registerRoutes(
           }
 
           if (emailSent) {
-            await storage.updateContactEmailSent(contact.id, emailType);
+            await storage.updateContactEmailSent(contact.id, user.id, emailType);
             results.push({ contactId: contact.id, success: true });
           } else {
             results.push({ contactId: contact.id, success: false, error: "Email not configured" });
