@@ -185,9 +185,8 @@ export default function Tools() {
                 <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle>
                   Security Risk Check
-                  <Badge variant="secondary">Conversation Starter</Badge>
                 </CardTitle>
                 <CardDescription className="mt-1">
                   Free 2-Minute Digital Safety Review
