@@ -16,6 +16,7 @@ import Events from "@/pages/portal/Events";
 import Tools from "@/pages/portal/Tools";
 import Products from "@/pages/portal/Products";
 import PublicEvents from "@/pages/PublicEvents";
+import PublicProducts from "@/pages/PublicProducts";
 import SupportInbox from "@/pages/admin/SupportInbox";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home}/>
       <Route path="/events" component={PublicEvents}/>
+      <Route path="/products" component={PublicProducts}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
