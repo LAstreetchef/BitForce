@@ -21,10 +21,11 @@ export interface Product {
   features: ProductFeature[];
   image: string;
   badge?: string;
-  badgeType?: "popular" | "bestValue" | "new";
+  badgeType?: "popular" | "bestValue" | "new" | "included";
   commissionInfo: string;
-  category: "subscription" | "session" | "bundle" | "security";
+  category: "subscription" | "session" | "bundle" | "security" | "partner";
   hasInteractiveFeature?: boolean;
+  externalUrl?: string;
 }
 
 export const products: Product[] = [
@@ -142,6 +143,36 @@ export const products: Product[] = [
     commissionInfo: "Earn $2 per monthly monitoring signup",
     category: "security",
     hasInteractiveFeature: true
+  },
+  {
+    id: "afterglow-app",
+    name: "AfterGlow Memory App",
+    tagline: "Digital legacy for your loved ones",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "A beautiful app to preserve and share precious memories with family. Create digital photo albums, voice recordings, and heartfelt messages that last forever.",
+    valueProposition: "Help families capture and preserve their most treasured memories in a secure, easy-to-use digital format that can be shared across generations.",
+    backstory: "AfterGlow was created to help families keep their loved ones' memories alive. Whether it's grandma's recipes, grandpa's stories, or family photos from decades past - AfterGlow makes it easy to preserve and share what matters most.",
+    bestFor: ["Families", "Memory Keeping", "Digital Legacy"],
+    useCases: [
+      "Create digital memory albums",
+      "Record voice messages for future generations",
+      "Share family stories and traditions",
+      "Preserve photos with descriptions and dates"
+    ],
+    features: [
+      { text: "Beautiful memory album creation" },
+      { text: "Voice recording for personal messages" },
+      { text: "Secure cloud storage for all memories" },
+      { text: "Easy sharing with family members" },
+      { text: "Included FREE with your BitForce subscription" }
+    ],
+    image: subscriptionImage,
+    badge: "Included Free",
+    badgeType: "included",
+    commissionInfo: "Included benefit - builds customer loyalty",
+    category: "partner",
+    externalUrl: "https://myafterglow.replit.app"
   }
 ];
 
@@ -225,5 +256,6 @@ export const categories = [
   { id: "subscription", name: "Subscriptions" },
   { id: "session", name: "Single Sessions" },
   { id: "bundle", name: "Bundles" },
-  { id: "security", name: "Security Tools" }
+  { id: "security", name: "Security Tools" },
+  { id: "partner", name: "Partner Apps" }
 ];

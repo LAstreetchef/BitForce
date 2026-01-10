@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, DollarSign, Share2, Sparkles, ArrowRight } from "lucide-react";
+import { Check, DollarSign, Share2, Sparkles, ArrowRight, ExternalLink } from "lucide-react";
 import type { Product } from "@/data/products";
 
 interface ProductCardProps {
@@ -19,6 +19,8 @@ export function ProductCard({ product, onShare, onLearnMore }: ProductCardProps)
         return "bg-green-600 text-white border-green-600";
       case "new":
         return "bg-purple-600 text-white border-purple-600";
+      case "included":
+        return "bg-amber-500 text-white border-amber-500";
       default:
         return "bg-primary text-primary-foreground";
     }
@@ -107,7 +109,16 @@ export function ProductCard({ product, onShare, onLearnMore }: ProductCardProps)
           </div>
           
           <div className="flex gap-2">
-            {onLearnMore && (
+            {product.externalUrl ? (
+              <Button 
+                className="flex-1"
+                onClick={() => window.open(product.externalUrl, '_blank', 'noopener,noreferrer')}
+                data-testid={`button-access-${product.id}`}
+              >
+                Access Now
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+            ) : onLearnMore && (
               <Button 
                 className="flex-1"
                 onClick={() => onLearnMore(product)}
