@@ -18,6 +18,7 @@ import Products from "@/pages/portal/Products";
 import PublicEvents from "@/pages/PublicEvents";
 import PublicProducts from "@/pages/PublicProducts";
 import ExplainerVideo from "@/pages/ExplainerVideo";
+import JoinBitForce from "@/pages/JoinBitForce";
 import SupportInbox from "@/pages/admin/SupportInbox";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/events" component={PublicEvents}/>
       <Route path="/products" component={PublicProducts}/>
       <Route path="/explainer" component={ExplainerVideo}/>
+      <Route path="/joinbitforce" component={JoinBitForce}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
