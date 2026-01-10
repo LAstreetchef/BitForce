@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ import {
   Cloud,
   Home,
   ArrowRight,
+  Play,
+  Pause,
+  RotateCcw,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -355,21 +358,83 @@ function StepNavigation({ steps, currentStep, onStepClick }: { steps: Step[]; cu
   );
 }
 
+const STEP_DURATION = 8000;
+
 export default function NextStep() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [stepProgress, setStepProgress] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
   const step = steps[currentStep];
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
+      setStepProgress(0);
+    } else {
+      setIsPlaying(false);
     }
+  }, [currentStep]);
+
+  const goPrev = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+      setStepProgress(0);
+    }
+  }, [currentStep]);
+
+  const restart = () => {
+    setCurrentStep(0);
+    setStepProgress(0);
+    setIsPlaying(true);
   };
 
-  const goPrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+  const togglePlay = useCallback(() => {
+    setIsPlaying(prev => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(() => {
+        goNext();
+      }, STEP_DURATION);
+      
+      progressRef.current = setInterval(() => {
+        setStepProgress(prev => Math.min(prev + 1, 100));
+      }, STEP_DURATION / 100);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
     }
-  };
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [isPlaying, goNext]);
+
+  useEffect(() => {
+    setStepProgress(0);
+  }, [currentStep]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "p" || e.key === "P") {
+        e.preventDefault();
+        togglePlay();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goNext, goPrev, togglePlay]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900" data-testid="page-nextstep">
@@ -504,6 +569,85 @@ export default function NextStep() {
       <AnimatePresence>
         <AmbassadorBuddy message={step.buddyMessage} visible={true} />
       </AnimatePresence>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-40">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-1 mb-3">
+            {steps.map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 h-1.5 rounded-full bg-white/20 overflow-hidden"
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-100 ${
+                    i < currentStep
+                      ? "bg-green-500 w-full"
+                      : i === currentStep
+                      ? "bg-blue-500"
+                      : "bg-transparent"
+                  }`}
+                  style={{
+                    width: i === currentStep ? `${stepProgress}%` : i < currentStep ? "100%" : "0%",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/20"
+                onClick={togglePlay}
+                data-testid="button-play-pause"
+              >
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/20"
+                onClick={restart}
+                data-testid="button-restart"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/20"
+                onClick={goPrev}
+                disabled={currentStep === 0}
+                data-testid="button-arrow-prev"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/20"
+                onClick={goNext}
+                disabled={currentStep >= steps.length - 1}
+                data-testid="button-arrow-next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            <div className="text-white/60 text-sm hidden md:block">
+              Step {currentStep + 1} of {steps.length}: {step.title} • Use arrow keys to navigate
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Badge className="bg-white/10 text-white/80">
+                {isPlaying ? "Auto-playing" : "Paused"}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
