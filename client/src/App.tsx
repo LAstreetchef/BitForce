@@ -22,6 +22,7 @@ import JoinBitForce from "@/pages/JoinBitForce";
 import NextStep from "@/pages/NextStep";
 import AmbassadorOne from "@/pages/AmbassadorOne";
 import SupportInbox from "@/pages/admin/SupportInbox";
+import TokenPitch from "@/pages/TokenPitch";
 
 function Router() {
   return (
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/joinbitforce" component={JoinBitForce}/>
       <Route path="/nextstep" component={NextStep}/>
       <Route path="/ambassadorone" component={AmbassadorOne}/>
+      <Route path="/token" component={TokenPitch}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
