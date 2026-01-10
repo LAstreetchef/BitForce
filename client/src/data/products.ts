@@ -3,6 +3,7 @@ import sessionImage from "@assets/generated_images/tech_mentor_one-time_session_
 import bundleImage from "@assets/generated_images/tech_companion_bundle_package_portrait.png";
 import securityScannerImage from "@assets/generated_images/digital_security_shield_scanner_illustration.png";
 import secretMessageImage from "@assets/Screenshot_2026-01-10_052350_1768040705760.png";
+import afterGlowImage from "@assets/Screenshot_2026-01-10_052814_1768040906938.png";
 
 export interface ProductFeature {
   text: string;
@@ -168,7 +169,7 @@ export const products: Product[] = [
       { text: "Easy sharing with family members" },
       { text: "Included FREE with your BitForce subscription" }
     ],
-    image: subscriptionImage,
+    image: afterGlowImage,
     badge: "Included Free",
     badgeType: "included",
     commissionInfo: "Included benefit - builds customer loyalty",
