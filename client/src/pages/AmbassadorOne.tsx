@@ -111,8 +111,8 @@ function PauloPresenter({ image, message, position = "right" }: { image: string;
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="absolute -inset-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-full blur-lg opacity-60 animate-pulse" />
-          <div className="relative w-24 h-28 md:w-28 md:h-32 overflow-hidden rounded-t-full rounded-b-3xl border-4 border-amber-400/50 shadow-2xl bg-gradient-to-b from-slate-800 to-slate-900">
-            <img src={image} alt="Paulo Benedeti" className="w-full h-full object-cover object-top" />
+          <div className="relative w-24 h-36 md:w-28 md:h-44 overflow-hidden rounded-t-full rounded-b-3xl border-4 border-amber-400/50 shadow-2xl bg-gradient-to-b from-slate-800 to-slate-900">
+            <img src={image} alt="Paulo Benedeti" className="w-full h-full object-cover object-[center_15%]" />
           </div>
         </motion.div>
       </div>
