@@ -4,6 +4,10 @@ import bundleImage from "@assets/generated_images/tech_companion_bundle_package_
 import securityScannerImage from "@assets/generated_images/digital_security_shield_scanner_illustration.png";
 import secretMessageImage from "@assets/Screenshot_2026-01-10_052350_1768040705760.png";
 import afterGlowImage from "@assets/Screenshot_2026-01-10_052814_1768040906938.png";
+import aiAssistantImage from "@assets/Screenshot_2026-01-09_153919_1768041392059.png";
+import securityCheckImage from "@assets/Screenshot_2026-01-09_153928_1768041392059.png";
+import friendFinderImage from "@assets/Screenshot_2026-01-09_153937_1768041392058.png";
+import propertyLookupImage from "@assets/Screenshot_2026-01-09_153951_1768041392058.png";
 
 export interface ProductFeature {
   text: string;
@@ -25,7 +29,7 @@ export interface Product {
   badge?: string;
   badgeType?: "popular" | "bestValue" | "new" | "included";
   commissionInfo: string;
-  category: "subscription" | "session" | "bundle" | "security" | "partner";
+  category: "subscription" | "session" | "bundle" | "security" | "partner" | "concierge";
   hasInteractiveFeature?: boolean;
   externalUrl?: string;
 }
@@ -205,6 +209,122 @@ export const products: Product[] = [
     commissionInfo: "Partner integration - drive engagement",
     category: "partner",
     externalUrl: "https://secretmessage4u.replit.app"
+  },
+  {
+    id: "concierge-ai-assistant",
+    name: "AI Tech Assistant",
+    tagline: "Instant answers to any tech question",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "Get instant help with tech tips, troubleshooting, and personalized guidance. Your ambassador uses this AI-powered assistant to provide you with expert answers whenever you need them.",
+    valueProposition: "Never wait for answers again. Your ambassador has access to an AI assistant that can help with any tech question - from smartphone tips to smart home setup advice.",
+    backstory: "Think of it as having a tech expert on speed dial. Your ambassador can quickly get the right answers and guidance to help you with any technology challenge.",
+    bestFor: ["Quick Questions", "Tech Guidance", "Troubleshooting"],
+    useCases: [
+      "Get quick answers about app features",
+      "Troubleshoot common tech issues",
+      "Learn tips for using devices",
+      "Understand tech terminology"
+    ],
+    features: [
+      { text: "Instant AI-powered answers" },
+      { text: "Personalized tech guidance" },
+      { text: "Available through your ambassador" },
+      { text: "Covers all devices and apps" },
+      { text: "Plain language explanations" }
+    ],
+    image: aiAssistantImage,
+    badge: "Included",
+    badgeType: "included",
+    commissionInfo: "Included concierge service with subscription",
+    category: "concierge"
+  },
+  {
+    id: "concierge-security-check",
+    name: "Security Risk Check",
+    tagline: "Free 2-minute digital safety review",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "Your ambassador can run a quick security check to see if your email has been exposed in data breaches, check if your passwords are safe, and give you a personal security score with recommendations.",
+    valueProposition: "Stay protected online without the confusion. Your ambassador handles the technical security check and explains everything in simple terms, so you know exactly how to stay safe.",
+    backstory: "Data breaches happen every day. This service helps your ambassador identify potential risks and guide you through simple steps to protect yourself and your family online.",
+    bestFor: ["Digital Safety", "Privacy Protection", "Peace of Mind"],
+    useCases: [
+      "Check if email was exposed in breaches",
+      "Verify password safety",
+      "Get personalized security score",
+      "Receive actionable protection steps"
+    ],
+    features: [
+      { text: "Email exposure scan" },
+      { text: "Password safety check" },
+      { text: "Personal security score" },
+      { text: "Actionable recommendations" },
+      { text: "Easy-to-understand results" }
+    ],
+    image: securityCheckImage,
+    badge: "Included",
+    badgeType: "included",
+    commissionInfo: "Included concierge service with subscription",
+    category: "concierge"
+  },
+  {
+    id: "concierge-friend-finder",
+    name: "Old Friend & Family Finder",
+    tagline: "Reconnect with people from your past",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "Lost touch with an old friend, family member, or former colleague? Your ambassador can help search public records to find contact information and help you reconnect with people who matter.",
+    valueProposition: "Reconnecting with loved ones shouldn't be complicated. Your ambassador handles the search and provides you with the information you need to reach out.",
+    backstory: "Life gets busy and people drift apart. This service helps bridge the gap by searching publicly available information to help you find and reconnect with important people from your past.",
+    bestFor: ["Family Reunions", "Lost Connections", "Reconnecting"],
+    useCases: [
+      "Find old friends from school",
+      "Reconnect with family members",
+      "Locate former colleagues",
+      "Plan reunions and gatherings"
+    ],
+    features: [
+      { text: "Public records search" },
+      { text: "Confidence scoring for matches" },
+      { text: "Contact information lookup" },
+      { text: "Nationwide database access" },
+      { text: "Privacy-respecting searches" }
+    ],
+    image: friendFinderImage,
+    badge: "Included",
+    badgeType: "included",
+    commissionInfo: "Included concierge service with subscription",
+    category: "concierge"
+  },
+  {
+    id: "concierge-property-insights",
+    name: "Property Insights",
+    tagline: "Weather, neighborhood data & home tips",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "Your ambassador can generate comprehensive property reports including real-time weather, neighborhood statistics, and personalized home maintenance recommendations based on your location.",
+    valueProposition: "Get valuable insights about your home and neighborhood. From weather alerts to local statistics, your ambassador provides helpful information tailored to where you live.",
+    backstory: "Knowing your neighborhood helps you make better decisions. This tool gives your ambassador access to weather data, census information, and location intelligence to better serve you.",
+    bestFor: ["Homeowners", "New Residents", "Weather Awareness"],
+    useCases: [
+      "Get local weather alerts and forecasts",
+      "Learn neighborhood demographics",
+      "Receive home maintenance tips",
+      "Understand local property trends"
+    ],
+    features: [
+      { text: "Real-time weather intelligence" },
+      { text: "Neighborhood demographics" },
+      { text: "Location mapping" },
+      { text: "Home maintenance recommendations" },
+      { text: "Personalized property insights" }
+    ],
+    image: propertyLookupImage,
+    badge: "Included",
+    badgeType: "included",
+    commissionInfo: "Included concierge service with subscription",
+    category: "concierge"
   }
 ];
 
@@ -289,5 +409,6 @@ export const categories = [
   { id: "session", name: "Single Sessions" },
   { id: "bundle", name: "Bundles" },
   { id: "security", name: "Security Tools" },
-  { id: "partner", name: "Partner Apps" }
+  { id: "partner", name: "Partner Apps" },
+  { id: "concierge", name: "Concierge Services" }
 ];
