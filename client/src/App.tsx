@@ -20,6 +20,7 @@ import PublicProducts from "@/pages/PublicProducts";
 import ExplainerVideo from "@/pages/ExplainerVideo";
 import JoinBitForce from "@/pages/JoinBitForce";
 import NextStep from "@/pages/NextStep";
+import AmbassadorOne from "@/pages/AmbassadorOne";
 import SupportInbox from "@/pages/admin/SupportInbox";
 
 function Router() {
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/explainer" component={ExplainerVideo}/>
       <Route path="/joinbitforce" component={JoinBitForce}/>
       <Route path="/nextstep" component={NextStep}/>
+      <Route path="/ambassadorone" component={AmbassadorOne}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
