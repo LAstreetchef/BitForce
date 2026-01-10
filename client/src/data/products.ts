@@ -2,6 +2,7 @@ import subscriptionImage from "@assets/generated_images/friendly_tech_buddy_subs
 import sessionImage from "@assets/generated_images/tech_mentor_one-time_session_portrait.png";
 import bundleImage from "@assets/generated_images/tech_companion_bundle_package_portrait.png";
 import securityScannerImage from "@assets/generated_images/digital_security_shield_scanner_illustration.png";
+import secretMessageImage from "@assets/Screenshot_2026-01-10_052350_1768040705760.png";
 
 export interface ProductFeature {
   text: string;
@@ -173,6 +174,36 @@ export const products: Product[] = [
     commissionInfo: "Included benefit - builds customer loyalty",
     category: "partner",
     externalUrl: "https://myafterglow.replit.app"
+  },
+  {
+    id: "secret-message",
+    name: "Secret Message",
+    tagline: "Playful pay-to-open messages",
+    price: "Free",
+    priceDetail: "to create",
+    description: "Send pictures, files, and messages that unlock with a payment. Set your price, share the link, and get paid when someone unlocks your secret message.",
+    valueProposition: "A fun and creative way to share exclusive content, surprise loved ones, or monetize your messages. Perfect for creators, gift-givers, and anyone who wants to add excitement to their digital communications.",
+    backstory: "Secret Message turns ordinary messages into exciting reveals. Whether you're sharing a surprise announcement, exclusive content, or a heartfelt note - the anticipation of unlocking makes every message special.",
+    bestFor: ["Creators", "Gift Givers", "Content Sharers"],
+    useCases: [
+      "Send surprise announcements to friends and family",
+      "Share exclusive content with a paywall",
+      "Create fun reveals for special occasions",
+      "Monetize your creative messages"
+    ],
+    features: [
+      { text: "Create messages with custom unlock prices" },
+      { text: "Share unique links with anyone" },
+      { text: "Get paid when messages are unlocked" },
+      { text: "Messages reveal as beautiful images" },
+      { text: "Simple and fun to use" }
+    ],
+    image: secretMessageImage,
+    badge: "New",
+    badgeType: "new",
+    commissionInfo: "Partner integration - drive engagement",
+    category: "partner",
+    externalUrl: "https://secretmessage4u.replit.app"
   }
 ];
 
