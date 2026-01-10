@@ -31,11 +31,11 @@ export function ProductCard({ product, onShare, onLearnMore }: ProductCardProps)
       className="overflow-visible flex flex-col h-full hover-elevate transition-all duration-300"
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative">
+      <div className={`relative ${product.category === "concierge" ? "bg-slate-100 dark:bg-slate-800" : ""}`}>
         <img 
           src={product.image} 
           alt={product.name}
-          className="w-full h-48 object-cover rounded-t-md"
+          className={`w-full h-48 rounded-t-md ${product.category === "concierge" ? "object-contain p-2" : "object-cover"}`}
           data-testid={`img-product-${product.id}`}
         />
         {product.badge && (
