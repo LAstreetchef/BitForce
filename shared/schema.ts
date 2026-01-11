@@ -351,3 +351,27 @@ export const insertAmbassadorContactSchema = createInsertSchema(ambassadorContac
 
 export type AmbassadorContact = typeof ambassadorContacts.$inferSelect;
 export type InsertAmbassadorContact = z.infer<typeof insertAmbassadorContactSchema>;
+
+// Withings OAuth tokens for customer health device connections
+export const withingsTokens = pgTable("withings_tokens", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerName: text("customer_name"),
+  withingsUserId: text("withings_user_id").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  scope: text("scope"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertWithingsTokenSchema = createInsertSchema(withingsTokens).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type WithingsToken = typeof withingsTokens.$inferSelect;
+export type InsertWithingsToken = z.infer<typeof insertWithingsTokenSchema>;

@@ -13,6 +13,7 @@ import {
   supportMessages,
   ambassadorInvitations,
   ambassadorContacts,
+  withingsTokens,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -41,6 +42,8 @@ import {
   type InsertAmbassadorInvitation,
   type AmbassadorContact,
   type InsertAmbassadorContact,
+  type WithingsToken,
+  type InsertWithingsToken,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -113,6 +116,14 @@ export interface IStorage {
   getAmbassadorContacts(ambassadorUserId: string): Promise<AmbassadorContact[]>;
   deleteAmbassadorContact(id: number, ambassadorUserId: string): Promise<boolean>;
   updateContactEmailSent(id: number, ambassadorUserId: string, emailType: string): Promise<AmbassadorContact | undefined>;
+  
+  // Withings Tokens
+  createWithingsToken(token: InsertWithingsToken): Promise<WithingsToken>;
+  getWithingsTokensByAmbassador(ambassadorUserId: string): Promise<WithingsToken[]>;
+  getWithingsTokenByCustomer(ambassadorUserId: string, customerEmail: string): Promise<WithingsToken | null>;
+  getWithingsTokenById(id: number): Promise<WithingsToken | null>;
+  updateWithingsToken(id: number, updates: Partial<WithingsToken>): Promise<WithingsToken>;
+  deleteWithingsToken(id: number, ambassadorUserId: string): Promise<boolean>;
 }
 
 function generateReferralCode(): string {
@@ -576,6 +587,58 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return updated;
+  }
+
+  // Withings Token Methods
+  async createWithingsToken(token: InsertWithingsToken): Promise<WithingsToken> {
+    const [created] = await getDb().insert(withingsTokens)
+      .values(token)
+      .returning();
+    return created;
+  }
+
+  async getWithingsTokensByAmbassador(ambassadorUserId: string): Promise<WithingsToken[]> {
+    return getDb().select()
+      .from(withingsTokens)
+      .where(eq(withingsTokens.ambassadorUserId, ambassadorUserId))
+      .orderBy(desc(withingsTokens.createdAt));
+  }
+
+  async getWithingsTokenByCustomer(ambassadorUserId: string, customerEmail: string): Promise<WithingsToken | null> {
+    const [token] = await getDb().select()
+      .from(withingsTokens)
+      .where(and(
+        eq(withingsTokens.ambassadorUserId, ambassadorUserId),
+        eq(withingsTokens.customerEmail, customerEmail)
+      ))
+      .limit(1);
+    return token || null;
+  }
+
+  async getWithingsTokenById(id: number): Promise<WithingsToken | null> {
+    const [token] = await getDb().select()
+      .from(withingsTokens)
+      .where(eq(withingsTokens.id, id))
+      .limit(1);
+    return token || null;
+  }
+
+  async updateWithingsToken(id: number, updates: Partial<WithingsToken>): Promise<WithingsToken> {
+    const [updated] = await getDb().update(withingsTokens)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(withingsTokens.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWithingsToken(id: number, ambassadorUserId: string): Promise<boolean> {
+    const result = await getDb().delete(withingsTokens)
+      .where(and(
+        eq(withingsTokens.id, id),
+        eq(withingsTokens.ambassadorUserId, ambassadorUserId)
+      ))
+      .returning();
+    return result.length > 0;
   }
 }
 

@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AskAI } from "@/components/AskAI";
 import { BreachScannerModal } from "@/components/BreachScannerModal";
 import { OldFriendFinderModal } from "@/components/OldFriendFinderModal";
+import { WithingsHealthTool } from "@/components/WithingsHealthTool";
 import type { Lead } from "@shared/schema";
 
 interface WeatherData {
@@ -291,6 +292,8 @@ export default function Tools() {
           </p>
         </CardContent>
       </Card>
+
+      <WithingsHealthTool />
 
       <Card>
         <CardHeader>

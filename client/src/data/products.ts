@@ -8,6 +8,9 @@ import aiAssistantImage from "@assets/Screenshot_2026-01-09_153919_1768041392059
 import securityCheckImage from "@assets/Screenshot_2026-01-09_153928_1768041392059.png";
 import friendFinderImage from "@assets/Screenshot_2026-01-09_153937_1768041392058.png";
 import propertyLookupImage from "@assets/Screenshot_2026-01-09_153951_1768041392058.png";
+import withingsScaleImage from "@assets/stock_images/smart_scale_digital__8f241d7f.jpg";
+import withingsBPImage from "@assets/stock_images/blood_pressure_monit_b3eebfef.jpg";
+import withingsWatchImage from "@assets/stock_images/smart_watch_health_f_e526cbfb.jpg";
 
 export interface ProductFeature {
   text: string;
@@ -29,7 +32,7 @@ export interface Product {
   badge?: string;
   badgeType?: "popular" | "bestValue" | "new" | "included";
   commissionInfo: string;
-  category: "subscription" | "session" | "bundle" | "security" | "partner" | "concierge";
+  category: "subscription" | "session" | "bundle" | "security" | "partner" | "concierge" | "health";
   hasInteractiveFeature?: boolean;
   externalUrl?: string;
 }
@@ -325,6 +328,96 @@ export const products: Product[] = [
     badgeType: "included",
     commissionInfo: "Included concierge service with subscription",
     category: "concierge"
+  },
+  {
+    id: "withings-body-scale",
+    name: "Withings Body Smart Scale",
+    tagline: "Track weight & body composition at home",
+    price: "$99",
+    priceDetail: "one-time purchase",
+    description: "A smart scale that measures weight, body fat, muscle mass, water percentage, and bone mass. Syncs automatically with your phone and your ambassador can help you understand your health trends.",
+    valueProposition: "Take control of your health journey with accurate measurements that sync to your phone. Your ambassador can review your progress and provide personalized health insights.",
+    backstory: "Withings has been making medical-grade smart devices for over a decade. Their Body Smart Scale brings clinical accuracy to your home, making it easy to track your health goals.",
+    bestFor: ["Health Tracking", "Weight Management", "Fitness Goals"],
+    useCases: [
+      "Track weight and body composition trends",
+      "Monitor progress toward fitness goals",
+      "Share health data with family or doctors",
+      "Get personalized insights from your ambassador"
+    ],
+    features: [
+      { text: "Weight, BMI, and body composition" },
+      { text: "Automatic sync to smartphone" },
+      { text: "Multi-user support (up to 8 users)" },
+      { text: "Pregnancy tracker mode" },
+      { text: "Ambassador-assisted health insights" }
+    ],
+    image: withingsScaleImage,
+    badge: "New",
+    badgeType: "new",
+    commissionInfo: "Earn $15 commission per sale",
+    category: "health",
+    externalUrl: "https://www.withings.com/us/en/body-smart"
+  },
+  {
+    id: "withings-bpm-connect",
+    name: "Withings BPM Connect",
+    tagline: "Medical-grade blood pressure monitoring",
+    price: "$99",
+    priceDetail: "one-time purchase",
+    description: "An FDA-cleared blood pressure monitor that provides accurate readings and syncs wirelessly to your phone. Your ambassador can help you track trends and understand what your numbers mean.",
+    valueProposition: "Monitor your blood pressure with clinical accuracy at home. Your ambassador can review your readings and help you maintain a healthy blood pressure routine.",
+    backstory: "High blood pressure affects millions but often goes undetected. The Withings BPM Connect brings hospital-grade accuracy home, making it easy to stay on top of your cardiovascular health.",
+    bestFor: ["Heart Health", "Blood Pressure Monitoring", "Seniors"],
+    useCases: [
+      "Track blood pressure trends over time",
+      "Share readings with your doctor",
+      "Get reminders to take measurements",
+      "Understand your cardiovascular health"
+    ],
+    features: [
+      { text: "FDA-cleared medical device" },
+      { text: "Clinically validated accuracy" },
+      { text: "Automatic sync to smartphone" },
+      { text: "Color-coded results for easy reading" },
+      { text: "Ambassador-assisted health monitoring" }
+    ],
+    image: withingsBPImage,
+    badge: "New",
+    badgeType: "new",
+    commissionInfo: "Earn $15 commission per sale",
+    category: "health",
+    externalUrl: "https://www.withings.com/us/en/bpm-connect"
+  },
+  {
+    id: "withings-scanwatch",
+    name: "Withings ScanWatch",
+    tagline: "Health monitoring on your wrist",
+    price: "$299",
+    priceDetail: "one-time purchase",
+    description: "A hybrid smartwatch that tracks heart rate, blood oxygen, sleep quality, and activity. Features ECG capability and can detect irregular heart rhythms. Your ambassador can help you understand your health data.",
+    valueProposition: "Wear your health monitor 24/7 with a stylish watch that tracks everything from sleep to heart health. Your ambassador provides personalized insights based on your data.",
+    backstory: "The Withings ScanWatch combines the elegance of a traditional watch with powerful health sensors. It's the only smartwatch that can detect both AFib and sleep apnea, making it perfect for proactive health monitoring.",
+    bestFor: ["Active Lifestyle", "Heart Health", "Sleep Tracking"],
+    useCases: [
+      "Track heart rate and blood oxygen levels",
+      "Monitor sleep quality and patterns",
+      "Detect irregular heart rhythms (AFib)",
+      "Track daily activity and exercise"
+    ],
+    features: [
+      { text: "ECG and blood oxygen monitoring" },
+      { text: "24/7 heart rate tracking" },
+      { text: "Advanced sleep analysis" },
+      { text: "30-day battery life" },
+      { text: "Ambassador-assisted health insights" }
+    ],
+    image: withingsWatchImage,
+    badge: "New",
+    badgeType: "new",
+    commissionInfo: "Earn $45 commission per sale",
+    category: "health",
+    externalUrl: "https://www.withings.com/us/en/scanwatch"
   }
 ];
 
@@ -410,5 +503,6 @@ export const categories = [
   { id: "bundle", name: "Bundles" },
   { id: "security", name: "Security Tools" },
   { id: "partner", name: "Partner Apps" },
-  { id: "concierge", name: "Concierge Services" }
+  { id: "concierge", name: "Concierge Services" },
+  { id: "health", name: "Health Devices" }
 ];

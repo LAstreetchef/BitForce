@@ -1610,6 +1610,180 @@ export async function registerRoutes(
     }
   });
 
+  // ============= WITHINGS HEALTH API ROUTES =============
+  
+  // Get Withings OAuth authorization URL
+  app.get("/api/withings/auth-url", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { getWithingsAuthUrl, createSignedState, generateNonce } = await import("./services/withings");
+      const user = req.user as any;
+      const customerEmail = req.query.customerEmail as string;
+      const customerName = req.query.customerName as string;
+      
+      if (!customerEmail) {
+        return res.status(400).json({ message: "Customer email is required" });
+      }
+      
+      // Create a signed state with HMAC to prevent forgery
+      const nonce = generateNonce();
+      const state = createSignedState({
+        ambassadorUserId: user.id,
+        customerEmail,
+        customerName: customerName || "",
+        nonce,
+      });
+      
+      const redirectUri = `${req.protocol}://${req.get("host")}/api/withings/callback`;
+      const authUrl = getWithingsAuthUrl(redirectUri, state);
+      
+      res.json({ authUrl });
+    } catch (err) {
+      console.error("Withings auth URL error:", err);
+      res.status(500).json({ message: "Failed to generate Withings auth URL" });
+    }
+  });
+  
+  // Withings OAuth callback
+  app.get("/api/withings/callback", async (req: Request, res: Response) => {
+    try {
+      const { exchangeWithingsCode, verifyAndDecodeState } = await import("./services/withings");
+      const { code, state } = req.query as { code: string; state: string };
+      
+      if (!code || !state) {
+        return res.redirect("/portal/tools?error=missing_params");
+      }
+      
+      // Verify and decode the signed state
+      const stateData = verifyAndDecodeState(state);
+      if (!stateData) {
+        console.error("OAuth state verification failed - potential CSRF attack");
+        return res.redirect("/portal/tools?error=invalid_state");
+      }
+      
+      const redirectUri = `${req.protocol}://${req.get("host")}/api/withings/callback`;
+      
+      // Exchange code for tokens
+      const tokens = await exchangeWithingsCode(code, redirectUri);
+      
+      // Check if we already have a token for this customer
+      const existingToken = await storage.getWithingsTokenByCustomer(
+        stateData.ambassadorUserId,
+        stateData.customerEmail
+      );
+      
+      if (existingToken) {
+        // Update existing token
+        await storage.updateWithingsToken(existingToken.id, {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          withingsUserId: tokens.userId,
+          scope: tokens.scope,
+        });
+      } else {
+        // Create new token
+        await storage.createWithingsToken({
+          ambassadorUserId: stateData.ambassadorUserId,
+          customerEmail: stateData.customerEmail,
+          customerName: stateData.customerName || null,
+          withingsUserId: tokens.userId,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          scope: tokens.scope,
+        });
+      }
+      
+      res.redirect("/portal/tools?success=withings_connected");
+    } catch (err) {
+      console.error("Withings callback error:", err);
+      res.redirect("/portal/tools?error=auth_failed");
+    }
+  });
+  
+  // Get connected Withings customers for ambassador
+  app.get("/api/withings/customers", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const tokens = await storage.getWithingsTokensByAmbassador(user.id);
+      
+      res.json(tokens.map((t) => ({
+        id: t.id,
+        customerEmail: t.customerEmail,
+        customerName: t.customerName,
+        connectedAt: t.createdAt,
+        lastUpdated: t.updatedAt,
+      })));
+    } catch (err) {
+      console.error("Get Withings customers error:", err);
+      res.status(500).json({ message: "Failed to get connected customers" });
+    }
+  });
+  
+  // Get health data for a connected customer
+  app.get("/api/withings/customer/:id/health", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { getWithingsHealthSummary, refreshWithingsToken } = await import("./services/withings");
+      const user = req.user as any;
+      const tokenId = parseInt(req.params.id);
+      
+      const token = await storage.getWithingsTokenById(tokenId);
+      
+      if (!token || token.ambassadorUserId !== user.id) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      // Check if token is expired and refresh if needed
+      let accessToken = token.accessToken;
+      if (new Date() >= token.expiresAt) {
+        try {
+          const newTokens = await refreshWithingsToken(token.refreshToken);
+          await storage.updateWithingsToken(token.id, {
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            expiresAt: newTokens.expiresAt,
+          });
+          accessToken = newTokens.accessToken;
+        } catch (refreshError) {
+          console.error("Token refresh failed:", refreshError);
+          return res.status(401).json({ message: "Customer needs to reconnect their device" });
+        }
+      }
+      
+      const healthData = await getWithingsHealthSummary(accessToken);
+      
+      res.json({
+        customer: {
+          email: token.customerEmail,
+          name: token.customerName,
+        },
+        health: healthData,
+      });
+    } catch (err) {
+      console.error("Get Withings health data error:", err);
+      res.status(500).json({ message: "Failed to get health data" });
+    }
+  });
+  
+  // Disconnect a customer's Withings account
+  app.delete("/api/withings/customer/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const tokenId = parseInt(req.params.id);
+      
+      const deleted = await storage.deleteWithingsToken(tokenId, user.id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete Withings customer error:", err);
+      res.status(500).json({ message: "Failed to disconnect customer" });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   setTimeout(async () => {
     try {
