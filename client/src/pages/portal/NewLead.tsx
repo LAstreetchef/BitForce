@@ -42,7 +42,7 @@ export default function NewLead() {
   const createLeadMutation = useMutation({
     mutationFn: async (data: { customer: CustomerFormValues; services: string[]; summary: string }) => {
       const response = await apiRequest("POST", "/api/leads", {
-        name: data.customer.fullName,
+        fullName: data.customer.fullName,
         email: data.customer.email,
         phone: data.customer.phone,
         address: data.customer.address,
