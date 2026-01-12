@@ -30,8 +30,9 @@ import {
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { SupportChat } from "@/components/SupportChat";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import SubscriptionRequired from "@/pages/SubscriptionRequired";
@@ -55,6 +56,18 @@ interface SubscriptionStatus {
   isAmbassador: boolean;
   subscriptionStatus: string;
   referralCode: string | null;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+}
+
+interface OnboardingStatus {
+  exists: boolean;
+  onboardingCompleted: boolean;
+  onboardingStep: number;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  referredByCode?: string;
 }
 
 export function PortalLayout({ children }: PortalLayoutProps) {
@@ -62,6 +75,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: subscriptionStatus, isLoading: subscriptionLoading, isFetched: subscriptionFetched } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/ambassador/subscription-status", user?.id],
@@ -72,7 +86,21 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     enabled: !!user?.id,
   });
 
+  const { data: onboardingStatus, isLoading: onboardingLoading } = useQuery<OnboardingStatus>({
+    queryKey: ["/api/ambassador/onboarding-status", user?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/ambassador/onboarding-status?userId=${user?.id}`);
+      return res.json();
+    },
+    enabled: !!user?.id && subscriptionStatus?.isAmbassador && subscriptionStatus?.subscriptionStatus === "active",
+  });
+
   const isSubscriptionCheckComplete = !!user?.id && subscriptionFetched;
+
+  const handleOnboardingComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/ambassador/onboarding-status", user?.id] });
+    queryClient.invalidateQueries({ queryKey: ["/api/ambassador/subscription-status", user?.id] });
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -127,6 +155,32 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   if (!subscriptionStatus?.isAmbassador || subscriptionStatus?.subscriptionStatus !== "active") {
     return <SubscriptionRequired userId={user?.id || ""} />;
+  }
+
+  if (onboardingLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-muted-foreground">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (onboardingStatus && !onboardingStatus.onboardingCompleted) {
+    return (
+      <OnboardingWizard
+        onComplete={handleOnboardingComplete}
+        initialData={{
+          fullName: onboardingStatus.fullName,
+          email: onboardingStatus.email,
+          phone: onboardingStatus.phone,
+          referredByCode: onboardingStatus.referredByCode,
+          onboardingStep: onboardingStatus.onboardingStep,
+        }}
+      />
+    );
   }
 
   const userInitials = user?.firstName && user?.lastName 

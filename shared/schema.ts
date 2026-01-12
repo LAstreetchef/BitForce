@@ -11,6 +11,7 @@ export const ambassadorSubscriptions = pgTable("ambassador_subscriptions", {
   userId: text("user_id").notNull(),
   email: text("email").notNull(),
   fullName: text("full_name").notNull(),
+  phone: text("phone"),
   referralCode: text("referral_code").notNull().unique(),
   referredByCode: text("referred_by_code"),
   stripeCustomerId: text("stripe_customer_id"),
@@ -18,6 +19,10 @@ export const ambassadorSubscriptions = pgTable("ambassador_subscriptions", {
   signupFeePaid: boolean("signup_fee_paid").default(false),
   subscriptionStatus: text("subscription_status").default("inactive"),
   firstMonthCompleted: boolean("first_month_completed").default(false),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  onboardingStep: integer("onboarding_step").default(0),
+  agreedToTerms: boolean("agreed_to_terms").default(false),
+  agreedToTermsAt: timestamp("agreed_to_terms_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

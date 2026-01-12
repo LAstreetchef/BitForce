@@ -132,6 +132,13 @@ export function registerCouponAppRoutes(router: Router) {
         if (!ambassador) {
           return res.status(404).json({ error: "Ambassador not found" });
         }
+
+        if (!ambassador.onboardingCompleted) {
+          return res.status(403).json({ 
+            error: "Onboarding not completed",
+            message: "Please complete your ambassador onboarding in the BitForce portal before using the API"
+          });
+        }
         
         const accessToken = generateToken();
         const refreshToken = generateToken();

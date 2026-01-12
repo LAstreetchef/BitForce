@@ -420,6 +420,8 @@ export async function registerRoutes(
         referralCode: ambassador.referralCode,
         signupFeePaid: ambassador.signupFeePaid,
         firstMonthCompleted: ambassador.firstMonthCompleted,
+        onboardingCompleted: ambassador.onboardingCompleted,
+        onboardingStep: ambassador.onboardingStep,
         totalBonusesEarned: totalBonuses,
         totalOverridesEarned: totalOverrides,
         pendingBonuses: bonuses.filter(b => b.status === "pending").length,
@@ -439,6 +441,115 @@ export async function registerRoutes(
       recurringOverridePercent: AMBASSADOR_PRICES.recurringOverridePercent,
       monthlyPassivePerReferral: (AMBASSADOR_PRICES.monthlySubscription * AMBASSADOR_PRICES.recurringOverridePercent / 100) / 100,
     });
+  });
+
+  app.post("/api/ambassador/onboarding", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const authenticatedUserId = user?.claims?.sub;
+      const { userId, step, data } = req.body;
+      
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (!userId) {
+        return res.status(400).json({ message: "Missing userId" });
+      }
+
+      if (authenticatedUserId !== userId) {
+        return res.status(403).json({ message: "Unauthorized: cannot update another user's onboarding" });
+      }
+
+      if (typeof step !== "number" || step < 0 || step > 3) {
+        return res.status(400).json({ message: "Invalid step value" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      if (!ambassador) {
+        return res.status(404).json({ message: "Ambassador not found" });
+      }
+
+      const updates: Partial<typeof ambassador> = {
+        onboardingStep: step,
+      };
+
+      if (data?.fullName && typeof data.fullName === "string") {
+        updates.fullName = data.fullName.trim();
+      }
+      if (data?.phone && typeof data.phone === "string") {
+        updates.phone = data.phone.trim();
+      }
+      if (data?.email && typeof data.email === "string") {
+        updates.email = data.email.trim();
+      }
+      if (data?.referredByCode !== undefined) {
+        updates.referredByCode = data.referredByCode ? String(data.referredByCode).trim() : null;
+      }
+      
+      if (data?.agreedToTerms === true) {
+        updates.agreedToTerms = true;
+        updates.agreedToTermsAt = new Date();
+      }
+
+      if (step >= 3 && data?.agreedToTerms === true) {
+        updates.onboardingCompleted = true;
+      }
+
+      const updated = await storage.updateAmbassadorSubscription(ambassador.id, updates);
+
+      res.json({
+        success: true,
+        onboardingStep: updated.onboardingStep,
+        onboardingCompleted: updated.onboardingCompleted,
+      });
+    } catch (err) {
+      console.error("Onboarding update error:", err);
+      res.status(500).json({ message: "Failed to update onboarding" });
+    }
+  });
+
+  app.get("/api/ambassador/onboarding-status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const authenticatedUserId = user?.claims?.sub;
+      const userId = req.query.userId as string;
+      
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (!userId) {
+        return res.status(400).json({ message: "Missing userId" });
+      }
+
+      if (authenticatedUserId !== userId) {
+        return res.status(403).json({ message: "Unauthorized: cannot access another user's onboarding status" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      if (!ambassador) {
+        return res.json({ 
+          exists: false,
+          onboardingCompleted: false,
+          onboardingStep: 0,
+        });
+      }
+
+      res.json({
+        exists: true,
+        onboardingCompleted: ambassador.onboardingCompleted,
+        onboardingStep: ambassador.onboardingStep,
+        fullName: ambassador.fullName,
+        email: ambassador.email,
+        phone: ambassador.phone,
+        referredByCode: ambassador.referredByCode,
+        agreedToTerms: ambassador.agreedToTerms,
+      });
+    } catch (err) {
+      console.error("Onboarding status error:", err);
+      res.status(500).json({ message: "Failed to get onboarding status" });
+    }
   });
 
   // Service Provider & Recommendations Routes
