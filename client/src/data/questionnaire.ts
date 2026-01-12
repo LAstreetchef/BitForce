@@ -40,6 +40,21 @@ export const questionnaire: Question[] = [
         serviceWeights: { "digitizing": 5 }
       },
       {
+        id: "afterglow",
+        label: "AfterGlow (memory preservation, digital legacy, family stories)",
+        serviceWeights: { "afterglow-app": 5, "digitizing": 2 }
+      },
+      {
+        id: "bitforce-saver",
+        label: "BitForce Saver (AI coupon books, savings, local deals)",
+        serviceWeights: { "bitforce-saver": 5 }
+      },
+      {
+        id: "concierge-services",
+        label: "Concierge Services (AI Assistant, Friend Finder, Property Insights)",
+        serviceWeights: { "concierge-ai-assistant": 3, "concierge-friend-finder": 3, "concierge-property-insights": 3 }
+      },
+      {
         id: "financial",
         label: "Financial (mortgage, loans, financing)",
         serviceWeights: { "financing": 5 }
