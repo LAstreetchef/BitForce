@@ -55,13 +55,15 @@ export default function Products() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={product} 
-            onShare={handleShareProduct}
-          />
-        ))}
+        {products
+          .filter((product) => product.category !== "health")
+          .map((product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              onShare={handleShareProduct}
+            />
+          ))}
       </div>
     </div>
   );
