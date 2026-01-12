@@ -30,8 +30,7 @@ import {
   Shield,
   Scan,
   CheckCircle,
-  Ticket,
-  Maximize2
+  Ticket
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -315,17 +314,16 @@ export default function Tools() {
               </div>
             </div>
             <Button 
-              variant="outline"
               className="gap-2"
               onClick={() => window.open("https://BitForceSaver.replit.app", "_blank")}
-              data-testid="button-open-coupon-fullscreen"
+              data-testid="button-launch-coupon-generator"
             >
-              <Maximize2 className="w-4 h-4" />
-              Open Full Screen
+              <ExternalLink className="w-4 h-4" />
+              Launch Generator
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
@@ -349,17 +347,7 @@ export default function Tools() {
               </div>
             </div>
           </div>
-          <div className="rounded-lg border overflow-hidden" style={{ height: "600px" }}>
-            <iframe
-              src="https://BitForceSaver.replit.app"
-              title="BitForce Saver - AI Coupon Book Generator"
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-              allow="clipboard-write"
-              data-testid="iframe-coupon-books"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground pt-2 border-t">
+          <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">
             Generate personalized coupon books in 3 simple steps: Enter location, let AI curate deals, and share with your customers.
           </p>
         </CardContent>
