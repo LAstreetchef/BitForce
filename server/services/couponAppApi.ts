@@ -93,6 +93,7 @@ function rateLimiter(req: Request, res: Response, next: NextFunction) {
 const tokenRequestSchema = z.object({
   grant_type: z.enum(["client_credentials", "refresh_token"]),
   ambassador_id: z.string().optional(),
+  email: z.string().email().optional(),
   refresh_token: z.string().optional(),
 });
 
@@ -117,11 +118,17 @@ export function registerCouponAppRoutes(router: Router) {
       const body = tokenRequestSchema.parse(req.body);
       
       if (body.grant_type === "client_credentials") {
-        if (!body.ambassador_id) {
-          return res.status(400).json({ error: "ambassador_id required for client_credentials grant" });
+        if (!body.ambassador_id && !body.email) {
+          return res.status(400).json({ error: "ambassador_id or email required for client_credentials grant" });
         }
         
-        const ambassador = await storage.getAmbassadorByUserId(body.ambassador_id);
+        let ambassador;
+        if (body.email) {
+          ambassador = await storage.getAmbassadorByEmail(body.email);
+        } else {
+          ambassador = await storage.getAmbassadorByUserId(body.ambassador_id!);
+        }
+        
         if (!ambassador) {
           return res.status(404).json({ error: "Ambassador not found" });
         }
@@ -131,7 +138,7 @@ export function registerCouponAppRoutes(router: Router) {
         const expiresAt = new Date(Date.now() + 3600 * 1000);
         
         await storage.createCouponAppToken({
-          ambassadorUserId: body.ambassador_id,
+          ambassadorUserId: ambassador.userId,
           accessToken,
           refreshToken,
           expiresAt,
@@ -144,6 +151,7 @@ export function registerCouponAppRoutes(router: Router) {
           token_type: "Bearer",
           expires_in: 3600,
           scope: "read:customers read:leads write:coupon-books",
+          ambassador_id: ambassador.userId,
         });
       } else if (body.grant_type === "refresh_token") {
         if (!body.refresh_token) {

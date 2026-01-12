@@ -63,6 +63,7 @@ export interface IStorage {
   
   createAmbassadorSubscription(subscription: InsertAmbassadorSubscription): Promise<AmbassadorSubscription>;
   getAmbassadorByUserId(userId: string): Promise<AmbassadorSubscription | null>;
+  getAmbassadorByEmail(email: string): Promise<AmbassadorSubscription | null>;
   getAmbassadorByReferralCode(code: string): Promise<AmbassadorSubscription | null>;
   getAmbassadorByStripeCustomerId(customerId: string): Promise<AmbassadorSubscription | null>;
   updateAmbassadorSubscription(id: number, updates: Partial<AmbassadorSubscription>): Promise<AmbassadorSubscription>;
@@ -190,6 +191,13 @@ export class DatabaseStorage implements IStorage {
     const [subscription] = await getDb().select()
       .from(ambassadorSubscriptions)
       .where(eq(ambassadorSubscriptions.userId, userId));
+    return subscription || null;
+  }
+
+  async getAmbassadorByEmail(email: string): Promise<AmbassadorSubscription | null> {
+    const [subscription] = await getDb().select()
+      .from(ambassadorSubscriptions)
+      .where(eq(ambassadorSubscriptions.email, email));
     return subscription || null;
   }
 

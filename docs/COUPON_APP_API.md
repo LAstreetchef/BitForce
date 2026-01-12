@@ -35,11 +35,19 @@ Content-Type: application/json
 X-API-Key: your-api-key
 ```
 
-**Request Body:**
+**Request Body (using ambassador ID):**
 ```json
 {
   "grant_type": "client_credentials",
   "ambassador_id": "ambassador-user-id"
+}
+```
+
+**Request Body (using email - recommended):**
+```json
+{
+  "grant_type": "client_credentials",
+  "email": "ambassador@example.com"
 }
 ```
 
@@ -50,13 +58,16 @@ X-API-Key: your-api-key
   "refresh_token": "xyz789ghi012...",
   "token_type": "Bearer",
   "expires_in": 3600,
-  "scope": "read:customers read:leads write:coupon-books"
+  "scope": "read:customers read:leads write:coupon-books",
+  "ambassador_id": "ambassador-user-id"
 }
 ```
 
 **Error Responses:**
-- 400: `{ "error": "ambassador_id required for client_credentials grant" }`
+- 400: `{ "error": "ambassador_id or email required for client_credentials grant" }`
 - 404: `{ "error": "Ambassador not found" }`
+
+**Note:** You can provide either `ambassador_id` or `email`. If both are provided, `email` takes precedence.
 
 ### Step 3: Refresh Token
 
