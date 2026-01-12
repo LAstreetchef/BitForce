@@ -11,6 +11,7 @@ import propertyLookupImage from "@assets/Screenshot_2026-01-09_153951_1768041392
 import withingsScaleImage from "@assets/stock_images/smart_scale_digital__8f241d7f.jpg";
 import withingsBPImage from "@assets/stock_images/blood_pressure_monit_b3eebfef.jpg";
 import withingsWatchImage from "@assets/stock_images/smart_watch_health_f_e526cbfb.jpg";
+import couponSaverImage from "@assets/generated_images/ai_coupon_book_savings_illustration.png";
 
 export interface ProductFeature {
   text: string;
@@ -212,6 +213,36 @@ export const products: Product[] = [
     commissionInfo: "Partner integration - drive engagement",
     category: "partner",
     externalUrl: "https://secretmessage4u.replit.app"
+  },
+  {
+    id: "bitforce-saver",
+    name: "BitForce Saver",
+    tagline: "AI-powered coupon books for your customers",
+    price: "Included",
+    priceDetail: "with subscription",
+    description: "Generate personalized, valuable coupon collections in seconds. Our proprietary AI engine curates coupons matched specifically for each customer based on their location and demographics.",
+    valueProposition: "Delight your customers with AI-curated savings tailored to their lifestyle. Enter any zip code to discover local deals, discounts, and exclusive offers - then share personalized digital coupon books.",
+    backstory: "In today's digital world, finding real value is harder than ever. BitForce Saver uses proprietary AI to scour thousands of sources and find the most valuable coupons tailored to your customers' needs and location.",
+    bestFor: ["Customer Engagement", "Value-Add Service", "Local Deals"],
+    useCases: [
+      "Create personalized coupon books for customers",
+      "Find location-based deals and discounts",
+      "Add your own branded coupons to collections",
+      "Build customer loyalty with exclusive savings"
+    ],
+    features: [
+      { text: "AI-powered coupon curation" },
+      { text: "Location-based deal discovery" },
+      { text: "Custom branded coupon creation" },
+      { text: "Personalized digital coupon books" },
+      { text: "Instant generation in 3 simple steps" }
+    ],
+    image: couponSaverImage,
+    badge: "New",
+    badgeType: "new",
+    commissionInfo: "Included tool - builds customer loyalty",
+    category: "partner",
+    externalUrl: "https://BitForceSaver.replit.app"
   },
   {
     id: "concierge-ai-assistant",
