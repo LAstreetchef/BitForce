@@ -292,6 +292,72 @@ export default function Home() {
           </div>
         </section>
 
+        {/* AI Coupon Book Generator Section */}
+        <section id="coupon-generator" className="py-16 bg-gradient-to-b from-slate-50 to-white" data-testid="section-coupon-generator">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 font-medium text-sm mb-4">
+                <Gift className="w-4 h-4" />
+                <span>Free Tool for Everyone</span>
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
+                AI Coupon Book Generator
+              </h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Discover personalized savings with our AI-powered coupon generator. Get exclusive deals tailored to your preferences.
+              </p>
+            </div>
+            
+            <Card className="max-w-4xl mx-auto overflow-hidden shadow-xl">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3 text-white">
+                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">BitForceSaver</h3>
+                    <p className="text-sm text-green-100">Powered by AI</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="bg-white/10 border-white/30 text-white"
+                  onClick={() => window.open('https://BitForceSaver.replit.app', '_blank', 'noopener,noreferrer')}
+                  data-testid="button-launch-saver"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Launch Full App
+                </Button>
+              </div>
+              
+              <div className="relative">
+                <iframe
+                  src="https://BitForceSaver.replit.app/explainer"
+                  className="w-full h-[500px] border-0"
+                  title="AI Coupon Book Generator"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  data-testid="iframe-coupon-generator"
+                />
+              </div>
+              
+              <div className="bg-slate-50 px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Shield className="w-4 h-4 text-green-600" />
+                  <span>Secure & Private</span>
+                </div>
+                <Button
+                  onClick={() => window.open('https://BitForceSaver.replit.app', '_blank', 'noopener,noreferrer')}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-get-coupons"
+                >
+                  <Gift className="w-4 h-4 mr-2" />
+                  Get Your Personalized Coupons
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </section>
+
         {/* Ambassador Earnings Section */}
         <section id="earnings" className="py-16 bg-white" data-testid="section-earnings">
           <div className="container mx-auto px-4">
