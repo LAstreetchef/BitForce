@@ -1904,15 +1904,26 @@ export async function registerRoutes(
   });
 
   // Initialize providers and run scraper asynchronously after startup
-  setTimeout(async () => {
-    try {
-      await initializeProviders();
-      const result = await runScraper();
-      console.log(`Scraper completed: ${result.listingsCount} listings scraped`);
-    } catch (err) {
-      console.error("Scraper initialization failed (will retry on manual trigger):", err);
-    }
-  }, 1000);
+  // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
+  // Check for PORT env var as indicator of Cloud Run (it's always set there)
+  const isCloudRun = process.env.K_SERVICE || process.env.PORT === "8080";
+  const isProduction = process.env.NODE_ENV === "production" || isCloudRun;
+  const scraperDelay = isProduction ? 60000 : 1000;
+  
+  if (!isProduction) {
+    setTimeout(async () => {
+      try {
+        await initializeProviders();
+        const result = await runScraper();
+        console.log(`Scraper completed: ${result.listingsCount} listings scraped`);
+      } catch (err) {
+        console.error("Scraper initialization failed (will retry on manual trigger):", err);
+      }
+    }, scraperDelay);
+  } else {
+    console.log("[server] Production mode detected - scraper auto-run disabled for faster startup");
+    console.log("[server] Scraper will run on first manual trigger via /api/scraper/run");
+  }
 
   return httpServer;
 }
