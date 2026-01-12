@@ -29,7 +29,9 @@ import {
   Info,
   Shield,
   Scan,
-  CheckCircle
+  CheckCircle,
+  Ticket,
+  Maximize2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -294,6 +296,74 @@ export default function Tools() {
       </Card>
 
       <WithingsHealthTool />
+
+      <Card className="border-primary/20 bg-gradient-to-br from-green-500/5 to-emerald-500/10" data-testid="card-coupon-books-tool">
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <Ticket className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  AI Coupon Book Generator
+                  <Badge variant="secondary">New</Badge>
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Create personalized coupon books for your customers powered by AI
+                </CardDescription>
+              </div>
+            </div>
+            <Button 
+              variant="outline"
+              className="gap-2"
+              onClick={() => window.open("https://BitForceSaver.replit.app", "_blank")}
+              data-testid="button-open-coupon-fullscreen"
+            >
+              <Maximize2 className="w-4 h-4" />
+              Open Full Screen
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">AI-Powered Curation</p>
+                <p className="text-xs text-muted-foreground">Find the best deals tailored to each customer</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Location-Based Deals</p>
+                <p className="text-xs text-muted-foreground">Discover local discounts by zip code</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Custom Branded Coupons</p>
+                <p className="text-xs text-muted-foreground">Add your own offers to collections</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border overflow-hidden" style={{ height: "600px" }}>
+            <iframe
+              src="https://BitForceSaver.replit.app"
+              title="BitForce Saver - AI Coupon Book Generator"
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              allow="clipboard-write"
+              data-testid="iframe-coupon-books"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground pt-2 border-t">
+            Generate personalized coupon books in 3 simple steps: Enter location, let AI curate deals, and share with your customers.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
