@@ -202,6 +202,62 @@ export const questionnaire: Question[] = [
         serviceWeights: { "digitizing": 2, "ai-assistance": 2 }
       }
     ]
+  },
+  {
+    id: "ambassador-potential",
+    title: "AMBASSADOR POTENTIAL: Could this client be a good ambassador?",
+    description: "These questions help identify leads who might be interested in joining our ambassador program.",
+    type: "single",
+    options: [
+      {
+        id: "strong-candidate",
+        label: "Yes - They seem interested in earning extra income and helping others",
+        serviceWeights: { "ambassador-recruit": 5 }
+      },
+      {
+        id: "maybe-candidate",
+        label: "Maybe - They have a good network and are tech-savvy",
+        serviceWeights: { "ambassador-recruit": 3 }
+      },
+      {
+        id: "not-candidate",
+        label: "No - They're just looking for services",
+        serviceWeights: {}
+      },
+      {
+        id: "already-asked",
+        label: "Already discussed - They want to learn more about becoming an ambassador",
+        serviceWeights: { "ambassador-recruit": 5 }
+      }
+    ]
+  },
+  {
+    id: "ambassador-network",
+    title: "AMBASSADOR POTENTIAL: How connected is this client?",
+    description: "Larger networks mean more potential for referrals if they become an ambassador.",
+    type: "single",
+    options: [
+      {
+        id: "large-network",
+        label: "Very connected - Active in community, church, clubs, or organizations",
+        serviceWeights: { "ambassador-recruit": 3 }
+      },
+      {
+        id: "medium-network",
+        label: "Moderately connected - Has friends and family they stay in touch with",
+        serviceWeights: { "ambassador-recruit": 2 }
+      },
+      {
+        id: "small-network",
+        label: "Small circle - Keeps to themselves mostly",
+        serviceWeights: { "ambassador-recruit": 1 }
+      },
+      {
+        id: "unknown-network",
+        label: "Unknown - Didn't discuss their network",
+        serviceWeights: {}
+      }
+    ]
   }
 ];
 
