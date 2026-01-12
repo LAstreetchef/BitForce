@@ -17,6 +17,29 @@ Production: https://your-domain.replit.app
 Development: http://localhost:5000
 ```
 
+## Prerequisites
+
+### Ambassador Onboarding Requirement
+
+Before an ambassador can use this API, they must complete the BitForce onboarding process:
+
+1. **Sign up** as a BitForce ambassador at the portal
+2. **Complete the 3-step onboarding wizard:**
+   - Step 1: Personal Information (full name)
+   - Step 2: Contact Details (email, phone, optional referral code)
+   - Step 3: Terms & Agreement (must accept terms of service)
+3. **Onboarding must be fully completed** before API tokens can be issued
+
+If an ambassador has not completed onboarding, token requests will fail with a 403 error:
+
+```json
+{
+  "error": "Ambassador has not completed onboarding. Please complete the onboarding process in the BitForce portal before using the API."
+}
+```
+
+---
+
 ## Authentication
 
 ### Step 1: Obtain API Key
@@ -417,6 +440,7 @@ By default, CORS is configured to allow requests from any origin (`*`). To restr
 |-----------|-------|-------------|
 | 400 | Bad Request | Invalid parameters, missing required fields, or invalid date format |
 | 401 | Unauthorized | Missing/invalid API key, missing/invalid/expired token |
+| 403 | Forbidden | Ambassador has not completed onboarding |
 | 404 | Not Found | Ambassador or resource not found |
 | 429 | Too Many Requests | Rate limit exceeded |
 | 500 | Internal Server Error | Server-side error |
