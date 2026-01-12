@@ -16,8 +16,8 @@ export const questionnaire: Question[] = [
   {
     id: "help-type",
     title: "What type of help is your client looking for?",
-    description: "Select the main category that best fits their needs.",
-    type: "single",
+    description: "Select all categories that apply to their needs.",
+    type: "multiple",
     options: [
       {
         id: "home-exterior",
