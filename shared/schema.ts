@@ -375,3 +375,46 @@ export const insertWithingsTokenSchema = createInsertSchema(withingsTokens).omit
 
 export type WithingsToken = typeof withingsTokens.$inferSelect;
 export type InsertWithingsToken = z.infer<typeof insertWithingsTokenSchema>;
+
+// Coupon App API tokens for OAuth-style authentication
+export const couponAppTokens = pgTable("coupon_app_tokens", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  accessToken: text("access_token").notNull().unique(),
+  refreshToken: text("refresh_token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  scope: text("scope").default("read:customers read:leads write:coupon-books"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+export const insertCouponAppTokenSchema = createInsertSchema(couponAppTokens).omit({ 
+  id: true, 
+  createdAt: true, 
+  lastUsedAt: true 
+});
+
+export type CouponAppToken = typeof couponAppTokens.$inferSelect;
+export type InsertCouponAppToken = z.infer<typeof insertCouponAppTokenSchema>;
+
+// Shared coupon books record for tracking
+export const sharedCouponBooks = pgTable("shared_coupon_books", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  customerId: integer("customer_id"),
+  leadId: integer("lead_id"),
+  title: text("title").notNull(),
+  couponsData: text("coupons_data").notNull(), // JSON string of coupons array
+  totalSavings: text("total_savings"),
+  shareVia: text("share_via").notNull(), // "email" | "sms"
+  status: text("status").default("pending"), // "pending" | "sent" | "failed"
+  sharedAt: timestamp("shared_at").defaultNow(),
+});
+
+export const insertSharedCouponBookSchema = createInsertSchema(sharedCouponBooks).omit({ 
+  id: true, 
+  sharedAt: true 
+});
+
+export type SharedCouponBook = typeof sharedCouponBooks.$inferSelect;
+export type InsertSharedCouponBook = z.infer<typeof insertSharedCouponBookSchema>;

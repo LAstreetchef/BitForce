@@ -14,6 +14,8 @@ import {
   ambassadorInvitations,
   ambassadorContacts,
   withingsTokens,
+  couponAppTokens,
+  sharedCouponBooks,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -44,10 +46,14 @@ import {
   type InsertAmbassadorContact,
   type WithingsToken,
   type InsertWithingsToken,
+  type CouponAppToken,
+  type InsertCouponAppToken,
+  type SharedCouponBook,
+  type InsertSharedCouponBook,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
-import { eq, and, ilike, or, sql, desc } from "drizzle-orm";
+import { eq, and, ilike, or, sql, desc, gte } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -124,6 +130,23 @@ export interface IStorage {
   getWithingsTokenById(id: number): Promise<WithingsToken | null>;
   updateWithingsToken(id: number, updates: Partial<WithingsToken>): Promise<WithingsToken>;
   deleteWithingsToken(id: number, ambassadorUserId: string): Promise<boolean>;
+  
+  // Coupon App Tokens
+  createCouponAppToken(token: InsertCouponAppToken): Promise<CouponAppToken>;
+  getCouponAppTokenByAccessToken(accessToken: string): Promise<CouponAppToken | null>;
+  getCouponAppTokenByRefreshToken(refreshToken: string): Promise<CouponAppToken | null>;
+  updateCouponAppTokenLastUsed(id: number): Promise<void>;
+  deleteCouponAppToken(id: number): Promise<void>;
+  deleteExpiredCouponAppTokens(): Promise<number>;
+  
+  // Shared Coupon Books
+  createSharedCouponBook(book: InsertSharedCouponBook): Promise<SharedCouponBook>;
+  getSharedCouponBooksByAmbassador(ambassadorUserId: string): Promise<SharedCouponBook[]>;
+  updateSharedCouponBookStatus(id: number, status: string): Promise<SharedCouponBook>;
+  
+  // Coupon App Sync Methods
+  getLeadsPaginated(limit: number, offset: number, updatedSince?: Date): Promise<{ data: Lead[]; total: number }>;
+  getAmbassadorContactsPaginated(ambassadorUserId: string, limit: number, offset: number, updatedSince?: Date): Promise<{ data: AmbassadorContact[]; total: number }>;
 }
 
 function generateReferralCode(): string {
@@ -639,6 +662,117 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return result.length > 0;
+  }
+
+  // Coupon App Token Methods
+  async createCouponAppToken(token: InsertCouponAppToken): Promise<CouponAppToken> {
+    const [created] = await getDb().insert(couponAppTokens)
+      .values(token)
+      .returning();
+    return created;
+  }
+
+  async getCouponAppTokenByAccessToken(accessToken: string): Promise<CouponAppToken | null> {
+    const [token] = await getDb().select()
+      .from(couponAppTokens)
+      .where(eq(couponAppTokens.accessToken, accessToken))
+      .limit(1);
+    return token || null;
+  }
+
+  async getCouponAppTokenByRefreshToken(refreshToken: string): Promise<CouponAppToken | null> {
+    const [token] = await getDb().select()
+      .from(couponAppTokens)
+      .where(eq(couponAppTokens.refreshToken, refreshToken))
+      .limit(1);
+    return token || null;
+  }
+
+  async updateCouponAppTokenLastUsed(id: number): Promise<void> {
+    await getDb().update(couponAppTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(couponAppTokens.id, id));
+  }
+
+  async deleteCouponAppToken(id: number): Promise<void> {
+    await getDb().delete(couponAppTokens)
+      .where(eq(couponAppTokens.id, id));
+  }
+
+  async deleteExpiredCouponAppTokens(): Promise<number> {
+    const result = await getDb().delete(couponAppTokens)
+      .where(sql`${couponAppTokens.expiresAt} < NOW()`)
+      .returning();
+    return result.length;
+  }
+
+  // Shared Coupon Book Methods
+  async createSharedCouponBook(book: InsertSharedCouponBook): Promise<SharedCouponBook> {
+    const [created] = await getDb().insert(sharedCouponBooks)
+      .values(book)
+      .returning();
+    return created;
+  }
+
+  async getSharedCouponBooksByAmbassador(ambassadorUserId: string): Promise<SharedCouponBook[]> {
+    return getDb().select()
+      .from(sharedCouponBooks)
+      .where(eq(sharedCouponBooks.ambassadorUserId, ambassadorUserId))
+      .orderBy(desc(sharedCouponBooks.sharedAt));
+  }
+
+  async updateSharedCouponBookStatus(id: number, status: string): Promise<SharedCouponBook> {
+    const [updated] = await getDb().update(sharedCouponBooks)
+      .set({ status })
+      .where(eq(sharedCouponBooks.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Coupon App Sync Methods
+  async getLeadsPaginated(limit: number, offset: number, updatedSince?: Date): Promise<{ data: Lead[]; total: number }> {
+    const whereCondition = updatedSince ? gte(leads.createdAt, updatedSince) : undefined;
+    
+    const data = await (whereCondition 
+      ? getDb().select().from(leads).where(whereCondition)
+      : getDb().select().from(leads))
+      .orderBy(desc(leads.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    const countQuery = whereCondition
+      ? getDb().select({ count: sql<number>`count(*)::int` }).from(leads).where(whereCondition)
+      : getDb().select({ count: sql<number>`count(*)::int` }).from(leads);
+    
+    const [countResult] = await countQuery;
+    
+    return { data, total: countResult?.count || 0 };
+  }
+
+  async getAmbassadorContactsPaginated(
+    ambassadorUserId: string, 
+    limit: number, 
+    offset: number, 
+    updatedSince?: Date
+  ): Promise<{ data: AmbassadorContact[]; total: number }> {
+    const baseCondition = eq(ambassadorContacts.ambassadorUserId, ambassadorUserId);
+    const whereCondition = updatedSince 
+      ? and(baseCondition, gte(ambassadorContacts.createdAt, updatedSince))
+      : baseCondition;
+    
+    const data = await getDb().select()
+      .from(ambassadorContacts)
+      .where(whereCondition)
+      .orderBy(desc(ambassadorContacts.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    const [countResult] = await getDb()
+      .select({ count: sql<number>`count(*)::int` })
+      .from(ambassadorContacts)
+      .where(whereCondition);
+    
+    return { data, total: countResult?.count || 0 };
   }
 }
 

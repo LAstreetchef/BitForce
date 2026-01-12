@@ -13,6 +13,8 @@ import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail, sendAIBuddyCustomerInviteEmail } from "./services/email";
+import { registerCouponAppRoutes, configureCouponAppCors } from "./services/couponAppApi";
+import { Router } from "express";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -61,6 +63,12 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Register image generation routes (Gemini AI)
   registerImageRoutes(app);
+
+  // Register Coupon App API routes with CORS
+  const couponAppRouter = Router();
+  couponAppRouter.use(configureCouponAppCors());
+  registerCouponAppRoutes(couponAppRouter);
+  app.use(couponAppRouter);
 
   app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
     const sig = req.headers["stripe-signature"] as string;
