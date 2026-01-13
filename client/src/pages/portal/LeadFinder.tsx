@@ -645,7 +645,7 @@ function LeadDetailDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md z-[1000]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Badge className={score >= 70 ? "bg-red-500" : score >= 50 ? "bg-yellow-500 text-black" : "bg-green-500"}>
