@@ -139,7 +139,7 @@ function Scene1({ progress }: { progress: number }) {
           }}
         >
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            Life is <span className="text-red-400">complicated</span>...
+            Life is getting more <span className="text-red-400">complicated</span>...
           </h2>
         </div>
         
