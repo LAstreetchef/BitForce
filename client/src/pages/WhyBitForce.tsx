@@ -332,7 +332,7 @@ function Scene3({ progress }: { progress: number }) {
         >
           <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl px-8 py-4 text-center">
             <p className="text-green-400 text-3xl md:text-4xl font-bold">
-              {progress > 80 && <AnimatedCounter value={2400} prefix="$" suffix="/year" />}
+              {progress > 80 && "$100's /year"}
             </p>
             <p className="text-white/80">Average Customer Savings</p>
           </div>
