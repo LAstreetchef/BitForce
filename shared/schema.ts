@@ -423,3 +423,48 @@ export const insertSharedCouponBookSchema = createInsertSchema(sharedCouponBooks
 
 export type SharedCouponBook = typeof sharedCouponBooks.$inferSelect;
 export type InsertSharedCouponBook = z.infer<typeof insertSharedCouponBookSchema>;
+
+// Saved Leads from Lead Finder tool - businesses found via Google Places API
+export const savedLeads = pgTable("saved_leads", {
+  id: serial("id").primaryKey(),
+  ambassadorUserId: text("ambassador_user_id").notNull(),
+  placeId: text("place_id").notNull(), // Google Places ID for deduplication
+  businessName: text("business_name").notNull(),
+  address: text("address").notNull(),
+  phone: text("phone"),
+  website: text("website"),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  businessType: text("business_type"), // e.g., "restaurant", "retail", "service"
+  rating: decimal("rating", { precision: 2, scale: 1 }),
+  reviewCount: integer("review_count"),
+  priceLevel: integer("price_level"),
+  score: integer("score").notNull().default(50), // Lead score 0-100
+  status: text("status").notNull().default("new"), // new, contacted, interested, client, declined
+  notes: text("notes"),
+  foundVia: text("found_via").default("google_places"),
+  searchLocation: text("search_location"), // Original search query
+  searchRadius: integer("search_radius"), // Miles
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSavedLeadSchema = createInsertSchema(savedLeads).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type SavedLead = typeof savedLeads.$inferSelect;
+export type InsertSavedLead = z.infer<typeof insertSavedLeadSchema>;
+
+// Lead status options for Lead Finder
+export const SAVED_LEAD_STATUSES = [
+  "new",
+  "contacted", 
+  "interested",
+  "client",
+  "declined"
+] as const;
+
+export type SavedLeadStatus = typeof SAVED_LEAD_STATUSES[number];

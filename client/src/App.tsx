@@ -15,6 +15,7 @@ import Settings from "@/pages/portal/Settings";
 import Events from "@/pages/portal/Events";
 import Tools from "@/pages/portal/Tools";
 import Products from "@/pages/portal/Products";
+import LeadFinder from "@/pages/portal/LeadFinder";
 import PublicEvents from "@/pages/PublicEvents";
 import PublicProducts from "@/pages/PublicProducts";
 import ExplainerVideo from "@/pages/ExplainerVideo";
@@ -75,6 +76,11 @@ function Router() {
       <Route path="/portal/tools">
         <PortalLayout>
           <Tools />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/lead-finder">
+        <PortalLayout>
+          <LeadFinder />
         </PortalLayout>
       </Route>
       <Route path="/portal/products">

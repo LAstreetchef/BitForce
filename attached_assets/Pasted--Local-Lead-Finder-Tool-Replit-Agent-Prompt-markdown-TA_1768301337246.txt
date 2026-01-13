@@ -1,0 +1,386 @@
+# **Local Lead Finder Tool - Replit Agent Prompt**
+
+```markdown
+**TASK:** Create a "Local Lead Finder" tool that scans a geo-fenced area for potential leads by analyzing local online resources, then presents them for ambassadors to pursue with BitForce marketing materials.
+
+**PROJECT NAME:** "BitForce Lead Scout"
+**TAGLINE:** "Find local opportunities in minutes, not days"
+
+**CORE FUNCTIONALITY:**
+User inputs: Address or ZIP code → System defines search radius → Scans local sources → Returns categorized leads → Allows saving/exporting → Integration with marketing materials
+
+**INPUT PARAMETERS:**
+
+1. **Location Input:**
+   - Address, City, ZIP Code, or Coordinates
+   - Search radius selector: 1mi, 5mi, 10mi, 25mi, custom
+
+2. **Lead Criteria:**
+   - Business type filters (small business, startups, retail, services, etc.)
+   - Persona filters (entrepreneurs, tech-savvy individuals, security-conscious)
+   - Date filters (recent mentions, new businesses, recent events)
+
+**GEO-FENCING ENGINE:**
+
+```javascript
+// Radius calculation and bounding box
+function createGeoFence(center, radiusMiles) {
+  const earthRadius = 3959; // miles
+  const latR = radiusMiles / earthRadius;
+  const lngR = latR / Math.cos(center.lat * Math.PI / 180);
+  
+  return {
+    minLat: center.lat - (latR * 180 / Math.PI),
+    maxLat: center.lat + (latR * 180 / Math.PI),
+    minLng: center.lng - (lngR * 180 / Math.PI),
+    maxLng: center.lng + (lngR * 180 / Math.PI)
+  };
+}
+```
+
+**DATA SOURCES TO SCRAPE/ANALYZE:**
+
+**Priority 1: Business Directories**
+- Google Places API (businesses within radius)
+- Yelp Fusion API (local business listings)
+- Yellow Pages API
+- Local Chamber of Commerce websites
+- Better Business Bureau listings
+
+**Priority 2: Classifieds & Local Listings**
+- Craigslist (via proxy/API if available)
+- Facebook Marketplace (public data)
+- Nextdoor (public business mentions)
+- Local newspaper classified sections
+- Angie's List/HomeAdvisor for service businesses
+
+**Priority 3: Government & Public Records**
+- Business license databases (city/county websites)
+- New business registrations (Secretary of State APIs)
+- Building permits (city planning departments)
+- Professional licensing boards
+
+**Priority 4: News & Media**
+- Local newspaper business sections
+- Patch.com local news
+- Event calendars (business openings, networking events)
+- Press releases about local companies
+
+**Priority 5: Social Signals**
+- Twitter location-based searches
+- Instagram location tags
+- LinkedIn Company search by location
+- Reddit local community mentions
+
+**LEAD SCORING ALGORITHM:**
+
+```python
+class LeadScorer:
+    def calculate_score(self, lead_data):
+        score = 0
+        
+        # Business type scoring
+        if lead_data['type'] in ['tech', 'consulting', 'digital']: score += 30
+        elif lead_data['type'] in ['retail', 'service']: score += 20
+        else: score += 10
+        
+        # Online presence scoring
+        if lead_data['has_website']: score += 20
+        if lead_data['has_social']: score += 15
+        if lead_data['recent_news']: score += 25  # Recently in news
+        
+        # Size indicators
+        if lead_data['employee_count'] > 10: score += 15
+        if lead_data['revenue_indicator'] == 'growing': score += 20
+        
+        # Contact availability
+        if lead_data['has_email']: score += 10
+        if lead_data['has_phone']: score += 5
+        
+        return min(100, score)  # Cap at 100
+```
+
+**FRONTEND DISPLAY DASHBOARD:**
+
+**1. Map Visualization:**
+- Interactive Google Maps/Leaflet.js map
+- Lead markers color-coded by score (red=high, yellow=medium, green=low)
+- Cluster markers for dense areas
+- Click markers for lead details
+
+**2. Lead List View:**
+```html
+<div class="lead-card" data-score="85">
+  <div class="lead-header">
+    <span class="score-badge">85% Match</span>
+    <h3>Digital Solutions LLC</h3>
+    <span class="distance">1.2 miles away</span>
+  </div>
+  
+  <div class="lead-details">
+    <p><strong>Type:</strong> IT Consulting</p>
+    <p><strong>Found On:</strong> Chamber of Commerce, Google Business</p>
+    <p><strong>Contact:</strong> contact@digitalsolutions.com | (555) 123-4567</p>
+    <p><strong>Why they're a good fit:</strong> Recently expanded team, tech-focused</p>
+  </div>
+  
+  <div class="lead-actions">
+    <button class="save-lead" data-id="lead123">💾 Save Lead</button>
+    <button class="send-materials" data-id="lead123">📨 Send Marketing Kit</button>
+    <button class="view-details" data-id="lead123">🔍 Details</button>
+  </div>
+</div>
+```
+
+**3. Filters & Sorting:**
+- Sort by: Score, Distance, Business Size, Recent Activity
+- Filter by: Industry, Employee Count, Revenue Indicator
+- Search within results
+
+**INTEGRATION WITH MARKETING MATERIALS:**
+
+**One-Click Marketing Distribution:**
+```javascript
+// Integrated marketing actions
+const marketingActions = {
+  sendExplainer: function(leadId) {
+    // Auto-generate personalized email with /explainer link
+    const email = generateEmail({
+      template: 'intro',
+      link: '/explainer',
+      personalization: leadData[leadId]
+    });
+    return email;
+  },
+  
+  sendWhyBitForce: function(leadId) {
+    // Send /why-bitforce page with personalized intro
+    return generateEmail({
+      template: 'value-proposition',
+      link: '/why-bitforce',
+      painPoints: analyzePainPoints(leadData[leadId])
+    });
+  },
+  
+  scheduleFollowup: function(leadId) {
+    // Add to ambassador's follow-up calendar
+    calendar.schedule({
+      lead: leadId,
+      action: 'call',
+      date: '3 days from now',
+      notes: 'Discuss BitForce solutions for ' + leadData[leadId].name
+    });
+  }
+};
+```
+
+**BACKEND ARCHITECTURE:**
+
+**1. Scraping Engine:**
+```python
+class LocalLeadScraper:
+    def __init__(self, location, radius):
+        self.location = location
+        self.radius = radius
+        self.results = []
+    
+    def scrape_source(self, source_type):
+        if source_type == 'google_business':
+            return self.scrape_google_places()
+        elif source_type == 'yelp':
+            return self.scrape_yelp()
+        elif source_type == 'government':
+            return self.scrape_government_sites()
+        # ... additional sources
+    
+    def deduplicate_leads(self):
+        # Merge duplicates from different sources
+        pass
+    
+    def enrich_lead_data(self, lead):
+        # Add additional data from other sources
+        pass
+```
+
+**2. Data Processing Pipeline:**
+```
+Input Location → Geo-fencing → Source Scraping (Parallel) → 
+Data Cleaning → Lead Scoring → Deduplication → 
+Enrichment → Storage → Display
+```
+
+**3. Rate Limiting & Compliance:**
+- Respect robots.txt for each site
+- Implement delays between requests (1-2 seconds)
+- User-agent rotation if scraping
+- API key management for paid services
+- Data privacy compliance (store only business/public data)
+
+**AMBASSADOR WORKFLOW INTEGRATION:**
+
+**Step-by-Step Process:**
+1. Ambassador enters target area
+2. System scans and returns leads in 2-5 minutes
+3. Ambassador reviews, saves promising leads
+4. Ambassador selects marketing materials to send
+5. System tracks outreach and responses
+6. Ambassador follows up based on engagement
+
+**Lead Management Features:**
+- **Save to CRM:** One-click save to ambassador's lead list
+- **Notes:** Add personal notes to each lead
+- **Status Tracking:** New → Contacted → Interested → Client
+- **Activity Log:** Track all interactions
+- **Export Options:** CSV, PDF lead sheets
+
+**PERFORMANCE OPTIMIZATION:**
+
+**Caching Strategy:**
+```javascript
+// Cache results by location to avoid repeated scraping
+const cacheKey = `leads_${location}_${radius}_${timestamp}`;
+if (cache.has(cacheKey)) {
+  return cache.get(cacheKey);
+} else {
+  const results = await scrapeFreshData();
+  cache.set(cacheKey, results, { ttl: 86400 }); // 24 hours
+  return results;
+}
+```
+
+**Progressive Loading:**
+- Show initial results in 30 seconds
+- Continue scraping in background
+- Update UI as new leads found
+- Allow ambassador to work with partial results
+
+**TECHNICAL STACK:**
+
+**Frontend:**
+- React/Vue.js for interactive UI
+- Mapbox/Leaflet for mapping
+- Bootstrap/Tailwind for styling
+- Chart.js for analytics
+
+**Backend:**
+- Python/Flask or Node.js/Express
+- PostgreSQL/MySQL for lead storage
+- Redis for caching
+- Celery/Redis Queue for async scraping tasks
+
+**APIs & Services:**
+- Google Places API (primary)
+- Yelp Fusion API
+- OpenStreetMap for mapping
+- Proxy service for web scraping
+- Email service (SendGrid/Mailgun)
+
+**IMPLEMENTATION PHASES:**
+
+**Phase 1: MVP (Week 1-2)**
+- Basic location input and Google Places integration
+- Simple lead display without scoring
+- Manual save/export functionality
+
+**Phase 2: Enhanced Scraping (Week 3-4)**
+- Add 3-5 additional data sources
+- Implement lead scoring algorithm
+- Add basic filters and sorting
+
+**Phase 3: Marketing Integration (Week 5-6)**
+- One-click marketing material sending
+- Email templates with personalization
+- Follow-up scheduling
+
+**Phase 4: Advanced Features (Week 7-8)**
+- Predictive scoring (ML-based)
+- Competitive analysis
+- Automated lead nurturing
+- Performance analytics
+
+**DELIVERABLES:**
+
+1. **Working Lead Finder Tool** with:
+   - Location-based search
+   - Multi-source scraping
+   - Lead scoring and filtering
+   - Map visualization
+   - Export functionality
+
+2. **Marketing Integration:**
+   - Direct links to /explainer and /why-bitforce
+   - Email template system
+   - Follow-up tracking
+
+3. **Ambassador Dashboard:**
+   - Lead management system
+   - Performance metrics
+   - Activity tracking
+
+4. **Admin Panel:**
+   - Source management
+   - Usage analytics
+   - System monitoring
+
+**COMPLIANCE & ETHICS:**
+
+**Important Disclaimers:**
+- "Only uses publicly available business information"
+- "Complies with local business contact regulations"
+- "Not for personal/consumer data collection"
+- "Ambassadors must follow ethical outreach practices"
+
+**Data Usage Policy:**
+- Store only business contact information (not personal)
+- Allow businesses to opt-out
+- Respect all API rate limits and terms
+- Implement CAPTCHA for high-volume users
+
+**SECURITY MEASURES:**
+- API key encryption
+- Rate limiting per user
+- Input validation and sanitization
+- Regular security audits
+- Data backup and recovery
+
+**TESTING PLAN:**
+- Unit tests for scoring algorithm
+- Integration tests for API calls
+- Performance tests for concurrent users
+- Cross-browser compatibility
+- Mobile responsiveness
+
+**DEPLOYMENT:**
+- Docker containerization
+- Environment variable configuration
+- SSL/TLS encryption
+- Load balancing for scraping tasks
+- Monitoring and alerting setup
+
+**SUCCESS METRICS:**
+- Leads found per search (target: 20-50)
+- Lead accuracy score (target: >80%)
+- Ambassador adoption rate
+- Conversion rate from tool leads to meetings
+- Time saved vs manual research
+
+**ALTERNATIVE SIMPLIFIED VERSION:**
+If full implementation is too complex, start with:
+
+```markdown
+**Minimal Viable Product:**
+1. Google Places API integration only
+2. Basic list of businesses in radius
+3. Export to CSV function
+4. Manual email template with links
+
+**Progressive Enhancement:**
+- Add one data source per iteration
+- Improve scoring over time
+- Add features based on ambassador feedback
+```
+
+This tool will empower BitForce ambassadors to efficiently find and engage with local prospects, dramatically increasing their outreach effectiveness while saving hours of manual research time.
+```
+
+**Additional note for Replit Agent:** Given the complexity of this tool, consider starting with a simplified MVP that uses just Google Places API and manual export, then progressively add features based on user feedback and performance. The scraping components should be implemented carefully to avoid rate limiting and legal issues.

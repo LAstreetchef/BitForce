@@ -16,6 +16,7 @@ import {
   withingsTokens,
   couponAppTokens,
   sharedCouponBooks,
+  savedLeads,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -50,6 +51,8 @@ import {
   type InsertCouponAppToken,
   type SharedCouponBook,
   type InsertSharedCouponBook,
+  type SavedLead,
+  type InsertSavedLead,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -148,6 +151,14 @@ export interface IStorage {
   // Coupon App Sync Methods
   getLeadsPaginated(limit: number, offset: number, updatedSince?: Date): Promise<{ data: Lead[]; total: number }>;
   getAmbassadorContactsPaginated(ambassadorUserId: string, limit: number, offset: number, updatedSince?: Date): Promise<{ data: AmbassadorContact[]; total: number }>;
+  
+  // Saved Leads (Lead Finder)
+  createSavedLead(lead: InsertSavedLead): Promise<SavedLead>;
+  getSavedLeadsByAmbassador(ambassadorUserId: string): Promise<SavedLead[]>;
+  getSavedLeadById(id: number, ambassadorUserId: string): Promise<SavedLead | null>;
+  getSavedLeadByPlaceId(placeId: string, ambassadorUserId: string): Promise<SavedLead | null>;
+  updateSavedLead(id: number, ambassadorUserId: string, updates: Partial<SavedLead>): Promise<SavedLead | null>;
+  deleteSavedLead(id: number, ambassadorUserId: string): Promise<boolean>;
 }
 
 function generateReferralCode(): string {
@@ -781,6 +792,60 @@ export class DatabaseStorage implements IStorage {
       .where(whereCondition);
     
     return { data, total: countResult?.count || 0 };
+  }
+
+  // Saved Leads (Lead Finder)
+  async createSavedLead(lead: InsertSavedLead): Promise<SavedLead> {
+    const [saved] = await getDb().insert(savedLeads).values(lead).returning();
+    return saved;
+  }
+
+  async getSavedLeadsByAmbassador(ambassadorUserId: string): Promise<SavedLead[]> {
+    return getDb().select()
+      .from(savedLeads)
+      .where(eq(savedLeads.ambassadorUserId, ambassadorUserId))
+      .orderBy(desc(savedLeads.createdAt));
+  }
+
+  async getSavedLeadById(id: number, ambassadorUserId: string): Promise<SavedLead | null> {
+    const [lead] = await getDb().select()
+      .from(savedLeads)
+      .where(and(
+        eq(savedLeads.id, id),
+        eq(savedLeads.ambassadorUserId, ambassadorUserId)
+      ));
+    return lead || null;
+  }
+
+  async getSavedLeadByPlaceId(placeId: string, ambassadorUserId: string): Promise<SavedLead | null> {
+    const [lead] = await getDb().select()
+      .from(savedLeads)
+      .where(and(
+        eq(savedLeads.placeId, placeId),
+        eq(savedLeads.ambassadorUserId, ambassadorUserId)
+      ));
+    return lead || null;
+  }
+
+  async updateSavedLead(id: number, ambassadorUserId: string, updates: Partial<SavedLead>): Promise<SavedLead | null> {
+    const [updated] = await getDb().update(savedLeads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(savedLeads.id, id),
+        eq(savedLeads.ambassadorUserId, ambassadorUserId)
+      ))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteSavedLead(id: number, ambassadorUserId: string): Promise<boolean> {
+    const result = await getDb().delete(savedLeads)
+      .where(and(
+        eq(savedLeads.id, id),
+        eq(savedLeads.ambassadorUserId, ambassadorUserId)
+      ))
+      .returning();
+    return result.length > 0;
   }
 }
 

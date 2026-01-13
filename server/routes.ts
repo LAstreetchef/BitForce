@@ -1903,6 +1903,175 @@ export async function registerRoutes(
     }
   });
 
+  // ================== LEAD FINDER ROUTES ==================
+  
+  const leadFinderSearchSchema = z.object({
+    location: z.string().min(1, "Location is required"),
+    radiusMiles: z.number().min(1).max(50).optional().default(5),
+    businessTypes: z.array(z.string()).optional(),
+  });
+  
+  // Search for leads in a location
+  app.post("/api/lead-finder/search", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = leadFinderSearchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { location, radiusMiles, businessTypes } = parsed.data;
+      
+      const { searchLeads } = await import("./services/leadFinder");
+      const results = await searchLeads(location, radiusMiles, businessTypes);
+      
+      res.json(results);
+    } catch (err: any) {
+      console.error("Lead finder search error:", err);
+      res.status(500).json({ message: err.message || "Failed to search for leads" });
+    }
+  });
+  
+  // Get saved leads for ambassador
+  app.get("/api/lead-finder/saved", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const leads = await storage.getSavedLeadsByAmbassador(user.id);
+      res.json(leads);
+    } catch (err) {
+      console.error("Get saved leads error:", err);
+      res.status(500).json({ message: "Failed to get saved leads" });
+    }
+  });
+  
+  const saveLeadSchema = z.object({
+    placeId: z.string().min(1),
+    businessName: z.string().min(1),
+    address: z.string().min(1),
+    phone: z.string().optional().nullable(),
+    website: z.string().optional().nullable(),
+    latitude: z.number(),
+    longitude: z.number(),
+    businessType: z.string().optional().nullable(),
+    rating: z.number().optional().nullable(),
+    reviewCount: z.number().optional().nullable(),
+    priceLevel: z.number().optional().nullable(),
+    score: z.number().min(0).max(100).optional().default(50),
+    notes: z.string().optional().nullable(),
+    searchLocation: z.string().optional().nullable(),
+    searchRadius: z.number().optional().nullable(),
+  });
+  
+  // Save a lead
+  app.post("/api/lead-finder/save", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const parsed = saveLeadSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const leadData = parsed.data;
+      
+      // Check if already saved
+      const existing = await storage.getSavedLeadByPlaceId(leadData.placeId, user.id);
+      if (existing) {
+        return res.status(400).json({ message: "Lead already saved" });
+      }
+      
+      const saved = await storage.createSavedLead({
+        ambassadorUserId: user.id,
+        placeId: leadData.placeId,
+        businessName: leadData.businessName,
+        address: leadData.address,
+        phone: leadData.phone || null,
+        website: leadData.website || null,
+        latitude: leadData.latitude.toString(),
+        longitude: leadData.longitude.toString(),
+        businessType: leadData.businessType || null,
+        rating: leadData.rating?.toString() || null,
+        reviewCount: leadData.reviewCount || null,
+        priceLevel: leadData.priceLevel || null,
+        score: leadData.score,
+        status: "new",
+        notes: leadData.notes || null,
+        foundVia: "google_places",
+        searchLocation: leadData.searchLocation || null,
+        searchRadius: leadData.searchRadius || null,
+      });
+      
+      res.json(saved);
+    } catch (err) {
+      console.error("Save lead error:", err);
+      res.status(500).json({ message: "Failed to save lead" });
+    }
+  });
+  
+  const updateLeadSchema = z.object({
+    status: z.enum(["new", "contacted", "interested", "client", "declined"]).optional(),
+    notes: z.string().optional().nullable(),
+  });
+  
+  // Update a saved lead (only status and notes can be updated)
+  app.patch("/api/lead-finder/saved/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const leadId = parseInt(req.params.id);
+      
+      const parsed = updateLeadSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const updated = await storage.updateSavedLead(leadId, user.id, parsed.data);
+      
+      if (!updated) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      
+      res.json(updated);
+    } catch (err) {
+      console.error("Update lead error:", err);
+      res.status(500).json({ message: "Failed to update lead" });
+    }
+  });
+  
+  // Delete a saved lead
+  app.delete("/api/lead-finder/saved/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const leadId = parseInt(req.params.id);
+      
+      const deleted = await storage.deleteSavedLead(leadId, user.id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete lead error:", err);
+      res.status(500).json({ message: "Failed to delete lead" });
+    }
+  });
+  
+  // Export saved leads as CSV
+  app.get("/api/lead-finder/export", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const leads = await storage.getSavedLeadsByAmbassador(user.id);
+      
+      const { exportToCsv } = await import("./services/leadFinder");
+      const csv = exportToCsv(leads);
+      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=leads-export.csv");
+      res.send(csv);
+    } catch (err) {
+      console.error("Export leads error:", err);
+      res.status(500).json({ message: "Failed to export leads" });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
   // Check for PORT env var as indicator of Cloud Run (it's always set there)

@@ -26,7 +26,8 @@ import {
   Loader2,
   CalendarDays,
   Wrench,
-  Package
+  Package,
+  Target
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { SupportChat } from "@/components/SupportChat";
@@ -40,6 +41,7 @@ import SubscriptionRequired from "@/pages/SubscriptionRequired";
 const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
   { title: "Leads", url: "/portal/leads", icon: ClipboardList },
+  { title: "Lead Finder", url: "/portal/lead-finder", icon: Target },
   { title: "Products", url: "/portal/products", icon: Package },
   { title: "Tools", url: "/portal/tools", icon: Wrench },
   { title: "My Team", url: "/portal/team", icon: Users },
