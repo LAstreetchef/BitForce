@@ -142,9 +142,12 @@ export default function LeadFinder() {
   const [radius, setRadius] = useState("5");
   const [businessType, setBusinessType] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
+  const [brokerResults, setBrokerResults] = useState<SearchResult | null>(null);
   const [selectedLead, setSelectedLead] = useState<PlaceResult | SavedLead | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([29.7604, -95.3698]); // Houston default
   const [activeTab, setActiveTab] = useState("search");
+  const [brokerLocation, setBrokerLocation] = useState("");
+  const [brokerRadius, setBrokerRadius] = useState("10");
 
   const { data: savedLeads, refetch: refetchSaved } = useQuery<SavedLead[]>({
     queryKey: ["/api/lead-finder/saved"],
@@ -161,6 +164,28 @@ export default function LeadFinder() {
       toast({
         title: "Search Complete",
         description: `Found ${data.places.length} potential leads`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Search Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const brokerSearchMutation = useMutation({
+    mutationFn: async (data: { location: string; radiusMiles: number }) => {
+      const response = await apiRequest("POST", "/api/lead-finder/brokers", data);
+      return response.json();
+    },
+    onSuccess: (data: SearchResult) => {
+      setBrokerResults(data);
+      setMapCenter([data.center.latitude, data.center.longitude]);
+      toast({
+        title: "Broker Search Complete",
+        description: `Found ${data.places.length} real estate brokers`,
       });
     },
     onError: (error: Error) => {
@@ -231,6 +256,21 @@ export default function LeadFinder() {
     });
   };
 
+  const handleBrokerSearch = () => {
+    if (!brokerLocation.trim()) {
+      toast({
+        title: "Enter a location",
+        description: "Please enter a city, address, or ZIP code to search for brokers",
+        variant: "destructive",
+      });
+      return;
+    }
+    brokerSearchMutation.mutate({
+      location: brokerLocation,
+      radiusMiles: parseInt(brokerRadius),
+    });
+  };
+
   const handleExport = () => {
     window.open("/api/lead-finder/export", "_blank");
   };
@@ -268,6 +308,10 @@ export default function LeadFinder() {
           <TabsTrigger value="search" data-testid="tab-search">
             <Search className="w-4 h-4 mr-2" />
             Search
+          </TabsTrigger>
+          <TabsTrigger value="brokers" data-testid="tab-brokers">
+            <Building2 className="w-4 h-4 mr-2" />
+            Broker Finder
           </TabsTrigger>
           <TabsTrigger value="saved" data-testid="tab-saved">
             <Save className="w-4 h-4 mr-2" />
@@ -427,6 +471,156 @@ export default function LeadFinder() {
           </div>
         </TabsContent>
 
+        <TabsContent value="brokers" className="flex-1 flex flex-col gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="mb-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  Find Top Real Estate Brokers
+                </h3>
+                <p className="text-sm text-muted-foreground">Search for the best-rated real estate brokers and agents in any area</p>
+              </div>
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <Label htmlFor="broker-location">Location</Label>
+                  <Input
+                    id="broker-location"
+                    placeholder="City, Address, or ZIP Code"
+                    value={brokerLocation}
+                    onChange={(e) => setBrokerLocation(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleBrokerSearch()}
+                    data-testid="input-broker-location"
+                  />
+                </div>
+                <div className="w-32">
+                  <Label htmlFor="broker-radius">Radius</Label>
+                  <Select value={brokerRadius} onValueChange={setBrokerRadius}>
+                    <SelectTrigger id="broker-radius" data-testid="select-broker-radius">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 miles</SelectItem>
+                      <SelectItem value="10">10 miles</SelectItem>
+                      <SelectItem value="25">25 miles</SelectItem>
+                      <SelectItem value="50">50 miles</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleBrokerSearch}
+                  disabled={brokerSearchMutation.isPending}
+                  data-testid="button-broker-search"
+                >
+                  {brokerSearchMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4 mr-2" />
+                  )}
+                  Find Brokers
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className="p-3 border-b">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Map View
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 flex-1 min-h-[300px]">
+                <MapContainer
+                  center={mapCenter}
+                  zoom={12}
+                  style={{ height: "100%", width: "100%" }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <MapUpdater center={mapCenter} />
+                  {brokerResults?.places.map((place) => (
+                    <Marker
+                      key={place.placeId}
+                      position={[place.latitude, place.longitude]}
+                      icon={createMarkerIcon(place.score || 50)}
+                      eventHandlers={{
+                        click: () => setSelectedLead(place),
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm">
+                          <strong>{place.businessName}</strong>
+                          <br />
+                          {place.address}
+                          {place.rating && (
+                            <>
+                              <br />
+                              <span className="flex items-center gap-1 mt-1">
+                                <Star className="w-3 h-3 text-yellow-500" />
+                                {place.rating} ({place.reviewCount} reviews)
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className="p-3 border-b">
+                <CardTitle className="text-sm flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Brokers Found ({brokerResults?.places.length || 0})
+                  </span>
+                  <div className="flex gap-1 text-xs">
+                    <Badge className="bg-red-500 text-white text-[10px]">Top Rated</Badge>
+                    <Badge className="bg-yellow-500 text-black text-[10px]">Good</Badge>
+                    <Badge className="bg-green-500 text-white text-[10px]">Other</Badge>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 flex-1 overflow-auto">
+                {!brokerResults && !brokerSearchMutation.isPending && (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <Building2 className="w-12 h-12 mb-2 opacity-50" />
+                    <p>Enter a location to find brokers</p>
+                    <p className="text-xs mt-1">Results ranked by ratings and reviews</p>
+                  </div>
+                )}
+                {brokerSearchMutation.isPending && (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                    <p>Searching for brokers...</p>
+                  </div>
+                )}
+                {brokerResults && (
+                  <div className="space-y-2">
+                    {brokerResults.places.map((place) => (
+                      <BrokerCard
+                        key={place.placeId}
+                        broker={place}
+                        isSaved={savedPlaceIds.has(place.placeId)}
+                        onSave={() => saveMutation.mutate(place)}
+                        onSelect={() => setSelectedLead(place)}
+                        saving={saveMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="saved" className="flex-1 overflow-auto">
           {!savedLeads || savedLeads.length === 0 ? (
             <Card className="p-8 text-center">
@@ -517,6 +711,87 @@ function LeadCard({
           }}
           disabled={isSaved || saving}
           data-testid={`button-save-${lead.placeId}`}
+        >
+          {isSaved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BrokerCard({
+  broker,
+  isSaved,
+  onSave,
+  onSelect,
+  saving,
+}: {
+  broker: PlaceResult;
+  isSaved: boolean;
+  onSave: () => void;
+  onSelect: () => void;
+  saving?: boolean;
+}) {
+  const score = broker.score || 50;
+
+  return (
+    <div
+      className="p-3 border rounded-lg hover-elevate cursor-pointer"
+      onClick={onSelect}
+      data-testid={`card-broker-${broker.placeId}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge className={`text-xs ${score >= 70 ? "bg-red-500" : score >= 50 ? "bg-yellow-500 text-black" : "bg-green-500"}`}>
+              {score}
+            </Badge>
+            <h4 className="font-medium truncate">{broker.businessName}</h4>
+          </div>
+          <p className="text-xs text-muted-foreground truncate">{broker.address}</p>
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+            {broker.rating && (
+              <span className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                {broker.rating}
+              </span>
+            )}
+            {broker.reviewCount && <span>{broker.reviewCount} reviews</span>}
+          </div>
+          <div className="flex gap-2 mt-2">
+            {broker.phone && (
+              <a
+                href={`tel:${broker.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <Phone className="w-3 h-3" />
+                Call
+              </a>
+            )}
+            {broker.website && (
+              <a
+                href={broker.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <Globe className="w-3 h-3" />
+                Website
+              </a>
+            )}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={isSaved ? "secondary" : "default"}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isSaved) onSave();
+          }}
+          disabled={isSaved || saving}
+          data-testid={`button-save-broker-${broker.placeId}`}
         >
           {isSaved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
         </Button>
