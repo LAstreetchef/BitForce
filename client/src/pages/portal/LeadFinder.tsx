@@ -664,7 +664,7 @@ export default function LeadFinder() {
           )}
         </TabsContent>
 
-        <TabsContent value="property" className="flex-1 overflow-auto">
+        <TabsContent value="property" className="overflow-auto">
           <PropertyIntelligence />
         </TabsContent>
       </Tabs>
