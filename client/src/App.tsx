@@ -18,6 +18,7 @@ import Products from "@/pages/portal/Products";
 import PublicEvents from "@/pages/PublicEvents";
 import PublicProducts from "@/pages/PublicProducts";
 import ExplainerVideo from "@/pages/ExplainerVideo";
+import WhyBitForce from "@/pages/WhyBitForce";
 import JoinBitForce from "@/pages/JoinBitForce";
 import NextStep from "@/pages/NextStep";
 import AmbassadorOne from "@/pages/AmbassadorOne";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/events" component={PublicEvents}/>
       <Route path="/products" component={PublicProducts}/>
       <Route path="/explainer" component={ExplainerVideo}/>
+      <Route path="/why-bitforce" component={WhyBitForce}/>
       <Route path="/joinbitforce" component={JoinBitForce}/>
       <Route path="/nextstep" component={NextStep}/>
       <Route path="/ambassadorone" component={AmbassadorOne}/>
