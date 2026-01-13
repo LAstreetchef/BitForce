@@ -33,6 +33,13 @@ import {
   Loader2,
   Target,
   TrendingUp,
+  Home,
+  DollarSign,
+  Bed,
+  Bath,
+  Ruler,
+  Calendar,
+  User,
 } from "lucide-react";
 
 const createMarkerIcon = (score: number) => {
@@ -266,6 +273,10 @@ export default function LeadFinder() {
             <Save className="w-4 h-4 mr-2" />
             Saved ({savedLeads?.length || 0})
           </TabsTrigger>
+          <TabsTrigger value="property" data-testid="tab-property">
+            <Home className="w-4 h-4 mr-2" />
+            Property Intel
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="search" className="flex-1 flex flex-col gap-4">
@@ -435,6 +446,10 @@ export default function LeadFinder() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="property" className="flex-1 overflow-auto">
+          <PropertyIntelligence />
         </TabsContent>
       </Tabs>
 
@@ -715,5 +730,351 @@ function LeadDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface PropertyData {
+  property: {
+    id: string;
+    formattedAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    county: string;
+    latitude: number;
+    longitude: number;
+    propertyType: string;
+    bedrooms: number;
+    bathrooms: number;
+    squareFootage: number;
+    lotSize: number;
+    yearBuilt: number;
+    lastSaleDate: string;
+    lastSalePrice: number;
+    ownerOccupied: boolean;
+    features: {
+      architectureType?: string;
+      cooling?: boolean;
+      coolingType?: string;
+      heating?: boolean;
+      heatingType?: string;
+      pool?: boolean;
+      garage?: boolean;
+      garageSpaces?: number;
+      fireplace?: boolean;
+    };
+    taxAssessments: Array<{
+      year: number;
+      value: number;
+    }>;
+    owner?: {
+      names: string[];
+      mailingAddress?: {
+        addressLine1: string;
+        city: string;
+        state: string;
+        zipCode: string;
+      };
+    };
+  } | null;
+  valueEstimate: {
+    price: number;
+    priceRangeLow: number;
+    priceRangeHigh: number;
+    comparables: Array<{
+      formattedAddress: string;
+      price: number;
+      squareFootage: number;
+      distance: number;
+    }>;
+  } | null;
+  rentEstimate: {
+    rent: number;
+    rentRangeLow: number;
+    rentRangeHigh: number;
+  } | null;
+}
+
+function PropertyIntelligence() {
+  const { toast } = useToast();
+  const [address, setAddress] = useState("");
+  const [propertyData, setPropertyData] = useState<PropertyData | null>(null);
+
+  const lookupMutation = useMutation({
+    mutationFn: async (addr: string) => {
+      const response = await apiRequest("POST", "/api/property-intel/lookup", { address: addr });
+      return response.json();
+    },
+    onSuccess: (data: PropertyData) => {
+      setPropertyData(data);
+      if (!data.property) {
+        toast({
+          title: "Property Not Found",
+          description: "Could not find property records for this address",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Lookup Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLookup = () => {
+    if (!address.trim()) {
+      toast({
+        title: "Enter an address",
+        description: "Please enter a full property address",
+        variant: "destructive",
+      });
+      return;
+    }
+    lookupMutation.mutate(address);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <Label htmlFor="property-address">Property Address</Label>
+              <Input
+                id="property-address"
+                placeholder="Enter full address (e.g., 123 Main St, Houston, TX 77001)"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                data-testid="input-property-address"
+              />
+            </div>
+            <Button
+              onClick={handleLookup}
+              disabled={lookupMutation.isPending}
+              data-testid="button-property-lookup"
+            >
+              {lookupMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4 mr-2" />
+              )}
+              Lookup Property
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {propertyData && propertyData.property && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Home className="w-5 h-5 text-primary" />
+                Property Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="font-medium">{propertyData.property.formattedAddress}</p>
+                <p className="text-sm text-muted-foreground">
+                  {propertyData.property.city}, {propertyData.property.state} {propertyData.property.zipCode}
+                </p>
+                <p className="text-sm text-muted-foreground">{propertyData.property.county} County</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="text-center p-2 bg-muted rounded-lg">
+                  <Bed className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="font-semibold">{propertyData.property.bedrooms || "—"}</p>
+                  <p className="text-xs text-muted-foreground">Beds</p>
+                </div>
+                <div className="text-center p-2 bg-muted rounded-lg">
+                  <Bath className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="font-semibold">{propertyData.property.bathrooms || "—"}</p>
+                  <p className="text-xs text-muted-foreground">Baths</p>
+                </div>
+                <div className="text-center p-2 bg-muted rounded-lg">
+                  <Ruler className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="font-semibold">{propertyData.property.squareFootage?.toLocaleString() || "—"}</p>
+                  <p className="text-xs text-muted-foreground">Sq Ft</p>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Property Type</span>
+                  <span className="font-medium">{propertyData.property.propertyType || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Year Built</span>
+                  <span className="font-medium">{propertyData.property.yearBuilt || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Lot Size</span>
+                  <span className="font-medium">{propertyData.property.lotSize?.toLocaleString() || "—"} sq ft</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Owner Occupied</span>
+                  <Badge variant={propertyData.property.ownerOccupied ? "default" : "secondary"}>
+                    {propertyData.property.ownerOccupied ? "Yes" : "No"}
+                  </Badge>
+                </div>
+              </div>
+
+              {propertyData.property.features && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-medium mb-2">Features</p>
+                  <div className="flex flex-wrap gap-1">
+                    {propertyData.property.features.pool && <Badge variant="outline">Pool</Badge>}
+                    {propertyData.property.features.garage && (
+                      <Badge variant="outline">Garage ({propertyData.property.features.garageSpaces})</Badge>
+                    )}
+                    {propertyData.property.features.fireplace && <Badge variant="outline">Fireplace</Badge>}
+                    {propertyData.property.features.cooling && <Badge variant="outline">A/C</Badge>}
+                    {propertyData.property.features.heating && <Badge variant="outline">Heating</Badge>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            {propertyData.valueEstimate && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    Value Estimate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center mb-4">
+                    <p className="text-3xl font-bold text-green-600">
+                      {formatCurrency(propertyData.valueEstimate.price)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Range: {formatCurrency(propertyData.valueEstimate.priceRangeLow)} -{" "}
+                      {formatCurrency(propertyData.valueEstimate.priceRangeHigh)}
+                    </p>
+                  </div>
+
+                  {propertyData.property.lastSalePrice && (
+                    <div className="flex justify-between text-sm pt-2 border-t">
+                      <span className="text-muted-foreground">Last Sale</span>
+                      <span>
+                        {formatCurrency(propertyData.property.lastSalePrice)}{" "}
+                        <span className="text-muted-foreground">
+                          ({formatDate(propertyData.property.lastSaleDate)})
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {propertyData.rentEstimate && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    Rent Estimate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">
+                      {formatCurrency(propertyData.rentEstimate.rent)}<span className="text-lg font-normal">/mo</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Range: {formatCurrency(propertyData.rentEstimate.rentRangeLow)} -{" "}
+                      {formatCurrency(propertyData.rentEstimate.rentRangeHigh)}/mo
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {propertyData.property.owner && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="w-5 h-5 text-purple-600" />
+                    Owner Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {propertyData.property.owner.names?.map((name, i) => (
+                    <p key={i} className="font-medium">{name}</p>
+                  ))}
+                  {propertyData.property.owner.mailingAddress && (
+                    <div className="text-sm text-muted-foreground pt-2 border-t">
+                      <p className="font-medium text-foreground">Mailing Address</p>
+                      <p>{propertyData.property.owner.mailingAddress.addressLine1}</p>
+                      <p>
+                        {propertyData.property.owner.mailingAddress.city},{" "}
+                        {propertyData.property.owner.mailingAddress.state}{" "}
+                        {propertyData.property.owner.mailingAddress.zipCode}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {propertyData.property.taxAssessments && propertyData.property.taxAssessments.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-orange-600" />
+                    Tax Assessment History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
+                    {propertyData.property.taxAssessments.slice(0, 3).map((tax) => (
+                      <div key={tax.year} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{tax.year}</span>
+                        <span className="font-medium">{formatCurrency(tax.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!propertyData && !lookupMutation.isPending && (
+        <Card className="p-8 text-center">
+          <Home className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <h3 className="font-semibold mb-2">Property Intelligence</h3>
+          <p className="text-muted-foreground mb-4">
+            Enter a residential address to get detailed property information including valuation, owner details, and more.
+          </p>
+          <div className="text-sm text-muted-foreground">
+            <p>Powered by RentCast - 140M+ US properties</p>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }

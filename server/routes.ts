@@ -2071,6 +2071,100 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to export leads" });
     }
   });
+  
+  // ================== PROPERTY INTELLIGENCE (RENTCAST) ROUTES ==================
+  
+  const propertyLookupSchema = z.object({
+    address: z.string().min(5, "Address is required"),
+  });
+  
+  // Get comprehensive property intelligence
+  app.post("/api/property-intel/lookup", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = propertyLookupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { getPropertyIntelligence } = await import("./services/rentcast");
+      const result = await getPropertyIntelligence(parsed.data.address);
+      
+      if (result.error) {
+        return res.status(500).json({ message: result.error });
+      }
+      
+      res.json(result);
+    } catch (err: any) {
+      console.error("Property intelligence error:", err);
+      res.status(500).json({ message: err.message || "Failed to get property intelligence" });
+    }
+  });
+  
+  // Get just property record
+  app.post("/api/property-intel/property", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = propertyLookupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { getPropertyRecord } = await import("./services/rentcast");
+      const property = await getPropertyRecord(parsed.data.address);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      res.json(property);
+    } catch (err: any) {
+      console.error("Property lookup error:", err);
+      res.status(500).json({ message: err.message || "Failed to lookup property" });
+    }
+  });
+  
+  // Get value estimate
+  app.post("/api/property-intel/value", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = propertyLookupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { getValueEstimate } = await import("./services/rentcast");
+      const estimate = await getValueEstimate(parsed.data.address);
+      
+      if (!estimate) {
+        return res.status(404).json({ message: "Could not estimate value" });
+      }
+      
+      res.json(estimate);
+    } catch (err: any) {
+      console.error("Value estimate error:", err);
+      res.status(500).json({ message: err.message || "Failed to estimate value" });
+    }
+  });
+  
+  // Get rent estimate
+  app.post("/api/property-intel/rent", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = propertyLookupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { getRentEstimate } = await import("./services/rentcast");
+      const estimate = await getRentEstimate(parsed.data.address);
+      
+      if (!estimate) {
+        return res.status(404).json({ message: "Could not estimate rent" });
+      }
+      
+      res.json(estimate);
+    } catch (err: any) {
+      console.error("Rent estimate error:", err);
+      res.status(500).json({ message: err.message || "Failed to estimate rent" });
+    }
+  });
 
   // Initialize providers and run scraper asynchronously after startup
   // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
