@@ -219,6 +219,28 @@ export default function LeadFinder() {
     },
   });
 
+  const saveBrokerMutation = useMutation({
+    mutationFn: async (lead: PlaceResult) => {
+      const response = await apiRequest("POST", "/api/lead-finder/save", {
+        ...lead,
+        searchLocation: brokerLocation,
+        searchRadius: parseInt(brokerRadius),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Broker Saved" });
+      queryClient.invalidateQueries({ queryKey: ["/api/lead-finder/saved"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: Partial<SavedLead> }) => {
       const response = await apiRequest("PATCH", `/api/lead-finder/saved/${id}`, updates);
@@ -609,9 +631,9 @@ export default function LeadFinder() {
                         key={place.placeId}
                         broker={place}
                         isSaved={savedPlaceIds.has(place.placeId)}
-                        onSave={() => saveMutation.mutate(place)}
+                        onSave={() => saveBrokerMutation.mutate(place)}
                         onSelect={() => setSelectedLead(place)}
-                        saving={saveMutation.isPending}
+                        saving={saveBrokerMutation.isPending}
                       />
                     ))}
                   </div>
