@@ -1,9 +1,9 @@
 import axios from "axios";
 
 function getGooglePlacesApiKey(): string {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
-    throw new Error("Google Places API key is not configured. Please add your API key in secrets.");
+    throw new Error("Google Places API key is not configured. Please add GOOGLE_PLACES_API_KEY in secrets.");
   }
   return apiKey;
 }
@@ -241,6 +241,144 @@ export async function searchLeads(
     center: geocoded,
     searchRadius: radiusMiles,
   };
+}
+
+export async function searchRealEstateBrokers(
+  location: string,
+  radiusMiles: number = 10
+): Promise<SearchResult> {
+  const geocoded = await geocodeAddress(location);
+  if (!geocoded) {
+    throw new Error("Could not find location. Please try a different address or ZIP code.");
+  }
+
+  const apiKey = getGooglePlacesApiKey();
+  const radiusMeters = radiusMiles * 1609.34;
+  const allPlaces: PlaceResult[] = [];
+
+  const brokerSearchTypes = ["real_estate_agency"];
+  const textSearchQueries = [
+    "real estate broker",
+    "real estate agent",
+    "realtor",
+    "real estate office",
+  ];
+
+  try {
+    for (const type of brokerSearchTypes) {
+      const response = await axios.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json", {
+        params: {
+          location: `${geocoded.latitude},${geocoded.longitude}`,
+          radius: Math.min(radiusMeters, 50000),
+          type: type,
+          key: apiKey,
+        },
+      });
+
+      if (response.data.status === "OK") {
+        for (const place of response.data.results) {
+          const details = await getPlaceDetails(place.place_id);
+          
+          const placeResult: PlaceResult = {
+            placeId: place.place_id,
+            businessName: place.name,
+            address: place.vicinity || place.formatted_address || "",
+            phone: details?.phone,
+            website: details?.website,
+            latitude: place.geometry.location.lat,
+            longitude: place.geometry.location.lng,
+            businessType: "realestate",
+            rating: place.rating,
+            reviewCount: place.user_ratings_total,
+            priceLevel: place.price_level,
+            types: place.types || [],
+            openNow: place.opening_hours?.open_now,
+          };
+          
+          if (!allPlaces.some(p => p.placeId === placeResult.placeId)) {
+            allPlaces.push(placeResult);
+          }
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    for (const query of textSearchQueries) {
+      const response = await axios.get("https://maps.googleapis.com/maps/api/place/textsearch/json", {
+        params: {
+          query: query,
+          location: `${geocoded.latitude},${geocoded.longitude}`,
+          radius: Math.min(radiusMeters, 50000),
+          key: apiKey,
+        },
+      });
+
+      if (response.data.status === "OK") {
+        for (const place of response.data.results.slice(0, 10)) {
+          if (allPlaces.some(p => p.placeId === place.place_id)) continue;
+          
+          const details = await getPlaceDetails(place.place_id);
+          
+          const placeResult: PlaceResult = {
+            placeId: place.place_id,
+            businessName: place.name,
+            address: place.formatted_address || place.vicinity || "",
+            phone: details?.phone,
+            website: details?.website,
+            latitude: place.geometry.location.lat,
+            longitude: place.geometry.location.lng,
+            businessType: "realestate",
+            rating: place.rating,
+            reviewCount: place.user_ratings_total,
+            priceLevel: place.price_level,
+            types: place.types || [],
+            openNow: place.opening_hours?.open_now,
+          };
+          
+          allPlaces.push(placeResult);
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    const scoredPlaces = allPlaces.map(place => ({
+      ...place,
+      score: calculateBrokerScore(place),
+    }));
+
+    scoredPlaces.sort((a, b) => b.score - a.score);
+
+    return {
+      places: scoredPlaces,
+      center: geocoded,
+      searchRadius: radiusMiles,
+    };
+  } catch (error) {
+    console.error("Broker search error:", error);
+    throw error;
+  }
+}
+
+function calculateBrokerScore(place: PlaceResult): number {
+  let score = 30;
+  
+  if (place.rating) {
+    if (place.rating >= 4.5) score += 30;
+    else if (place.rating >= 4.0) score += 20;
+    else if (place.rating >= 3.5) score += 10;
+  }
+  
+  if (place.reviewCount) {
+    if (place.reviewCount >= 100) score += 25;
+    else if (place.reviewCount >= 50) score += 20;
+    else if (place.reviewCount >= 20) score += 15;
+    else if (place.reviewCount >= 10) score += 10;
+  }
+  
+  if (place.website) score += 10;
+  if (place.phone) score += 5;
+  
+  return Math.min(100, Math.max(0, score));
 }
 
 export function exportToCsv(leads: any[]): string {
