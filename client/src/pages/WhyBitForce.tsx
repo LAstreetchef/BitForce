@@ -481,9 +481,9 @@ function Scene6({ progress }: { progress: number }) {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
       <ParticleField />
       
-      <div className="z-10 w-full max-w-5xl px-4">
+      <div className="z-10 w-full max-w-6xl px-4">
         <h2
-          className="text-3xl md:text-5xl font-bold text-white text-center mb-4 transition-all duration-700"
+          className="text-3xl md:text-5xl font-bold text-white text-center mb-6 transition-all duration-700"
           style={{
             opacity: progress > 5 ? 1 : 0,
             transform: `translateY(${progress > 5 ? 0 : -30}px)`,
@@ -492,59 +492,105 @@ function Scene6({ progress }: { progress: number }) {
           Simple, Affordable <span className="text-purple-400">Pricing</span>
         </h2>
         
-        <div className="grid md:grid-cols-2 gap-8 mt-10 items-center">
+        <div className="grid md:grid-cols-3 gap-4 mt-6">
           <div
             className="transition-all duration-700"
             style={{
               opacity: progress > 20 ? 1 : 0,
-              transform: `scale(${progress > 20 ? 1 : 0.8})`,
+              transform: `translateY(${progress > 20 ? 0 : 30}px)`,
             }}
           >
-            <img 
-              src={monthlySubscription} 
-              alt="Monthly AI Buddy Subscription" 
-              className="rounded-xl shadow-2xl mx-auto max-w-xs"
-            />
-          </div>
-          
-          <div className="space-y-4">
-            <div
-              className="transition-all duration-500"
-              style={{ opacity: progress > 35 ? 1 : 0, transform: `translateX(${progress > 35 ? 0 : 30}px)` }}
-            >
-              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-purple-500/30 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-white text-xl font-bold">Monthly AI Buddy</span>
-                  <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">Most Popular</span>
-                </div>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-4xl font-bold text-white">$29</span>
-                  <span className="text-white/60">/month</span>
-                </div>
-                <ul className="space-y-2">
-                  {["Personal AI-trained ambassador", "Unlimited tech support", "Exclusive coupon access", "AfterGlow app included", "Friend & Family finder"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-white/80">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+            <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 rounded-xl p-5 h-full">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white text-lg font-bold">Monthly AI Buddy</span>
+                <span className="bg-yellow-500 text-black px-2 py-0.5 rounded-full text-xs font-bold">Most Popular</span>
+              </div>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className="text-3xl font-bold text-white">$29</span>
+                <span className="text-white/60 text-sm">/month</span>
+              </div>
+              <p className="text-white/60 text-sm mb-3">Ongoing support, lasting confidence</p>
+              <ul className="space-y-1.5">
+                {["Personal AI-trained ambassador", "Unlimited tech support", "Exclusive coupon access", "AfterGlow app included", "Friend & Family finder"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-white/80 text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-green-400 text-xs font-medium">Less than $1/day for peace of mind</p>
               </div>
             </div>
-            
-            <div
-              className="text-center transition-all duration-500"
-              style={{ opacity: progress > 60 ? 1 : 0 }}
-            >
-              <p className="text-white/60 text-sm">
-                Less than <span className="text-green-400 font-bold">$1/day</span> for peace of mind
-              </p>
+          </div>
+          
+          <div
+            className="transition-all duration-700"
+            style={{
+              opacity: progress > 35 ? 1 : 0,
+              transform: `translateY(${progress > 35 ? 0 : 30}px)`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 rounded-xl p-5 h-full">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white text-lg font-bold">One-Time Session</span>
+                <span className="text-teal-400 text-sm font-medium">60 min</span>
+              </div>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className="text-3xl font-bold text-white">$79</span>
+              </div>
+              <p className="text-white/60 text-sm mb-3">Quick wins, lasting confidence</p>
+              <ul className="space-y-1.5">
+                {["60 min dedicated one-on-one", "Plain language explanations", "Custom AI-generated guide", "Help with photos, devices, apps"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-white/80 text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-teal-400 text-xs font-medium">Perfect for specific tech challenges</p>
+              </div>
+            </div>
+          </div>
+          
+          <div
+            className="transition-all duration-700"
+            style={{
+              opacity: progress > 50 ? 1 : 0,
+              transform: `translateY(${progress > 50 ? 0 : 30}px)`,
+            }}
+          >
+            <div className="bg-gradient-to-br from-orange-500/20 to-amber-500/20 border-2 border-orange-500/50 rounded-xl p-5 h-full relative">
+              <div className="absolute -top-3 right-4">
+                <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Best Value</span>
+              </div>
+              <div className="flex items-center justify-between mb-3 mt-1">
+                <span className="text-white text-lg font-bold">Bundle Package</span>
+                <span className="text-orange-400 text-sm font-medium">3 sessions</span>
+              </div>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className="text-3xl font-bold text-white">$199</span>
+                <span className="text-white/40 text-sm line-through ml-2">$237</span>
+              </div>
+              <p className="text-white/60 text-sm mb-3">Steady progress, lasting peace of mind</p>
+              <ul className="space-y-1.5">
+                {["3 full 60-minute sessions", "Same trusted buddy throughout", "Save $38 vs. individual", "Personalized digital folder"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-white/80 text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-orange-400 text-xs font-medium">For truly comfortable technology use</p>
+              </div>
             </div>
           </div>
         </div>
         
         <div
-          className="mt-8 grid grid-cols-3 gap-4 max-w-lg mx-auto transition-all duration-500"
+          className="mt-6 grid grid-cols-3 gap-4 max-w-md mx-auto transition-all duration-500"
           style={{ opacity: progress > 75 ? 1 : 0 }}
         >
           {[
