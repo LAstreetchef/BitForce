@@ -1930,6 +1930,31 @@ export async function registerRoutes(
       res.status(500).json({ message: err.message || "Failed to search for leads" });
     }
   });
+
+  const brokerSearchSchema = z.object({
+    location: z.string().min(1, "Location is required"),
+    radiusMiles: z.number().min(1).max(50).optional().default(10),
+  });
+
+  // Search for real estate brokers in a location
+  app.post("/api/lead-finder/brokers", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = brokerSearchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0].message });
+      }
+      
+      const { location, radiusMiles } = parsed.data;
+      
+      const { searchRealEstateBrokers } = await import("./services/leadFinder");
+      const results = await searchRealEstateBrokers(location, radiusMiles);
+      
+      res.json(results);
+    } catch (err: any) {
+      console.error("Broker search error:", err);
+      res.status(500).json({ message: err.message || "Failed to search for brokers" });
+    }
+  });
   
   // Get saved leads for ambassador
   app.get("/api/lead-finder/saved", isAuthenticated, async (req: Request, res: Response) => {
