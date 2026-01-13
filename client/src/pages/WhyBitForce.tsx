@@ -33,6 +33,9 @@ import analyticsScreenshot from "@assets/Screenshot_2026-01-12_172008_1768297256
 import friendFinderScreenshot from "@assets/{A4A53F14-8B56-4C68-B658-E8EAAB14D4A9}_1768297282791.png";
 import monthlySubscription from "@assets/{FB81D370-6D3E-4238-B4DA-3C1F3E5C28D2}_1768297162284.png";
 import afterglowApp from "@assets/{83D0B58E-E09A-46A1-9A2D-7867F2ABF0E5}_1768297185928.png";
+import secretMessageApp from "@assets/Screenshot_2026-01-10_052350_1768299587093.png";
+import ambassadorSummit from "@assets/Screenshot_2026-01-13_044008_1768299602592.png";
+import digitalFootprintScanner from "@assets/Screenshot_2026-01-09_154954_1768299637178.png";
 
 interface Scene {
   id: number;
@@ -46,7 +49,7 @@ const scenes: Scene[] = [
   { id: 2, title: "Meet Your AI Buddy", duration: 8, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
   { id: 3, title: "Save Money", duration: 12, bgGradient: "from-emerald-900 via-green-800 to-teal-900" },
   { id: 4, title: "Save Time", duration: 10, bgGradient: "from-cyan-900 via-blue-800 to-indigo-900" },
-  { id: 5, title: "Stay Connected", duration: 10, bgGradient: "from-purple-900 via-pink-800 to-rose-900" },
+  { id: 5, title: "Keep in Touch", duration: 10, bgGradient: "from-purple-900 via-pink-800 to-rose-900" },
   { id: 6, title: "Our Products", duration: 12, bgGradient: "from-indigo-900 via-violet-800 to-purple-900" },
   { id: 7, title: "Get Started", duration: 8, bgGradient: "from-blue-800 via-indigo-700 to-blue-900" },
 ];
@@ -408,67 +411,60 @@ function Scene4({ progress }: { progress: number }) {
 }
 
 function Scene5({ progress }: { progress: number }) {
+  const products = [
+    { img: friendFinderScreenshot, title: "Friend & Family Finder", desc: "Reconnect with people from your past", showAt: 15 },
+    { img: afterglowApp, title: "AfterGlow Memory App", desc: "Preserve precious memories - FREE", showAt: 25 },
+    { img: secretMessageApp, title: "Secret Message", desc: "Pay-to-open messages & files", showAt: 35 },
+    { img: ambassadorSummit, title: "Ambassador Summit 2026", desc: "In-person events & networking", showAt: 45 },
+    { img: digitalFootprintScanner, title: "Digital Footprint Scanner", desc: "Security check - included with plan", showAt: 55 },
+  ];
+
   return (
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
       <ParticleField />
       
       <div className="z-10 w-full max-w-6xl px-4">
         <h2
-          className="text-3xl md:text-5xl font-bold text-white text-center mb-4 transition-all duration-700"
+          className="text-3xl md:text-5xl font-bold text-white text-center mb-6 transition-all duration-700"
           style={{
             opacity: progress > 5 ? 1 : 0,
             transform: `translateY(${progress > 5 ? 0 : -30}px)`,
           }}
         >
           <Heart className="inline w-10 h-10 md:w-14 md:h-14 mr-3 text-pink-400" />
-          Stay <span className="text-pink-400">Connected</span>
+          Keep in <span className="text-pink-400">Touch</span>
         </h2>
         
-        <div className="grid md:grid-cols-2 gap-8 mt-10">
-          <div
-            className="transition-all duration-700"
-            style={{
-              opacity: progress > 20 ? 1 : 0,
-              transform: `translateX(${progress > 20 ? 0 : -50}px)`,
-            }}
-          >
-            <div className="bg-white/10 rounded-2xl p-4 border border-white/20 mb-4">
-              <img 
-                src={friendFinderScreenshot} 
-                alt="Friend & Family Finder" 
-                className="rounded-xl w-full"
-              />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {products.map((product, i) => (
+            <div
+              key={i}
+              className="transition-all duration-500"
+              style={{
+                opacity: progress > product.showAt ? 1 : 0,
+                transform: `translateY(${progress > product.showAt ? 0 : 20}px)`,
+              }}
+            >
+              <div className="bg-white/10 rounded-xl p-2 border border-white/20 h-full">
+                <img 
+                  src={product.img} 
+                  alt={product.title} 
+                  className="rounded-lg w-full h-28 object-cover object-top mb-2"
+                />
+                <h3 className="text-sm font-bold text-white mb-1 line-clamp-1">{product.title}</h3>
+                <p className="text-white/60 text-xs line-clamp-2">{product.desc}</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Old Friend & Family Finder</h3>
-            <p className="text-white/70">Reconnect with people from your past using our public records search tool</p>
-          </div>
-          
-          <div
-            className="transition-all duration-700"
-            style={{
-              opacity: progress > 45 ? 1 : 0,
-              transform: `translateX(${progress > 45 ? 0 : 50}px)`,
-            }}
-          >
-            <div className="bg-white/10 rounded-2xl p-4 border border-white/20 mb-4">
-              <img 
-                src={afterglowApp} 
-                alt="AfterGlow Memory App" 
-                className="rounded-xl w-full"
-              />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">AfterGlow Memory App</h3>
-            <p className="text-white/70">Preserve and share precious memories with your loved ones - included FREE</p>
-          </div>
+          ))}
         </div>
         
         <div
-          className="mt-8 flex justify-center transition-all duration-500"
+          className="mt-6 flex justify-center transition-all duration-500"
           style={{ opacity: progress > 75 ? 1 : 0 }}
         >
           <div className="flex items-center gap-2 bg-pink-500/20 border border-pink-500/30 rounded-full px-6 py-3">
             <Heart className="w-5 h-5 text-pink-400" />
-            <span className="text-white">Family & Friends Matter Most</span>
+            <span className="text-white">Stay Connected with What Matters</span>
           </div>
         </div>
       </div>
