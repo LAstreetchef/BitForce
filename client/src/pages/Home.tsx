@@ -264,6 +264,11 @@ export default function Home() {
                     <Brain className="w-5 h-5 text-purple-600 shrink-0" />
                     <span className="text-slate-700">Free AI training & resources</span>
                   </div>
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <Coins className="w-5 h-5 text-amber-600 shrink-0" />
+                    <span className="text-slate-700">Earn BFT tokens</span>
+                    <Badge className="ml-auto bg-amber-100 text-amber-700 border-amber-300">$0.02/BFT</Badge>
+                  </div>
                 </div>
 
                 {isAuthenticated ? (
