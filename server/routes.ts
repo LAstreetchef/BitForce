@@ -194,30 +194,16 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  // BFT TOKEN PLATFORM METRICS ENDPOINT - NO AUTHENTICATION FOR TESTING
+  // BFT TOKEN PLATFORM METRICS ENDPOINT
   app.get("/api/metrics", async (req: Request, res: Response) => {
     try {
-      const leads = await storage.getLeads();
-      const customerCount = leads.length;
-
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const recentLeads = leads.filter(
-        (lead: any) => new Date(lead.createdAt) >= thirtyDaysAgo
-      );
-      const monthlyPurchaseVolume = recentLeads.length * 500;
-
-      let ambassadorCount = 0;
-      try {
-        if (typeof storage.getAmbassadors === 'function') {
-          const ambassadors = await storage.getAmbassadors();
-          ambassadorCount = Array.isArray(ambassadors) ? ambassadors.length : 0;
-        }
-      } catch (e) {
-        console.log("[/api/metrics] Could not get ambassador count");
-      }
+      const ambassadorCount = await storage.getAmbassadorCount();
+      const customerCount = await storage.getCustomerCount();
+      const monthlyPurchaseVolume = await storage.getMonthlyPurchaseVolume();
 
       const confidenceRate = ambassadorCount > 0 ? 85 : 0;
+
+      console.log("[/api/metrics] Returning:", { ambassadorCount, customerCount, monthlyPurchaseVolume });
 
       res.json({
         ambassadorCount,

@@ -904,6 +904,29 @@ export class DatabaseStorage implements IStorage {
     
     return total;
   }
+  async getAmbassadorCount(): Promise<number> {
+    const result = await getDb()
+      .select({ count: sql<number>`count(*)` })
+      .from(ambassadorSubscriptions);
+    return Number(result[0]?.count) || 0;
+  }
+
+  async getCustomerCount(): Promise<number> {
+    const result = await getDb()
+      .select({ count: sql<number>`count(*)` })
+      .from(leads);
+    return Number(result[0]?.count) || 0;
+  }
+
+  async getMonthlyPurchaseVolume(): Promise<number> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const result = await getDb()
+      .select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(gte(leads.createdAt, thirtyDaysAgo));
+    return (Number(result[0]?.count) || 0) * 500;
+  }
 }
 
 export const storage = new DatabaseStorage();
