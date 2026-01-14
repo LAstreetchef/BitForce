@@ -139,9 +139,20 @@ export default function EarningsCalculator() {
                     <Info className="w-5 h-5 text-primary" />
                     <h2 className="text-lg font-semibold">How to Use This Calculator</h2>
                   </div>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30">
+                      <DollarSign className="w-3 h-3 mr-1" />
+                      Earn Cash
+                    </Badge>
+                    <span className="text-muted-foreground">+</span>
+                    <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30">
+                      <Coins className="w-3 h-3 mr-1" />
+                      Earn Crypto BFT
+                    </Badge>
+                  </div>
                   <p className="text-sm text-muted-foreground mb-3">
-                    This tool helps you estimate your potential earnings as a BitForce Ambassador. 
-                    Adjust the sliders below to match your expected activity level and see your projected income.
+                    As a BitForce Ambassador, you earn <strong>both cash bonuses and BFT crypto tokens</strong>. 
+                    Adjust the sliders below to see your projected income from both streams.
                   </p>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li className="flex items-start gap-2">
