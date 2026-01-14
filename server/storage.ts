@@ -56,7 +56,7 @@ import {
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
-import { eq, and, ilike, or, sql, desc, gte } from "drizzle-orm";
+import { eq, and, ilike, or, sql, desc, gte, inArray } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -159,6 +159,11 @@ export interface IStorage {
   getSavedLeadByPlaceId(placeId: string, ambassadorUserId: string): Promise<SavedLead | null>;
   updateSavedLead(id: number, ambassadorUserId: string, updates: Partial<SavedLead>): Promise<SavedLead | null>;
   deleteSavedLead(id: number, ambassadorUserId: string): Promise<boolean>;
+  
+  // BFT Platform Integration Metrics
+  getAmbassadorCount(): Promise<number>;
+  getCustomerCount(): Promise<number>;
+  getMonthlyPurchaseVolume(): Promise<number>;
 }
 
 function generateReferralCode(): string {
@@ -846,6 +851,58 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return result.length > 0;
+  }
+
+  // BFT Platform Integration Metrics
+  async getAmbassadorCount(): Promise<number> {
+    const result = await getDb().select({ count: sql<number>`count(*)::int` })
+      .from(ambassadorSubscriptions)
+      .where(eq(ambassadorSubscriptions.subscriptionStatus, 'active'));
+    return result[0]?.count ?? 0;
+  }
+
+  async getCustomerCount(): Promise<number> {
+    const result = await getDb().select({ count: sql<number>`count(*)::int` })
+      .from(leads);
+    return result[0]?.count ?? 0;
+  }
+
+  async getMonthlyPurchaseVolume(): Promise<number> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const soldServices = await getDb().select({
+      listingId: leadServices.listingId
+    })
+      .from(leadServices)
+      .where(and(
+        eq(leadServices.status, 'sold'),
+        gte(leadServices.updatedAt, startOfMonth)
+      ));
+    
+    if (soldServices.length === 0) return 0;
+    
+    const listingIds = soldServices
+      .map(s => s.listingId)
+      .filter((id): id is number => id !== null);
+    
+    if (listingIds.length === 0) return 0;
+    
+    const listings = await getDb().select({ price: providerListings.price })
+      .from(providerListings)
+      .where(inArray(providerListings.id, listingIds));
+    
+    let total = 0;
+    for (const listing of listings) {
+      if (listing.price) {
+        const numericPrice = parseFloat(listing.price.replace(/[^0-9.]/g, ''));
+        if (!isNaN(numericPrice)) {
+          total += numericPrice;
+        }
+      }
+    }
+    
+    return total;
   }
 }
 
