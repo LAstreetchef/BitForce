@@ -1,52 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Play, FileVideo, ArrowLeft, Loader2, Sparkles, Film } from "lucide-react";
+import { Download, ArrowLeft, Loader2, Sparkles, Film } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-
-import tokenRewardsVideo from "@assets/generated_videos/shiny_reward_tokens_appearing_magically.mp4";
-import tokensGrowingVideo from "@assets/generated_videos/tokens_growing_bigger_and_multiplying.mp4";
-import celebrationVideo from "@assets/generated_videos/celebration_with_valuable_coin_treasure.mp4";
-import lemonadeStandVideo from "@assets/generated_videos/neighborhood_lemonade_stand_scene.mp4";
-
-const videos = [
-  {
-    id: 1,
-    title: "1. The Neighborhood Stand",
-    description: "Intro scene - A colorful neighborhood with a welcoming lemonade stand",
-    src: lemonadeStandVideo,
-    filename: "neighborhood_lemonade_stand_scene.mp4",
-    scriptLine: "As an ambassador, you get powerful tools to help your neighbors..."
-  },
-  {
-    id: 2,
-    title: "2. Earning Reward Tokens",
-    description: "Golden coins and tokens floating with sparkles - earning rewards",
-    src: tokenRewardsVideo,
-    filename: "shiny_reward_tokens_appearing_magically.mp4",
-    scriptLine: "Use Property Lookup, Security Checks, and AI tools to find who needs help!"
-  },
-  {
-    id: 3,
-    title: "3. Tokens Growing in Value",
-    description: "Coins multiplying and growing larger - showing how value increases",
-    src: tokensGrowingVideo,
-    filename: "tokens_growing_bigger_and_multiplying.mp4",
-    scriptLine: "Every time you connect someone with the right service, you earn BFT tokens."
-  },
-  {
-    id: 4,
-    title: "4. Success Celebration",
-    description: "Confetti and treasure chest overflowing with coins - the payoff",
-    src: celebrationVideo,
-    filename: "celebration_with_valuable_coin_treasure.mp4",
-    scriptLine: "As our team grows, those tokens become worth more - everyone wins together!"
-  }
-];
-
-const fullScript = `"As an ambassador, you get powerful tools to help your neighbors. Use our Property Lookup to spot homes that need services. Run Security Checks to see if their email has been in a data breach. Help them find lost friends and family with our People Finder. Every time you connect someone with the right service, you earn BFT tokens - and as our team grows, those tokens become worth more. It's a team game where everyone wins together!"`;
 
 export default function ExplainerVideos() {
   const { toast } = useToast();
@@ -98,10 +56,10 @@ export default function ExplainerVideos() {
     }
   };
 
-  const handleDownload = (src: string, filename: string) => {
+  const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = src;
-    link.download = filename;
+    link.href = "/api/video/explainer-complete";
+    link.download = "bft_explainer_complete.mp4";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -109,7 +67,7 @@ export default function ExplainerVideos() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6">
           <Link href="/">
             <Button variant="ghost" size="sm" data-testid="button-back-home">
@@ -121,23 +79,22 @@ export default function ExplainerVideos() {
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <FileVideo className="w-8 h-8 text-primary" />
+            <Film className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold">BFT Explainer Video</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Kid-friendly explainer video about how and why ambassadors earn BFT tokens. 
-            Get the complete video with captions and background music, or download individual clips.
+            Learn how ambassadors earn BFT tokens by helping neighbors find the services they need.
           </p>
         </div>
 
-        <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Film className="w-6 h-6 text-primary" />
               Complete Explainer Video
             </CardTitle>
             <CardDescription>
-              All 4 clips combined with captions and cinematic background music (~24 seconds)
+              Full video with captions and background music (~24 seconds)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -156,11 +113,11 @@ export default function ExplainerVideos() {
                 <div className="flex gap-3">
                   <Button 
                     className="flex-1"
-                    onClick={() => handleDownload("/api/video/explainer-complete", "bft_explainer_complete.mp4")}
+                    onClick={handleDownload}
                     data-testid="button-download-combined"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Complete Video
+                    Download Video
                   </Button>
                   <Button 
                     variant="outline"
@@ -178,7 +135,7 @@ export default function ExplainerVideos() {
                   <Sparkles className="w-12 h-12 mx-auto text-primary mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Ready to Create Your Video?</h3>
                   <p className="text-muted-foreground mb-4">
-                    Click below to automatically combine all clips, add captions, and include background music.
+                    Click below to generate the complete explainer video with captions and music.
                   </p>
                 </div>
                 <Button 
@@ -195,7 +152,7 @@ export default function ExplainerVideos() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Create Complete Video
+                      Create Video
                     </>
                   )}
                 </Button>
@@ -203,62 +160,6 @@ export default function ExplainerVideos() {
             )}
           </CardContent>
         </Card>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Play className="w-5 h-5" />
-              Voiceover Script (for 11-year-olds)
-            </CardTitle>
-            <CardDescription>The captions that appear in the combined video</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <blockquote className="border-l-4 border-primary pl-4 italic text-lg">
-              {fullScript}
-            </blockquote>
-            <p className="text-sm text-muted-foreground mt-4">
-              Duration: ~24 seconds with captions synced to each clip
-            </p>
-          </CardContent>
-        </Card>
-
-        <h2 className="text-xl font-semibold mb-4">Individual Video Clips</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {videos.map((video) => (
-            <Card key={video.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{video.title}</CardTitle>
-                <CardDescription>{video.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
-                  <video
-                    src={video.src}
-                    controls
-                    className="w-full h-full object-contain"
-                    data-testid={`video-clip-${video.id}`}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-                <div className="bg-muted/50 p-3 rounded-md">
-                  <p className="text-sm italic text-muted-foreground">
-                    "{video.scriptLine}"
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => handleDownload(video.src, video.filename)}
-                  data-testid={`button-download-${video.id}`}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Clip
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </div>
     </div>
   );
