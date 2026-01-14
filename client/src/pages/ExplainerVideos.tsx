@@ -18,7 +18,7 @@ const videos = [
     description: "Intro scene - A colorful neighborhood with a welcoming lemonade stand",
     src: lemonadeStandVideo,
     filename: "neighborhood_lemonade_stand_scene.mp4",
-    scriptLine: "Imagine you help your neighbors find the best lemonade stand in town..."
+    scriptLine: "As an ambassador, you get powerful tools to help your neighbors..."
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const videos = [
     description: "Golden coins and tokens floating with sparkles - earning rewards",
     src: tokenRewardsVideo,
     filename: "shiny_reward_tokens_appearing_magically.mp4",
-    scriptLine: "Every time you bring a new customer, you get special gold coins!"
+    scriptLine: "Use Property Lookup, Security Checks, and AI tools to find who needs help!"
   },
   {
     id: 3,
@@ -34,7 +34,7 @@ const videos = [
     description: "Coins multiplying and growing larger - showing how value increases",
     src: tokensGrowingVideo,
     filename: "tokens_growing_bigger_and_multiplying.mp4",
-    scriptLine: "The more kids who join and help, the more valuable everyone's coins become."
+    scriptLine: "Every time you connect someone with the right service, you earn BFT tokens."
   },
   {
     id: 4,
@@ -42,11 +42,11 @@ const videos = [
     description: "Confetti and treasure chest overflowing with coins - the payoff",
     src: celebrationVideo,
     filename: "celebration_with_valuable_coin_treasure.mp4",
-    scriptLine: "It's like a team game where everyone wins together!"
+    scriptLine: "As our team grows, those tokens become worth more - everyone wins together!"
   }
 ];
 
-const fullScript = `"Imagine you help your neighbors find the best lemonade stand in town. Every time you bring a new customer, you get special gold coins! The cool part? The more kids who join and help, the more valuable everyone's coins become. That's how BFT works - you help people find great services, earn tokens, and as the team grows, your tokens become worth more. It's like a team game where everyone wins together!"`;
+const fullScript = `"As an ambassador, you get powerful tools to help your neighbors. Use our Property Lookup to spot homes that need services. Run Security Checks to see if their email has been in a data breach. Help them find lost friends and family with our People Finder. Every time you connect someone with the right service, you earn BFT tokens - and as our team grows, those tokens become worth more. It's a team game where everyone wins together!"`;
 
 export default function ExplainerVideos() {
   const { toast } = useToast();
