@@ -43,6 +43,11 @@ function Router() {
           <Dashboard />
         </PortalLayout>
       </Route>
+      <Route path="/portal/dashboard">
+        <PortalLayout>
+          <Dashboard />
+        </PortalLayout>
+      </Route>
       <Route path="/portal/leads">
         <PortalLayout>
           <Leads />
