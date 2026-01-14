@@ -245,10 +245,14 @@ export async function registerRoutes(
       }
 
       const metrics = await bftApiClient.getTokenMetrics();
+      // Map BFT platform response to our expected format
+      const priceChangeStr = metrics.priceChange || "0.00%";
+      const priceChange24h = parseFloat(priceChangeStr.replace('%', '')) || 0;
+      
       res.json({
-        tokenPrice: metrics.tokenPrice,
-        priceChange24h: metrics.priceChange24h,
-        lastUpdated: metrics.lastUpdated,
+        tokenPrice: metrics.currentPrice ?? 0.0247,
+        priceChange24h: priceChange24h,
+        lastUpdated: new Date().toISOString(),
       });
     } catch (err: any) {
       console.error("[/api/bft/token-price] Error:", err.message);

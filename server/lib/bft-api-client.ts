@@ -1,15 +1,19 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-const BFT_PLATFORM_URL = process.env.BFT_PLATFORM_URL;
-const SYNC_API_KEY = process.env.SYNC_API_KEY;
+// Read env vars dynamically via getters to pick up changes after module load
+const getBftPlatformUrl = () => process.env.BFT_PLATFORM_URL;
+const getSyncApiKey = () => process.env.SYNC_API_KEY;
 
 export interface TokenMetrics {
-  tokenPrice: number;
+  currentPrice: number;
+  basePrice: number;
+  priceChange: string;
   totalSupply: number;
   circulatingSupply: number;
   marketCap: number;
-  priceChange24h: number;
-  lastUpdated: string;
+  tokenPrice?: number;
+  priceChange24h?: number;
+  lastUpdated?: string;
 }
 
 export interface AmbassadorSyncData {
@@ -79,22 +83,32 @@ export interface LeaderboardResponse {
 }
 
 class BFTApiClient {
-  private client: AxiosInstance;
-  private isConfigured: boolean;
+  private cachedClient: AxiosInstance | null = null;
+  private cachedBaseUrl: string = '';
+  private cachedApiKey: string = '';
 
-  constructor() {
-    this.isConfigured = !!(BFT_PLATFORM_URL && SYNC_API_KEY);
+  private getClient(): AxiosInstance {
+    const baseURL = getBftPlatformUrl() || '';
+    const apiKey = getSyncApiKey() || '';
     
-    this.client = axios.create({
-      baseURL: BFT_PLATFORM_URL || '',
+    // Rebuild client only if env vars changed
+    if (this.cachedClient && this.cachedBaseUrl === baseURL && this.cachedApiKey === apiKey) {
+      return this.cachedClient;
+    }
+    
+    this.cachedBaseUrl = baseURL;
+    this.cachedApiKey = apiKey;
+    
+    const client = axios.create({
+      baseURL,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': SYNC_API_KEY || '',
+        'X-API-Key': apiKey,
       },
     });
 
-    this.client.interceptors.response.use(
+    client.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
         const message = error.response?.data 
@@ -104,47 +118,55 @@ class BFTApiClient {
         throw error;
       }
     );
+    
+    this.cachedClient = client;
+    return client;
   }
 
   private ensureConfigured(): void {
-    if (!this.isConfigured) {
+    if (!this.isAvailable()) {
       throw new Error('BFT API client is not configured. Please set BFT_PLATFORM_URL and SYNC_API_KEY environment variables.');
     }
   }
 
   async getTokenMetrics(): Promise<TokenMetrics> {
     this.ensureConfigured();
-    const response = await this.client.get<TokenMetrics>('/api/sync/token-metrics');
+    const client = this.getClient();
+    const response = await client.get<TokenMetrics>('/api/sync/token-metrics');
     return response.data;
   }
 
   async syncAmbassador(data: AmbassadorSyncData): Promise<AmbassadorSyncResponse> {
     this.ensureConfigured();
-    const response = await this.client.post<AmbassadorSyncResponse>('/api/sync/ambassador', data);
+    const client = this.getClient();
+    const response = await client.post<AmbassadorSyncResponse>('/api/sync/ambassador', data);
     return response.data;
   }
 
   async convertPoints(data: ConvertPointsRequest): Promise<ConvertPointsResponse> {
     this.ensureConfigured();
-    const response = await this.client.post<ConvertPointsResponse>('/api/sync/convert-points', data);
+    const client = this.getClient();
+    const response = await client.post<ConvertPointsResponse>('/api/sync/convert-points', data);
     return response.data;
   }
 
   async recordActivity(data: ActivityRecord): Promise<ActivityResponse> {
     this.ensureConfigured();
-    const response = await this.client.post<ActivityResponse>('/api/sync/activity', data);
+    const client = this.getClient();
+    const response = await client.post<ActivityResponse>('/api/sync/activity', data);
     return response.data;
   }
 
   async getLeaderboard(limit?: number): Promise<LeaderboardResponse> {
     this.ensureConfigured();
+    const client = this.getClient();
     const params = limit ? { limit } : {};
-    const response = await this.client.get<LeaderboardResponse>('/api/sync/leaderboard', { params });
+    const response = await client.get<LeaderboardResponse>('/api/sync/leaderboard', { params });
     return response.data;
   }
 
   isAvailable(): boolean {
-    return this.isConfigured;
+    return !!(getBftPlatformUrl() && getSyncApiKey());
   }
 }
 
