@@ -46,3 +46,4 @@ integrations = ["javascript_log_in_with_replit:2.0.0", "javascript_gemini_ai_int
 [userenv.shared]
 VITE_STRIPE_PUBLISHABLE_KEY = "${STRIPE_PUBLISHABLE_KEY}"
 ADMIN_USER_IDS = "39706341"
+BFT_PLATFORM_URL = "https://bft-token-platform.replit.app"
