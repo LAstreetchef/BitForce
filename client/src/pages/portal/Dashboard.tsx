@@ -22,7 +22,9 @@ import { formatDistanceToNow } from "date-fns";
 import { LEVEL_THRESHOLDS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 
 interface GamificationStats {
-  points: {
+  bftBalance: number;
+  bftPlatformAvailable: boolean;
+  legacyPoints: {
     totalPoints: number;
     level: number;
     currentStreak: number;
@@ -71,9 +73,11 @@ export default function Dashboard() {
     queryKey: ["/api/gamification/leaderboard"],
   });
 
-  const currentLevel = stats?.points?.level || 1;
-  const totalPoints = stats?.points?.totalPoints || 0;
-  const currentStreak = stats?.points?.currentStreak || 0;
+  const bftBalance = stats?.bftBalance || 0;
+  const bftPlatformAvailable = stats?.bftPlatformAvailable || false;
+  const currentLevel = stats?.legacyPoints?.level || 1;
+  const totalPoints = stats?.legacyPoints?.totalPoints || 0;
+  const currentStreak = stats?.legacyPoints?.currentStreak || 0;
   
   const currentThreshold = LEVEL_THRESHOLDS[currentLevel - 1] || 0;
   const nextThreshold = LEVEL_THRESHOLDS[currentLevel] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
@@ -83,11 +87,11 @@ export default function Dashboard() {
 
   const summaryStats = [
     { 
-      title: "Total Points", 
-      value: totalPoints.toLocaleString(), 
-      change: `+${stats?.recentActions?.reduce((sum, a) => sum + a.pointsAwarded, 0) || 0} recent`, 
-      icon: Zap,
-      color: "text-amber-600"
+      title: "BFT Balance", 
+      value: bftPlatformAvailable ? bftBalance.toFixed(2) : "—", 
+      change: bftPlatformAvailable ? "Token rewards" : "Connecting...", 
+      icon: Sparkles,
+      color: "text-emerald-600"
     },
     { 
       title: "Current Level", 

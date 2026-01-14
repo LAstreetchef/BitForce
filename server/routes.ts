@@ -11,6 +11,7 @@ import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
 import { getPropertyReport } from "./services/propertyData";
 import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
+import { awardBftTokens } from "./lib/bft-rewards";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail, sendAIBuddyCustomerInviteEmail } from "./services/email";
 import { registerCouponAppRoutes, configureCouponAppCors } from "./services/couponAppApi";
@@ -329,6 +330,62 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("[/api/bft/leaderboard] Error:", err.message);
       res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // One-time migration: Convert all legacy points to BFT tokens
+  app.post("/api/bft/migrate-points", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      const { pointsToBft } = await import("./lib/bft-rewards");
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ message: "BFT platform not configured" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      if (!ambassador) {
+        return res.status(404).json({ message: "Ambassador not found" });
+      }
+
+      const pointsRecord = await storage.getOrCreateAmbassadorPoints(userId);
+      const currentPoints = pointsRecord?.totalPoints || 0;
+
+      if (currentPoints < 10) {
+        return res.status(400).json({ 
+          message: "Minimum 10 points required for migration",
+          currentPoints 
+        });
+      }
+
+      // Convert all legacy points to BFT
+      const result = await bftApiClient.convertPoints({
+        ambassadorId: ambassador.id.toString(),
+        pointsToConvert: currentPoints,
+      });
+
+      if (result.success) {
+        // Reset local points to 0 after successful migration
+        await storage.updateAmbassadorPoints(userId, -currentPoints);
+      }
+
+      res.json({
+        success: result.success,
+        pointsMigrated: currentPoints,
+        bftTokensReceived: result.bftTokensReceived || pointsToBft(currentPoints),
+        message: result.success 
+          ? "Successfully migrated all points to BFT tokens!" 
+          : "Migration failed, please try again",
+      });
+    } catch (err: any) {
+      console.error("[/api/bft/migrate-points] Error:", err.message);
+      res.status(500).json({ message: "Failed to migrate points" });
     }
   });
 
@@ -767,8 +824,16 @@ export async function registerRoutes(
 
       const { leadId, roomType, style } = req.body;
 
-      // Award points for generating design
-      await storage.updateAmbassadorPoints(userId, ACTION_POINTS.GENERATE_DESIGN);
+      // Award BFT tokens for generating design
+      const bftResult = await awardBftTokens(
+        userId,
+        "GENERATE_DESIGN",
+        ACTION_POINTS.GENERATE_DESIGN,
+        `Generated ${roomType} design with ${style} style`,
+        { leadId, roomType, style }
+      );
+
+      // Also log locally for history
       await storage.logAmbassadorAction({
         userId,
         actionType: "GENERATE_DESIGN",
@@ -780,7 +845,8 @@ export async function registerRoutes(
 
       res.json({ 
         success: true, 
-        pointsAwarded: ACTION_POINTS.GENERATE_DESIGN,
+        bftAwarded: bftResult.bftAwarded,
+        pointsEquivalent: ACTION_POINTS.GENERATE_DESIGN,
       });
     } catch (err) {
       console.error("Track design generation error:", err);
@@ -824,8 +890,16 @@ export async function registerRoutes(
         ambassadorId: userId,
       });
 
-      // Award points for suggesting service
-      await storage.updateAmbassadorPoints(userId, ACTION_POINTS.SUGGEST_SERVICE);
+      // Award BFT tokens for suggesting service
+      const bftResult = await awardBftTokens(
+        userId,
+        "SUGGEST_SERVICE",
+        ACTION_POINTS.SUGGEST_SERVICE,
+        `Suggested ${serviceName}`,
+        { leadId, serviceName, listingId }
+      );
+
+      // Also log locally for history
       await storage.logAmbassadorAction({
         userId,
         actionType: "SUGGEST_SERVICE",
@@ -912,7 +986,16 @@ export async function registerRoutes(
       }
 
       if (pointsToAward > 0) {
-        await storage.updateAmbassadorPoints(userId, pointsToAward);
+        // Award BFT tokens for status change
+        await awardBftTokens(
+          userId,
+          actionType,
+          pointsToAward,
+          `Status changed to ${status}`,
+          { leadId: updatedService.leadId, leadServiceId: id, status }
+        );
+
+        // Also log locally for history
         await storage.logAmbassadorAction({
           userId,
           actionType,
@@ -930,7 +1013,7 @@ export async function registerRoutes(
     }
   });
 
-  // Gamification API
+  // Gamification API - returns both BFT balance (when available) and local points
   app.get("/api/gamification/stats", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = req.user as any;
@@ -939,12 +1022,32 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const points = await storage.getOrCreateAmbassadorPoints(userId);
+      // Always get local points (used for levels, streaks, leaderboard)
+      const localPoints = await storage.getOrCreateAmbassadorPoints(userId);
       const badges = await storage.getAmbassadorBadges(userId);
       const recentActions = await storage.getAmbassadorActions(userId, 10);
 
+      // Try to get BFT balance from token price endpoint (lightweight check)
+      let bftBalance = 0;
+      let bftPlatformAvailable = false;
+      
+      try {
+        const { pointsToBft } = await import("./lib/bft-rewards");
+        const { bftApiClient } = await import("./lib/bft-api-client");
+        
+        if (bftApiClient.isAvailable()) {
+          // Estimate BFT balance from local points (conversion rate: 10 pts = 1 BFT)
+          bftBalance = pointsToBft(localPoints.totalPoints);
+          bftPlatformAvailable = true;
+        }
+      } catch (err) {
+        console.log("[gamification/stats] BFT calculation error, using local points only");
+      }
+
       res.json({
-        points,
+        bftBalance,
+        bftPlatformAvailable,
+        legacyPoints: localPoints,
         badges: badges.map(b => ({
           ...b,
           definition: BADGE_DEFINITIONS[b.badgeType as BadgeType] || null,
