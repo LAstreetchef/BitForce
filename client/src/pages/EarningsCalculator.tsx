@@ -135,6 +135,9 @@ export default function EarningsCalculator() {
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
                 <div className="flex-1">
+                  <p className="text-xl md:text-2xl font-bold text-foreground mb-3" data-testid="text-tagline">
+                    Can you succeed in the job of the future? Find out now.
+                  </p>
                   <div className="flex items-center gap-2 mb-2">
                     <Info className="w-5 h-5 text-primary" />
                     <h2 className="text-lg font-semibold">How to Use This Calculator</h2>
