@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Play, FileVideo, ArrowLeft } from "lucide-react";
+import { Download, Play, FileVideo, ArrowLeft, Loader2, Sparkles, Film } from "lucide-react";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 import tokenRewardsVideo from "@assets/generated_videos/shiny_reward_tokens_appearing_magically.mp4";
 import tokensGrowingVideo from "@assets/generated_videos/tokens_growing_bigger_and_multiplying.mp4";
@@ -46,6 +49,55 @@ const videos = [
 const fullScript = `"Imagine you help your neighbors find the best lemonade stand in town. Every time you bring a new customer, you get special gold coins! The cool part? The more kids who join and help, the more valuable everyone's coins become. That's how BFT works - you help people find great services, earn tokens, and as the team grows, your tokens become worth more. It's like a team game where everyone wins together!"`;
 
 export default function ExplainerVideos() {
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [combinedVideoExists, setCombinedVideoExists] = useState(false);
+
+  useEffect(() => {
+    checkVideoStatus();
+  }, []);
+
+  const checkVideoStatus = async () => {
+    try {
+      const response = await fetch("/api/video/explainer-status");
+      const data = await response.json();
+      setCombinedVideoExists(data.exists);
+    } catch (err) {
+      console.error("Failed to check video status:", err);
+    }
+  };
+
+  const handleCombineVideos = async () => {
+    setIsProcessing(true);
+    toast({
+      title: "Processing Video",
+      description: "Combining clips, adding captions and music. This may take a minute...",
+    });
+
+    try {
+      const response = await apiRequest("POST", "/api/video/combine-explainer");
+      const data = await response.json();
+      
+      if (data.success) {
+        setCombinedVideoExists(true);
+        toast({
+          title: "Video Ready!",
+          description: "Your combined explainer video is ready to download.",
+        });
+      } else {
+        throw new Error(data.message || "Failed to combine videos");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Processing Failed",
+        description: err.message || "Could not combine videos. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleDownload = (src: string, filename: string) => {
     const link = document.createElement('a');
     link.href = src;
@@ -70,13 +122,87 @@ export default function ExplainerVideos() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <FileVideo className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">BFT Explainer Video Clips</h1>
+            <h1 className="text-3xl font-bold">BFT Explainer Video</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Kid-friendly video clips explaining how and why ambassadors earn BFT tokens. 
-            Download these clips and combine them with the voiceover script below.
+            Kid-friendly explainer video about how and why ambassadors earn BFT tokens. 
+            Get the complete video with captions and background music, or download individual clips.
           </p>
         </div>
+
+        <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Film className="w-6 h-6 text-primary" />
+              Complete Explainer Video
+            </CardTitle>
+            <CardDescription>
+              All 4 clips combined with captions and cinematic background music (~24 seconds)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {combinedVideoExists ? (
+              <>
+                <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+                  <video
+                    src="/attached_assets/generated_videos/bft_explainer_complete.mp4"
+                    controls
+                    className="w-full h-full object-contain"
+                    data-testid="video-combined"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                <div className="flex gap-3">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => handleDownload("/attached_assets/generated_videos/bft_explainer_complete.mp4", "bft_explainer_complete.mp4")}
+                    data-testid="button-download-combined"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Complete Video
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleCombineVideos}
+                    disabled={isProcessing}
+                    data-testid="button-regenerate"
+                  >
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="bg-muted/50 rounded-lg p-8 mb-4">
+                  <Sparkles className="w-12 h-12 mx-auto text-primary mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Ready to Create Your Video?</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Click below to automatically combine all clips, add captions, and include background music.
+                  </p>
+                </div>
+                <Button 
+                  size="lg"
+                  onClick={handleCombineVideos}
+                  disabled={isProcessing}
+                  data-testid="button-combine-videos"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing Video...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Create Complete Video
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="mb-8">
           <CardHeader>
@@ -84,18 +210,19 @@ export default function ExplainerVideos() {
               <Play className="w-5 h-5" />
               Voiceover Script (for 11-year-olds)
             </CardTitle>
-            <CardDescription>Read this script while playing the video clips in order</CardDescription>
+            <CardDescription>The captions that appear in the combined video</CardDescription>
           </CardHeader>
           <CardContent>
             <blockquote className="border-l-4 border-primary pl-4 italic text-lg">
               {fullScript}
             </blockquote>
             <p className="text-sm text-muted-foreground mt-4">
-              Duration: ~30-45 seconds when read at a natural pace
+              Duration: ~24 seconds with captions synced to each clip
             </p>
           </CardContent>
         </Card>
 
+        <h2 className="text-xl font-semibold mb-4">Individual Video Clips</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {videos.map((video) => (
             <Card key={video.id} className="overflow-hidden">
@@ -132,21 +259,6 @@ export default function ExplainerVideos() {
             </Card>
           ))}
         </div>
-
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>How to Create Your Final Video</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-              <li>Download all 4 video clips above</li>
-              <li>Record yourself (or have someone) read the voiceover script</li>
-              <li>Use a video editor (like iMovie, CapCut, or Canva) to combine clips with audio</li>
-              <li>Add the clips in order (1-4) matching the script sections</li>
-              <li>Export and share your explainer video</li>
-            </ol>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

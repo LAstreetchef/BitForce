@@ -2434,6 +2434,28 @@ export async function registerRoutes(
     }
   });
 
+  // Video processing endpoint for explainer video
+  app.post("/api/video/combine-explainer", async (req: Request, res: Response) => {
+    try {
+      const { combineExplainerVideos } = await import("./services/videoProcessor");
+      const outputPath = await combineExplainerVideos();
+      res.json({ success: true, message: "Video combined successfully", path: outputPath });
+    } catch (err: any) {
+      console.error("[Video Combine] Error:", err.message);
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  app.get("/api/video/explainer-status", async (req: Request, res: Response) => {
+    try {
+      const { getCombinedVideoPath } = await import("./services/videoProcessor");
+      const path = getCombinedVideoPath();
+      res.json({ exists: !!path, path });
+    } catch (err: any) {
+      res.status(500).json({ exists: false, message: err.message });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
   // Check for PORT env var as indicator of Cloud Run (it's always set there)
