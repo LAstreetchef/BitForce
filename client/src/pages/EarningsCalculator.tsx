@@ -319,7 +319,7 @@ export default function EarningsCalculator() {
                             value={[ambassadorReferrals]}
                             onValueChange={(v) => { setAmbassadorReferrals(v[0]); clearPreset(); }}
                             min={0}
-                            max={20}
+                            max={100}
                             step={1}
                             data-testid="slider-ambassadors"
                           />
