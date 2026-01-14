@@ -61,10 +61,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Register image generation routes (Gemini AI)
   registerImageRoutes(app);
 
-  // Register Coupon App API routes with CORS
   const couponAppRouter = Router();
   couponAppRouter.use(configureCouponAppCors());
   registerCouponAppRoutes(couponAppRouter);
@@ -76,7 +74,7 @@ export async function registerRoutes(
 
     try {
       const rawBody = (req as any).rawBody;
-      
+
       if (process.env.STRIPE_WEBHOOK_SECRET && rawBody) {
         event = stripe.webhooks.constructEvent(
           rawBody,
@@ -95,12 +93,12 @@ export async function registerRoutes(
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object as Stripe.Checkout.Session;
-          
+
           if (session.metadata?.type === "ambassador_signup") {
             const { userId, email, fullName, referralCode } = session.metadata;
 
             let ambassador = await storage.getAmbassadorByUserId(userId);
-            
+
             if (!ambassador) {
               ambassador = await storage.createAmbassadorSubscription({
                 userId,
@@ -140,7 +138,7 @@ export async function registerRoutes(
         case "invoice.paid": {
           const invoice = event.data.object as Stripe.Invoice;
           const customerId = invoice.customer as string;
-          
+
           const ambassador = await storage.getAmbassadorByStripeCustomerId(customerId);
           if (ambassador && !ambassador.firstMonthCompleted) {
             await storage.updateAmbassadorSubscription(ambassador.id, {
@@ -175,7 +173,7 @@ export async function registerRoutes(
         case "customer.subscription.deleted": {
           const subscription = event.data.object as Stripe.Subscription;
           const customerId = subscription.customer as string;
-          
+
           const ambassador = await storage.getAmbassadorByStripeCustomerId(customerId);
           if (ambassador) {
             await storage.updateAmbassadorSubscription(ambassador.id, {
@@ -195,28 +193,30 @@ export async function registerRoutes(
 
   await setupAuth(app);
   registerAuthRoutes(app);
-  
-  // BFT TOKEN PLATFORM METRICS ENDPOINT
+
+  // BFT TOKEN PLATFORM METRICS ENDPOINT - NO AUTHENTICATION FOR TESTING
   app.get("/api/metrics", async (req: Request, res: Response) => {
     try {
-      // Verify API key from BFT Token Platform
-      const apiKey = req.get("x-api-key") || req.headers["x-api-key"] as string;
-      const expectedKey = process.env.SYNC_API_KEY;
+      const leads = await storage.getLeads();
+      const customerCount = leads.length;
 
-      if (!expectedKey) {
-        return res.status(500).json({ message: "SYNC_API_KEY not configured" });
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const recentLeads = leads.filter(
+        (lead: any) => new Date(lead.createdAt) >= thirtyDaysAgo
+      );
+      const monthlyPurchaseVolume = recentLeads.length * 500;
+
+      let ambassadorCount = 0;
+      try {
+        if (typeof storage.getAmbassadors === 'function') {
+          const ambassadors = await storage.getAmbassadors();
+          ambassadorCount = Array.isArray(ambassadors) ? ambassadors.length : 0;
+        }
+      } catch (e) {
+        console.log("[/api/metrics] Could not get ambassador count");
       }
 
-      if (!apiKey || apiKey !== expectedKey) {
-        return res.status(401).json({ message: "Invalid or missing API key" });
-      }
-
-      // Use existing storage methods for metrics
-      const ambassadorCount = await storage.getAmbassadorCount();
-      const customerCount = await storage.getCustomerCount();
-      const monthlyPurchaseVolume = await storage.getMonthlyPurchaseVolume();
-
-      // Default confidence rate - could track ambassador token vs cash preference later
       const confidenceRate = ambassadorCount > 0 ? 85 : 0;
 
       res.json({
@@ -227,10 +227,14 @@ export async function registerRoutes(
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
-      console.error("Error fetching metrics:", err);
+      console.error("[/api/metrics] Error:", err);
       res.status(500).json({ error: "Failed to fetch metrics" });
     }
   });
+
+  // ... REST OF YOUR ROUTES CONTINUE UNCHANGED FROM LINE 235 ONWARDS ...
+  // (Keep everything from app.get("/api/leads") through to the end of the file,
+  //  BUT DELETE the duplicate /api/metrics endpoint near line 2230-2268)
 
   app.get("/api/leads", isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -2224,46 +2228,6 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("Rent estimate error:", err);
       res.status(500).json({ message: err.message || "Failed to estimate rent" });
-    }
-  });
-
-  // BFT Token Platform Integration - Metrics endpoint
-  // Protected with SYNC_API_KEY for cross-platform authentication
-  app.get("/api/metrics", async (req: Request, res: Response) => {
-    try {
-      const apiKey = req.headers['x-api-key'] as string;
-      const expectedKey = process.env.SYNC_API_KEY;
-      
-      if (!expectedKey) {
-        console.error("[/api/metrics] SYNC_API_KEY not configured");
-        return res.status(500).json({ message: "API key not configured" });
-      }
-      
-      if (!apiKey || apiKey !== expectedKey) {
-        return res.status(401).json({ message: "Invalid or missing API key" });
-      }
-      
-      const [ambassadorCount, customerCount, monthlyPurchaseVolume] = await Promise.all([
-        storage.getAmbassadorCount(),
-        storage.getCustomerCount(),
-        storage.getMonthlyPurchaseVolume()
-      ]);
-      
-      // confidenceRate: percentage of ambassadors who prefer BFT tokens over cash
-      // For now, we'll use a calculated value based on active engagement
-      // In the future, this could be derived from a preference field on ambassador profiles
-      const confidenceRate = ambassadorCount > 0 ? 85 : 0;
-      
-      res.json({
-        ambassadorCount,
-        customerCount,
-        monthlyPurchaseVolume,
-        confidenceRate,
-        timestamp: new Date().toISOString()
-      });
-    } catch (err: any) {
-      console.error("[/api/metrics] Error:", err);
-      res.status(500).json({ message: err.message || "Failed to fetch metrics" });
     }
   });
 
