@@ -200,7 +200,7 @@ export async function registerRoutes(
   app.get("/api/metrics", async (req: Request, res: Response) => {
     try {
       // Verify API key from BFT Token Platform
-      const apiKey = req.headers["x-api-key"] as string;
+      const apiKey = req.get("x-api-key") || req.headers["x-api-key"] as string;
       const expectedKey = process.env.SYNC_API_KEY;
 
       if (!expectedKey) {
