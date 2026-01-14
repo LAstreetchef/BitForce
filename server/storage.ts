@@ -105,6 +105,7 @@ export interface IStorage {
   updateAmbassadorPoints(userId: string, pointsToAdd: number): Promise<AmbassadorPoints>;
   logAmbassadorAction(action: InsertAmbassadorAction): Promise<AmbassadorAction>;
   getAmbassadorActions(userId: string, limit?: number): Promise<AmbassadorAction[]>;
+  getAllRecentActions(limit?: number): Promise<(AmbassadorAction & { actorName: string })[]>;
   getLeaderboard(limit?: number): Promise<AmbassadorPoints[]>;
   
   // Ambassador Badges
@@ -494,6 +495,30 @@ export class DatabaseStorage implements IStorage {
       .where(eq(ambassadorActions.userId, userId))
       .orderBy(desc(ambassadorActions.createdAt))
       .limit(limit);
+  }
+
+  async getAllRecentActions(limit: number = 50): Promise<(AmbassadorAction & { actorName: string })[]> {
+    const results = await getDb()
+      .select({
+        id: ambassadorActions.id,
+        userId: ambassadorActions.userId,
+        actionType: ambassadorActions.actionType,
+        pointsAwarded: ambassadorActions.pointsAwarded,
+        leadId: ambassadorActions.leadId,
+        leadServiceId: ambassadorActions.leadServiceId,
+        description: ambassadorActions.description,
+        createdAt: ambassadorActions.createdAt,
+        actorName: ambassadorSubscriptions.fullName,
+      })
+      .from(ambassadorActions)
+      .leftJoin(ambassadorSubscriptions, eq(ambassadorActions.userId, ambassadorSubscriptions.userId))
+      .orderBy(desc(ambassadorActions.createdAt))
+      .limit(limit);
+    
+    return results.map(r => ({
+      ...r,
+      actorName: r.actorName || 'Unknown Ambassador',
+    }));
   }
 
   async getLeaderboard(limit: number = 10): Promise<AmbassadorPoints[]> {

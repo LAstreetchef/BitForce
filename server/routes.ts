@@ -232,6 +232,55 @@ export async function registerRoutes(
     }
   });
 
+  // BFT TOKEN PLATFORM ACTIVITIES ENDPOINT (called by BFT platform)
+  app.get("/api/activities", async (req: Request, res: Response) => {
+    try {
+      const apiKey = req.headers["x-api-key"] as string;
+      const expectedKey = process.env.SYNC_API_KEY;
+
+      if (!expectedKey) {
+        console.error("[/api/activities] SYNC_API_KEY not configured");
+        return res.status(500).json({ message: "SYNC_API_KEY not configured" });
+      }
+
+      if (!apiKey || apiKey !== expectedKey) {
+        return res.status(401).json({ message: "Invalid or missing API key" });
+      }
+
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const recentActions = await storage.getAllRecentActions(limit);
+
+      const activityTypeMap: Record<string, string> = {
+        'SUGGEST_SERVICE': 'customer_onboarded',
+        'CONTACT_LEAD': 'customer_onboarded',
+        'LEAD_INTERESTED': 'customer_onboarded',
+        'MAKE_SALE': 'purchase_made',
+        'DAILY_LOGIN': 'tokens_earned',
+        'STREAK_BONUS_7': 'bonus_earned',
+        'STREAK_BONUS_30': 'bonus_earned',
+        'GENERATE_DESIGN': 'tokens_earned',
+        'AMBASSADOR_JOINED': 'ambassador_joined',
+      };
+
+      const activities = recentActions.map(action => {
+        const bftTokens = Math.floor(action.pointsAwarded / 10);
+        return {
+          id: `action-${action.id}`,
+          type: activityTypeMap[action.actionType] || 'tokens_earned',
+          actorName: action.actorName,
+          description: action.description || `Earned ${bftTokens} BFT for ${action.actionType.toLowerCase().replace(/_/g, ' ')}`,
+          value: bftTokens,
+          timestamp: action.createdAt?.toISOString() || new Date().toISOString(),
+        };
+      });
+
+      res.json(activities);
+    } catch (err) {
+      console.error("[/api/activities] Error:", err);
+      res.status(500).json({ error: "Failed to fetch activities" });
+    }
+  });
+
   // BFT TOKEN ENDPOINTS (for ambassador dashboard to fetch from BFT platform)
   app.get("/api/bft/token-price", isAuthenticated, async (req: Request, res: Response) => {
     try {
