@@ -1,4 +1,5 @@
 import { 
+  users,
   leads, 
   eventRegistrations, 
   ambassadorSubscriptions,
@@ -53,7 +54,8 @@ import {
   type InsertSharedCouponBook,
   type SavedLead,
   type InsertSavedLead,
-  LEVEL_THRESHOLDS
+  LEVEL_THRESHOLDS,
+  users
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
 import { eq, and, ilike, or, sql, desc, gte, inArray } from "drizzle-orm";
@@ -907,7 +909,7 @@ export class DatabaseStorage implements IStorage {
   async getAmbassadorCount(): Promise<number> {
     const result = await getDb()
       .select({ count: sql<number>`count(*)` })
-      .from(ambassadorSubscriptions);
+      .from(users);
     return Number(result[0]?.count) || 0;
   }
 
