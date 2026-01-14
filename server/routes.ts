@@ -194,9 +194,22 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  // BFT TOKEN PLATFORM METRICS ENDPOINT
+  // BFT TOKEN PLATFORM METRICS ENDPOINT (called by BFT platform)
   app.get("/api/metrics", async (req: Request, res: Response) => {
     try {
+      // Verify API key from BFT Token Platform
+      const apiKey = req.headers["x-api-key"] as string;
+      const expectedKey = process.env.SYNC_API_KEY;
+
+      if (!expectedKey) {
+        console.error("[/api/metrics] SYNC_API_KEY not configured");
+        return res.status(500).json({ message: "SYNC_API_KEY not configured" });
+      }
+
+      if (!apiKey || apiKey !== expectedKey) {
+        return res.status(401).json({ message: "Invalid or missing API key" });
+      }
+
       const ambassadorCount = await storage.getAmbassadorCount();
       const customerCount = await storage.getCustomerCount();
       const monthlyPurchaseVolume = await storage.getMonthlyPurchaseVolume();
@@ -218,9 +231,106 @@ export async function registerRoutes(
     }
   });
 
-  // ... REST OF YOUR ROUTES CONTINUE UNCHANGED FROM LINE 235 ONWARDS ...
-  // (Keep everything from app.get("/api/leads") through to the end of the file,
-  //  BUT DELETE the duplicate /api/metrics endpoint near line 2230-2268)
+  // BFT TOKEN ENDPOINTS (for ambassador dashboard to fetch from BFT platform)
+  app.get("/api/bft/token-price", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ 
+          message: "BFT integration not configured",
+          tokenPrice: null 
+        });
+      }
+
+      const metrics = await bftApiClient.getTokenMetrics();
+      res.json({
+        tokenPrice: metrics.tokenPrice,
+        priceChange24h: metrics.priceChange24h,
+        lastUpdated: metrics.lastUpdated,
+      });
+    } catch (err: any) {
+      console.error("[/api/bft/token-price] Error:", err.message);
+      res.status(500).json({ message: "Failed to fetch token price" });
+    }
+  });
+
+  app.post("/api/bft/convert-points", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      const user = req.user as any;
+      
+      if (!user?.id) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ message: "BFT integration not configured" });
+      }
+
+      const { pointsToConvert, walletAddress } = req.body;
+      
+      if (!pointsToConvert || typeof pointsToConvert !== 'number' || pointsToConvert < 10) {
+        return res.status(400).json({ message: "Minimum 10 points required for conversion" });
+      }
+
+      // Get ambassador's current points
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      if (!ambassador) {
+        return res.status(404).json({ message: "Ambassador not found" });
+      }
+
+      const pointsRecord = await storage.getOrCreateAmbassadorPoints(user.id);
+      const currentPoints = pointsRecord?.totalPoints || 0;
+
+      if (currentPoints < pointsToConvert) {
+        return res.status(400).json({ 
+          message: `Insufficient points. You have ${currentPoints} points.` 
+        });
+      }
+
+      // Call BFT platform to convert points
+      const result = await bftApiClient.convertPoints({
+        ambassadorId: ambassador.id.toString(),
+        pointsToConvert,
+        walletAddress,
+      });
+
+      // Deduct points locally after successful conversion
+      if (result.success) {
+        await storage.updateAmbassadorPoints(user.id, -pointsToConvert);
+      }
+
+      res.json({
+        success: result.success,
+        pointsConverted: result.pointsConverted,
+        bftTokensReceived: result.bftTokensReceived,
+        conversionRate: result.conversionRate,
+        newPointsBalance: currentPoints - pointsToConvert,
+      });
+    } catch (err: any) {
+      console.error("[/api/bft/convert-points] Error:", err.message);
+      res.status(500).json({ message: "Failed to convert points" });
+    }
+  });
+
+  app.get("/api/bft/leaderboard", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ message: "BFT integration not configured" });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 10;
+      const result = await bftApiClient.getLeaderboard(limit);
+      
+      res.json(result);
+    } catch (err: any) {
+      console.error("[/api/bft/leaderboard] Error:", err.message);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
 
   app.get("/api/leads", isAuthenticated, async (req: Request, res: Response) => {
     try {
