@@ -13,6 +13,7 @@ const REFERRAL_BONUS = 50;
 const RECURRING_OVERRIDE = 4;
 
 const REWARDS_EXPLAINED = [
+  { label: "Ambassador Signup", bft: 50, description: "Earn 50 BFT when you recruit a new ambassador" },
   { label: "Daily Login", bft: 0.2, description: "Earn BFT just for logging in each day" },
   { label: "Customer Contact", bft: 1, description: "Log a conversation with a potential customer" },
   { label: "Interest Shown", bft: 1.5, description: "When a customer expresses interest in services" },
@@ -90,6 +91,7 @@ export default function EarningsCalculator() {
     const streaks7Day = Math.floor(loginDays / 7);
     const streaks30Day = Math.floor(loginDays / 30);
 
+    const bftFromAmbassadors = ambassadorReferrals * 50;
     const bftFromLogins = loginDays * 0.2;
     const bftFromContacts = customersContacted * 1;
     const bftFromInterested = customersInterested * 1.5;
@@ -98,7 +100,7 @@ export default function EarningsCalculator() {
     const bftFrom7DayStreaks = streaks7Day * 2.5;
     const bftFrom30DayStreaks = streaks30Day * 10;
 
-    const totalBft = bftFromLogins + bftFromContacts + bftFromInterested + bftFromSales + bftFromServices + bftFrom7DayStreaks + bftFrom30DayStreaks;
+    const totalBft = bftFromAmbassadors + bftFromLogins + bftFromContacts + bftFromInterested + bftFromSales + bftFromServices + bftFrom7DayStreaks + bftFrom30DayStreaks;
     const bftDollarValue = totalBft * bftTokenValue;
     const totalEarnings = totalCashEarnings + bftDollarValue;
     const netProfit = totalEarnings - totalCosts;
