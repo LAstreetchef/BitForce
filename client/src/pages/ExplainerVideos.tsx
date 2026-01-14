@@ -145,7 +145,7 @@ export default function ExplainerVideos() {
               <>
                 <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
                   <video
-                    src="/attached_assets/generated_videos/bft_explainer_complete.mp4"
+                    src="/api/video/explainer-complete"
                     controls
                     className="w-full h-full object-contain"
                     data-testid="video-combined"
@@ -156,7 +156,7 @@ export default function ExplainerVideos() {
                 <div className="flex gap-3">
                   <Button 
                     className="flex-1"
-                    onClick={() => handleDownload("/attached_assets/generated_videos/bft_explainer_complete.mp4", "bft_explainer_complete.mp4")}
+                    onClick={() => handleDownload("/api/video/explainer-complete", "bft_explainer_complete.mp4")}
                     data-testid="button-download-combined"
                   >
                     <Download className="w-4 h-4 mr-2" />

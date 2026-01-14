@@ -2449,10 +2449,53 @@ export async function registerRoutes(
   app.get("/api/video/explainer-status", async (req: Request, res: Response) => {
     try {
       const { getCombinedVideoPath } = await import("./services/videoProcessor");
-      const path = getCombinedVideoPath();
-      res.json({ exists: !!path, path });
+      const videoPath = getCombinedVideoPath();
+      res.json({ exists: !!videoPath, path: videoPath });
     } catch (err: any) {
       res.status(500).json({ exists: false, message: err.message });
+    }
+  });
+
+  // Stream the combined explainer video
+  app.get("/api/video/explainer-complete", async (req: Request, res: Response) => {
+    try {
+      const { getCombinedVideoPath } = await import("./services/videoProcessor");
+      const videoPath = getCombinedVideoPath();
+      
+      if (!videoPath) {
+        return res.status(404).json({ message: "Combined video not found" });
+      }
+      
+      const fs = await import("fs");
+      const path = await import("path");
+      const stat = fs.statSync(videoPath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunkSize = (end - start) + 1;
+        const file = fs.createReadStream(videoPath, { start, end });
+        
+        res.writeHead(206, {
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunkSize,
+          "Content-Type": "video/mp4",
+        });
+        file.pipe(res);
+      } else {
+        res.writeHead(200, {
+          "Content-Length": fileSize,
+          "Content-Type": "video/mp4",
+        });
+        fs.createReadStream(videoPath).pipe(res);
+      }
+    } catch (err: any) {
+      console.error("[Video Stream] Error:", err.message);
+      res.status(500).json({ message: err.message });
     }
   });
 
