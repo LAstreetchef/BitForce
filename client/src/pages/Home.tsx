@@ -28,7 +28,8 @@ import {
   Rocket,
   RefreshCcw,
   Calculator,
-  Infinity
+  Infinity,
+  Coins
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -358,7 +359,7 @@ export default function Home() {
                 </div>
 
                 <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <DollarSign className="w-8 h-8" />
@@ -382,6 +383,14 @@ export default function Home() {
                       <div className="text-3xl font-bold mb-1 text-yellow-300">$50</div>
                       <div className="text-emerald-100">Per Qualified Referral</div>
                       <div className="text-sm text-emerald-200 mt-2">+ $4/mo passive forever</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-purple-400/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Coins className="w-8 h-8 text-purple-300" />
+                      </div>
+                      <div className="text-3xl font-bold mb-1 text-purple-300">50 BFT</div>
+                      <div className="text-emerald-100">Per Ambassador</div>
+                      <div className="text-sm text-emerald-200 mt-2">+ activity rewards daily</div>
                     </div>
                   </div>
                 </div>
