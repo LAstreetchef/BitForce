@@ -12,7 +12,7 @@ const VIDEO_FILES = [
 ];
 
 const SUBTITLES_FILE = 'explainer_captions.srt';
-const MUSIC_FILE = 'ambient_music.mp3';
+const MUSIC_FILE = 'epic_background.mp3';
 const OUTPUT_FILE = 'bft_explainer_complete.mp4';
 
 export async function combineExplainerVideos(): Promise<string> {
