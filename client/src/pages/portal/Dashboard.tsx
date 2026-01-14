@@ -193,7 +193,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   BFT Token
-                  {tokenPrice && (
+                  {tokenPrice?.tokenPrice != null && tokenPrice?.priceChange24h != null && (
                     <Badge 
                       variant="secondary" 
                       className={tokenPrice.priceChange24h >= 0 
@@ -218,7 +218,7 @@ export default function Dashboard() {
             <div className="text-right md:min-w-[140px]">
               {tokenPriceLoading ? (
                 <Skeleton className="h-8 w-24 ml-auto" />
-              ) : tokenPrice ? (
+              ) : tokenPrice?.tokenPrice != null ? (
                 <>
                   <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     ${tokenPrice.tokenPrice.toFixed(4)}
@@ -233,7 +233,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          {bftPlatformAvailable && bftBalance > 0 && tokenPrice && (
+          {bftPlatformAvailable && bftBalance > 0 && tokenPrice?.tokenPrice != null && (
             <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Your {bftBalance.toFixed(2)} BFT is worth</span>
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">
