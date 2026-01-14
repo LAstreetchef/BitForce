@@ -58,9 +58,15 @@ export async function combineExplainerVideos(): Promise<string> {
   });
 
   await new Promise<void>((resolve, reject) => {
-    ffmpeg()
+    let command = ffmpeg()
       .input(tempConcatPath)
-      .input(musicPath)
+      .input(musicPath);
+
+    if (fs.existsSync(subtitlesPath)) {
+      command = command.videoFilters(`subtitles=${subtitlesPath}:force_style='FontSize=20,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=3,Outline=2'`);
+    }
+
+    command
       .outputOptions([
         '-map', '0:v',
         '-map', '1:a',
@@ -70,7 +76,7 @@ export async function combineExplainerVideos(): Promise<string> {
         '-preset', 'fast'
       ])
       .output(outputPath)
-      .on('start', (cmd) => console.log('[VideoProcessor] Adding background music...'))
+      .on('start', (cmd) => console.log('[VideoProcessor] Adding captions and music...'))
       .on('end', () => {
         console.log('[VideoProcessor] Video processing complete!');
         if (fs.existsSync(tempConcatPath)) fs.unlinkSync(tempConcatPath);

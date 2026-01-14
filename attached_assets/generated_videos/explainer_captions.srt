@@ -1,15 +1,15 @@
 1
 00:00:00,000 --> 00:00:06,000
-Imagine you help your neighbors find the best lemonade stand in town.
+As an ambassador, you get powerful tools to help your neighbors.
 
 2
 00:00:06,000 --> 00:00:12,000
-Every time you bring a new customer, you get special gold coins!
+Use Property Lookup, Security Checks, and AI tools to find who needs help!
 
 3
 00:00:12,000 --> 00:00:18,000
-The more kids who join and help, the more valuable everyone's coins become.
+Every time you connect someone with the right service, you earn BFT tokens.
 
 4
 00:00:18,000 --> 00:00:24,000
-It's like a team game where everyone wins together!
+As our team grows, those tokens become worth more - everyone wins together!
