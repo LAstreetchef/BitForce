@@ -4,6 +4,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 const getBftPlatformUrl = () => process.env.BFT_PLATFORM_URL;
 const getSyncApiKey = () => process.env.SYNC_API_KEY;
 
+// Response from BFT Platform's /api/sync/token-metrics endpoint
 export interface TokenMetrics {
   currentPrice: number;
   basePrice: number;
@@ -11,9 +12,13 @@ export interface TokenMetrics {
   totalSupply: number;
   circulatingSupply: number;
   marketCap: number;
-  tokenPrice?: number;
-  priceChange24h?: number;
-  lastUpdated?: string;
+}
+
+// Frontend-facing token price response (transformed from TokenMetrics)
+export interface TokenPriceResponse {
+  tokenPrice: number;
+  priceChange24h: number;
+  lastUpdated: string;
 }
 
 export interface AmbassadorSyncData {
