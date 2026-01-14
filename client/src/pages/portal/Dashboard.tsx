@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   DollarSign, 
   TrendingUp, 
+  TrendingDown,
   Users, 
   Target,
   ArrowUpRight,
@@ -15,7 +16,9 @@ import {
   Trophy,
   Star,
   Crown,
-  Sparkles
+  Sparkles,
+  Coins,
+  Info
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -53,6 +56,12 @@ interface LeaderboardEntry {
   currentStreak: number;
 }
 
+interface TokenPriceData {
+  tokenPrice: number;
+  priceChange24h: number;
+  lastUpdated: string;
+}
+
 const badgeIcons: Record<string, typeof Star> = {
   star: Star,
   trophy: Trophy,
@@ -71,6 +80,12 @@ export default function Dashboard() {
 
   const { data: leaderboard = [], isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/gamification/leaderboard"],
+  });
+
+  const { data: tokenPrice, isLoading: tokenPriceLoading } = useQuery<TokenPriceData>({
+    queryKey: ["/api/bft/token-price"],
+    retry: false,
+    staleTime: 60000,
   });
 
   const bftBalance = stats?.bftBalance || 0;
@@ -166,6 +181,68 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {/* BFT Token Price Info Card */}
+      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800" data-testid="section-bft-token-info">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/50 rounded-full">
+                <Coins className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  BFT Token
+                  {tokenPrice && (
+                    <Badge 
+                      variant="secondary" 
+                      className={tokenPrice.priceChange24h >= 0 
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" 
+                        : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                      }
+                    >
+                      {tokenPrice.priceChange24h >= 0 ? (
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3 mr-1" />
+                      )}
+                      {tokenPrice.priceChange24h >= 0 ? "+" : ""}{tokenPrice.priceChange24h.toFixed(2)}%
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Earn BFT tokens for every action you take. Convert your rewards to real value or hold for future benefits.
+                </p>
+              </div>
+            </div>
+            <div className="text-right md:min-w-[140px]">
+              {tokenPriceLoading ? (
+                <Skeleton className="h-8 w-24 ml-auto" />
+              ) : tokenPrice ? (
+                <>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                    ${tokenPrice.tokenPrice.toFixed(4)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">per BFT token</div>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground flex items-center gap-1 justify-end">
+                  <Info className="w-4 h-4" />
+                  Price unavailable
+                </div>
+              )}
+            </div>
+          </div>
+          {bftPlatformAvailable && bftBalance > 0 && tokenPrice && (
+            <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Your {bftBalance.toFixed(2)} BFT is worth</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                ${(bftBalance * tokenPrice.tokenPrice).toFixed(2)}
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card data-testid="section-level-progress">
