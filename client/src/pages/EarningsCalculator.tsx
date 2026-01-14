@@ -465,7 +465,7 @@ export default function EarningsCalculator() {
                             value={[customersInterested]}
                             onValueChange={(v) => { handleInterestedChange(v[0]); clearPreset(); }}
                             min={0}
-                            max={Math.max(customersContacted, 1)}
+                            max={100}
                             step={1}
                             data-testid="slider-interested"
                           />
@@ -489,7 +489,7 @@ export default function EarningsCalculator() {
                             value={[salesClosed]}
                             onValueChange={(v) => { setSalesClosed(v[0]); clearPreset(); }}
                             min={0}
-                            max={Math.max(customersInterested, 1)}
+                            max={100}
                             step={1}
                             data-testid="slider-sales"
                           />
