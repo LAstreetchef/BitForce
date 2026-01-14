@@ -157,149 +157,149 @@ export default function EarningsCalculator() {
           </Card>
 
           <Card className="lg:col-span-8 flex flex-col">
-            <CardContent className="p-4 flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 h-full">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    Team Building
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Ambassadors Recruited</span>
-                      <Badge variant="outline" data-testid="text-ambassador-count">{ambassadorReferrals}</Badge>
+            <CardContent className="p-4 flex-1 flex flex-col">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 h-full flex-1">
+                <div className="flex flex-col gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Users className="w-4 h-4" />
+                      Team Building
                     </div>
-                    <Slider
-                      value={[ambassadorReferrals]}
-                      onValueChange={(v) => setAmbassadorReferrals(v[0])}
-                      min={0}
-                      max={20}
-                      step={1}
-                      data-testid="slider-ambassadors"
-                    />
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Ambassadors Recruited</span>
+                        <Badge variant="outline" data-testid="text-ambassador-count">{ambassadorReferrals}</Badge>
+                      </div>
+                      <Slider
+                        value={[ambassadorReferrals]}
+                        onValueChange={(v) => setAmbassadorReferrals(v[0])}
+                        min={0}
+                        max={20}
+                        step={1}
+                        data-testid="slider-ambassadors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Months</span>
+                        <Badge variant="outline" data-testid="text-months">{months}</Badge>
+                      </div>
+                      <Slider
+                        value={[months]}
+                        onValueChange={(v) => setMonths(v[0])}
+                        min={1}
+                        max={24}
+                        step={1}
+                        data-testid="slider-months"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Months</span>
-                      <Badge variant="outline" data-testid="text-months">{months}</Badge>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Sparkles className="w-4 h-4" />
+                      Your Activity
                     </div>
-                    <Slider
-                      value={[months]}
-                      onValueChange={(v) => setMonths(v[0])}
-                      min={1}
-                      max={24}
-                      step={1}
-                      data-testid="slider-months"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground pt-2">
-                    <Sparkles className="w-4 h-4" />
-                    Your Activity
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Days Active/Month</span>
-                      <Badge variant="outline" data-testid="text-days">{daysActivePerMonth}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Days Active/Month</span>
+                        <Badge variant="outline" data-testid="text-days">{daysActivePerMonth}</Badge>
+                      </div>
+                      <Slider
+                        value={[daysActivePerMonth]}
+                        onValueChange={(v) => setDaysActivePerMonth(v[0])}
+                        min={0}
+                        max={30}
+                        step={1}
+                        data-testid="slider-days"
+                      />
                     </div>
-                    <Slider
-                      value={[daysActivePerMonth]}
-                      onValueChange={(v) => setDaysActivePerMonth(v[0])}
-                      min={0}
-                      max={30}
-                      step={1}
-                      data-testid="slider-days"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Services/Month</span>
-                      <Badge variant="outline" data-testid="text-services">{servicesPerMonth}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Services/Month</span>
+                        <Badge variant="outline" data-testid="text-services">{servicesPerMonth}</Badge>
+                      </div>
+                      <Slider
+                        value={[servicesPerMonth]}
+                        onValueChange={(v) => setServicesPerMonth(v[0])}
+                        min={0}
+                        max={50}
+                        step={1}
+                        data-testid="slider-services"
+                      />
                     </div>
-                    <Slider
-                      value={[servicesPerMonth]}
-                      onValueChange={(v) => setServicesPerMonth(v[0])}
-                      min={0}
-                      max={50}
-                      step={1}
-                      data-testid="slider-services"
-                    />
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <TrendingUp className="w-4 h-4" />
-                    Customer Funnel
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Customers Contacted</span>
-                      <Badge variant="outline" data-testid="text-contacts">{customersContacted}</Badge>
+                <div className="flex flex-col gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <TrendingUp className="w-4 h-4" />
+                      Customer Funnel
                     </div>
-                    <Slider
-                      value={[customersContacted]}
-                      onValueChange={(v) => handleContactsChange(v[0])}
-                      min={0}
-                      max={100}
-                      step={1}
-                      data-testid="slider-contacts"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Showing Interest</span>
-                      <Badge variant="outline" data-testid="text-interested">{customersInterested}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Customers Contacted</span>
+                        <Badge variant="outline" data-testid="text-contacts">{customersContacted}</Badge>
+                      </div>
+                      <Slider
+                        value={[customersContacted]}
+                        onValueChange={(v) => handleContactsChange(v[0])}
+                        min={0}
+                        max={100}
+                        step={1}
+                        data-testid="slider-contacts"
+                      />
                     </div>
-                    <Slider
-                      value={[customersInterested]}
-                      onValueChange={(v) => handleInterestedChange(v[0])}
-                      min={0}
-                      max={Math.max(customersContacted, 1)}
-                      step={1}
-                      data-testid="slider-interested"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Sales Closed</span>
-                      <Badge variant="outline" data-testid="text-sales">{salesClosed}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Showing Interest</span>
+                        <Badge variant="outline" data-testid="text-interested">{customersInterested}</Badge>
+                      </div>
+                      <Slider
+                        value={[customersInterested]}
+                        onValueChange={(v) => handleInterestedChange(v[0])}
+                        min={0}
+                        max={Math.max(customersContacted, 1)}
+                        step={1}
+                        data-testid="slider-interested"
+                      />
                     </div>
-                    <Slider
-                      value={[salesClosed]}
-                      onValueChange={(v) => setSalesClosed(v[0])}
-                      min={0}
-                      max={Math.max(customersInterested, 1)}
-                      step={1}
-                      data-testid="slider-sales"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground pt-2">
-                    <Coins className="w-4 h-4" />
-                    Token Value
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>BFT Price ($)</span>
-                      <Badge variant="outline" data-testid="text-bft-value">${bftTokenValue.toFixed(2)}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Sales Closed</span>
+                        <Badge variant="outline" data-testid="text-sales">{salesClosed}</Badge>
+                      </div>
+                      <Slider
+                        value={[salesClosed]}
+                        onValueChange={(v) => setSalesClosed(v[0])}
+                        min={0}
+                        max={Math.max(customersInterested, 1)}
+                        step={1}
+                        data-testid="slider-sales"
+                      />
                     </div>
-                    <Slider
-                      value={[bftTokenValue * 100]}
-                      onValueChange={(v) => setBftTokenValue(v[0] / 100)}
-                      min={1}
-                      max={100}
-                      step={1}
-                      data-testid="slider-bft-value"
-                    />
+                  </div>
+
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Coins className="w-4 h-4" />
+                      Token Value
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>BFT Price ($)</span>
+                        <Badge variant="outline" data-testid="text-bft-value">${bftTokenValue.toFixed(2)}</Badge>
+                      </div>
+                      <Slider
+                        value={[bftTokenValue * 100]}
+                        onValueChange={(v) => setBftTokenValue(v[0] / 100)}
+                        min={1}
+                        max={100}
+                        step={1}
+                        data-testid="slider-bft-value"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
