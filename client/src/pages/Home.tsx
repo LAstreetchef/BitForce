@@ -123,6 +123,7 @@ export default function Home() {
             <a href="/events" className="hover:text-blue-600 transition-colors" data-testid="link-events">Events</a>
             <a href="/explainer" className="hover:text-blue-600 transition-colors" data-testid="link-how-it-works">How It Works</a>
             <a href="/why-bitforce" className="hover:text-blue-600 transition-colors" data-testid="link-why-bitforce">Why BitForce</a>
+            <a href="/calculator" className="hover:text-blue-600 transition-colors" data-testid="link-calculator">Calculator</a>
           </nav>
           <div className="flex items-center gap-2">
             {authLoading ? (

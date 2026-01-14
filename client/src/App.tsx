@@ -26,6 +26,7 @@ import AmbassadorOne from "@/pages/AmbassadorOne";
 import SupportInbox from "@/pages/admin/SupportInbox";
 import TokenPitch from "@/pages/TokenPitch";
 import ExplainerVideos from "@/pages/ExplainerVideos";
+import EarningsCalculator from "@/pages/EarningsCalculator";
 
 function Router() {
   return (
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/ambassadorone" component={AmbassadorOne}/>
       <Route path="/token" component={TokenPitch}/>
       <Route path="/explainer-videos" component={ExplainerVideos}/>
+      <Route path="/calculator" component={EarningsCalculator}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
