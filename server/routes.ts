@@ -851,6 +851,49 @@ export async function registerRoutes(
     }
   });
 
+  // SSO Token Generation for BitForceToken Platform
+  app.get("/api/ambassador/sso-token", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = user.claims?.sub || user.id;
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      
+      if (!ambassador) {
+        return res.status(404).json({ message: "Ambassador not found" });
+      }
+
+      const ssoSecret = process.env.SSO_SECRET;
+      if (!ssoSecret) {
+        console.error("[/api/ambassador/sso-token] SSO_SECRET not configured");
+        return res.status(500).json({ message: "SSO not configured" });
+      }
+
+      const crypto = await import("crypto");
+      const payload = {
+        email: ambassador.email,
+        name: ambassador.fullName,
+        ambassadorId: ambassador.id.toString(),
+        exp: Date.now() + 5 * 60 * 1000  // 5 minute expiry
+      };
+
+      const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64');
+      const signature = crypto.createHmac('sha256', ssoSecret).update(payloadB64).digest('hex');
+      const ssoToken = `${payloadB64}.${signature}`;
+
+      res.json({ 
+        ssoToken,
+        redirectUrl: `https://bitforcetoken.replit.app/wallet?sso_token=${encodeURIComponent(ssoToken)}`
+      });
+    } catch (err: any) {
+      console.error("[/api/ambassador/sso-token] Error:", err.message);
+      res.status(500).json({ message: "Failed to generate SSO token" });
+    }
+  });
+
   // BFT Token Tracking Routes
   app.get("/api/ambassador/bft/balance", isAuthenticated, async (req: Request, res: Response) => {
     try {
