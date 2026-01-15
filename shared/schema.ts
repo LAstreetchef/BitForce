@@ -23,6 +23,8 @@ export const ambassadorSubscriptions = pgTable("ambassador_subscriptions", {
   onboardingStep: integer("onboarding_step").default(0),
   agreedToTerms: boolean("agreed_to_terms").default(false),
   agreedToTermsAt: timestamp("agreed_to_terms_at"),
+  bftBalance: decimal("bft_balance", { precision: 18, scale: 4 }).notNull().default("0"),
+  bftLastUpdated: timestamp("bft_last_updated"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -35,6 +37,28 @@ export const insertAmbassadorSubscriptionSchema = createInsertSchema(ambassadorS
 
 export type AmbassadorSubscription = typeof ambassadorSubscriptions.$inferSelect;
 export type InsertAmbassadorSubscription = z.infer<typeof insertAmbassadorSubscriptionSchema>;
+
+// BFT Token Transactions - tracks all BFT earning events
+export const bftTransactions = pgTable("bft_transactions", {
+  id: serial("id").primaryKey(),
+  ambassadorId: integer("ambassador_id").notNull(),
+  transactionType: text("transaction_type").notNull(), // daily_login, ambassador_signup, customer_contact, interest_shown, sale_closed, streak_7day, streak_30day, service_logged, admin_adjustment
+  amount: decimal("amount", { precision: 18, scale: 4 }).notNull(),
+  balanceAfter: decimal("balance_after", { precision: 18, scale: 4 }).notNull(),
+  referenceId: text("reference_id"), // Optional reference to the activity that triggered this (e.g., lead ID, referral ID)
+  referenceType: text("reference_type"), // Type of reference: lead, referral, streak, etc.
+  description: text("description"),
+  metadata: text("metadata"), // JSON string for additional data
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertBftTransactionSchema = createInsertSchema(bftTransactions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type BftTransaction = typeof bftTransactions.$inferSelect;
+export type InsertBftTransaction = z.infer<typeof insertBftTransactionSchema>;
 
 // Track referral bonuses ($50 per qualified referral)
 export const referralBonuses = pgTable("referral_bonuses", {

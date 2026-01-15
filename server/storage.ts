@@ -18,6 +18,7 @@ import {
   couponAppTokens,
   sharedCouponBooks,
   savedLeads,
+  bftTransactions,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -53,9 +54,10 @@ import {
   type SharedCouponBook,
   type InsertSharedCouponBook,
   type SavedLead,
+  type BftTransaction,
+  type InsertBftTransaction,
   type InsertSavedLead,
-  LEVEL_THRESHOLDS,
-  users
+  LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
 import { eq, and, ilike, or, sql, desc, gte, inArray } from "drizzle-orm";
@@ -167,6 +169,11 @@ export interface IStorage {
   getAmbassadorCount(): Promise<number>;
   getCustomerCount(): Promise<number>;
   getMonthlyPurchaseVolume(): Promise<number>;
+  
+  // BFT Token Tracking
+  getAmbassadorBftBalance(ambassadorId: number): Promise<string>;
+  recordBftTransaction(ambassadorId: number, transactionType: string, amount: number, description?: string, referenceId?: string, referenceType?: string, metadata?: Record<string, unknown>): Promise<BftTransaction>;
+  getBftTransactions(ambassadorId: number, limit?: number): Promise<BftTransaction[]>;
 }
 
 function generateReferralCode(): string {
@@ -931,28 +938,63 @@ export class DatabaseStorage implements IStorage {
     
     return total;
   }
-  async getAmbassadorCount(): Promise<number> {
-    const result = await getDb()
-      .select({ count: sql<number>`count(*)` })
-      .from(users);
-    return Number(result[0]?.count) || 0;
+
+  // BFT Token Tracking
+  async getAmbassadorBftBalance(ambassadorId: number): Promise<string> {
+    const [ambassador] = await getDb()
+      .select({ bftBalance: ambassadorSubscriptions.bftBalance })
+      .from(ambassadorSubscriptions)
+      .where(eq(ambassadorSubscriptions.id, ambassadorId));
+    return ambassador?.bftBalance ?? "0";
   }
 
-  async getCustomerCount(): Promise<number> {
-    const result = await getDb()
-      .select({ count: sql<number>`count(*)` })
-      .from(leads);
-    return Number(result[0]?.count) || 0;
+  async recordBftTransaction(
+    ambassadorId: number, 
+    transactionType: string, 
+    amount: number, 
+    description?: string, 
+    referenceId?: string, 
+    referenceType?: string, 
+    metadata?: Record<string, unknown>
+  ): Promise<BftTransaction> {
+    // Get current balance
+    const currentBalance = parseFloat(await this.getAmbassadorBftBalance(ambassadorId));
+    const newBalance = currentBalance + amount;
+    
+    // Update ambassador's BFT balance
+    await getDb()
+      .update(ambassadorSubscriptions)
+      .set({ 
+        bftBalance: newBalance.toFixed(4),
+        bftLastUpdated: new Date()
+      })
+      .where(eq(ambassadorSubscriptions.id, ambassadorId));
+    
+    // Record the transaction
+    const [transaction] = await getDb()
+      .insert(bftTransactions)
+      .values({
+        ambassadorId,
+        transactionType,
+        amount: amount.toFixed(4),
+        balanceAfter: newBalance.toFixed(4),
+        referenceId,
+        referenceType,
+        description,
+        metadata: metadata ? JSON.stringify(metadata) : null
+      })
+      .returning();
+    
+    return transaction;
   }
 
-  async getMonthlyPurchaseVolume(): Promise<number> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const result = await getDb()
-      .select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(gte(leads.createdAt, thirtyDaysAgo));
-    return (Number(result[0]?.count) || 0) * 500;
+  async getBftTransactions(ambassadorId: number, limit: number = 50): Promise<BftTransaction[]> {
+    return getDb()
+      .select()
+      .from(bftTransactions)
+      .where(eq(bftTransactions.ambassadorId, ambassadorId))
+      .orderBy(desc(bftTransactions.createdAt))
+      .limit(limit);
   }
 }
 

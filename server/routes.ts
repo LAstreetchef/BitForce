@@ -798,6 +798,142 @@ export async function registerRoutes(
     }
   });
 
+  // BFT Token Tracking Routes
+  app.get("/api/ambassador/bft/balance", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      if (!ambassador) {
+        return res.json({ balance: "0", transactions: [] });
+      }
+
+      const balance = await storage.getAmbassadorBftBalance(ambassador.id);
+      const transactions = await storage.getBftTransactions(ambassador.id, 20);
+
+      res.json({ 
+        balance,
+        lastUpdated: ambassador.bftLastUpdated,
+        transactions 
+      });
+    } catch (err: any) {
+      console.error("Get BFT balance error:", err);
+      res.status(500).json({ message: "Failed to get BFT balance" });
+    }
+  });
+
+  app.get("/api/ambassador/bft/transactions", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      if (!ambassador) {
+        return res.json([]);
+      }
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const transactions = await storage.getBftTransactions(ambassador.id, limit);
+
+      res.json(transactions);
+    } catch (err: any) {
+      console.error("Get BFT transactions error:", err);
+      res.status(500).json({ message: "Failed to get BFT transactions" });
+    }
+  });
+
+  // Internal function to award BFT - called by other parts of the system
+  const awardBftToAmbassador = async (
+    ambassadorId: number,
+    transactionType: string,
+    amount: number,
+    description?: string,
+    referenceId?: string,
+    referenceType?: string,
+    metadata?: Record<string, unknown>
+  ) => {
+    // Validate amount
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Invalid amount: must be a positive number");
+    }
+
+    const allowedTypes = [
+      'daily_login', 'ambassador_signup', 'customer_contact', 
+      'interest_shown', 'sale_closed', 'streak_7day', 'streak_30day', 
+      'service_logged', 'admin_adjustment', 'referral_bonus'
+    ];
+    if (!allowedTypes.includes(transactionType)) {
+      throw new Error(`Invalid transaction type: ${transactionType}`);
+    }
+
+    return storage.recordBftTransaction(
+      ambassadorId,
+      transactionType,
+      amount,
+      description,
+      referenceId,
+      referenceType,
+      metadata
+    );
+  };
+
+  // Expose the awardBftToAmbassador function for internal use
+  (app as any).awardBftToAmbassador = awardBftToAmbassador;
+
+  // Admin-only endpoint for manual BFT awards
+  app.post("/api/admin/bft/award", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Check if user is admin
+      const adminUserIds = (process.env.ADMIN_USER_IDS || "").split(",").map((id: string) => id.trim()).filter(Boolean);
+      const isUserAdmin = adminUserIds.length === 0 || adminUserIds.includes(user.id);
+      if (!isUserAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { ambassadorId, transactionType, amount, description, referenceId, referenceType, metadata } = req.body;
+
+      if (!ambassadorId || !transactionType || amount === undefined) {
+        return res.status(400).json({ message: "Missing ambassadorId, transactionType, or amount" });
+      }
+
+      const parsedAmount = parseFloat(amount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ message: "Amount must be a positive number" });
+      }
+
+      const transaction = await awardBftToAmbassador(
+        parseInt(ambassadorId),
+        transactionType,
+        parsedAmount,
+        description,
+        referenceId,
+        referenceType,
+        metadata
+      );
+
+      const newBalance = await storage.getAmbassadorBftBalance(parseInt(ambassadorId));
+
+      res.json({ 
+        success: true,
+        transaction,
+        newBalance
+      });
+    } catch (err: any) {
+      console.error("Award BFT error:", err);
+      res.status(500).json({ message: "Failed to award BFT" });
+    }
+  });
+
   // Service Provider & Recommendations Routes
   app.get("/api/providers", async (_req: Request, res: Response) => {
     try {
