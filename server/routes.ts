@@ -885,7 +885,6 @@ export async function registerRoutes(
       const ssoToken = `${payloadB64}.${signature}`;
 
       res.json({ 
-        ssoToken,
         redirectUrl: `https://bitforcetoken.replit.app/wallet?sso_token=${encodeURIComponent(ssoToken)}`
       });
     } catch (err: any) {

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
@@ -18,9 +19,13 @@ import {
   Crown,
   Sparkles,
   Coins,
-  Info
+  Info,
+  ExternalLink,
+  ShoppingCart
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { LEVEL_THRESHOLDS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 
@@ -74,6 +79,8 @@ const badgeIcons: Record<string, typeof Star> = {
 };
 
 export default function Dashboard() {
+  const { toast } = useToast();
+  
   const { data: stats, isLoading: statsLoading } = useQuery<GamificationStats>({
     queryKey: ["/api/gamification/stats"],
   });
@@ -86,6 +93,23 @@ export default function Dashboard() {
     queryKey: ["/api/bft/token-price"],
     retry: false,
     staleTime: 60000,
+  });
+
+  const buyBftMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", "/api/ambassador/sso-token");
+      return response.json();
+    },
+    onSuccess: (data: { redirectUrl: string }) => {
+      window.open(data.redirectUrl, "_blank");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to connect to Token Platform",
+        variant: "destructive",
+      });
+    },
   });
 
   const bftBalance = stats?.bftBalance || 0;
@@ -241,6 +265,44 @@ export default function Dashboard() {
               </span>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Buy BFT Tokens Card */}
+      <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0" data-testid="section-buy-bft">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-white/20 rounded-full">
+                <ShoppingCart className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Buy BFT Tokens</h3>
+                <p className="text-sm text-white/80 mt-1">
+                  Invest in BFT tokens now at early-stage prices. Build your token portfolio before the public launch.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => buyBftMutation.mutate()}
+              disabled={buyBftMutation.isPending}
+              className="bg-white text-blue-600 hover:bg-white/90 font-semibold gap-2"
+              data-testid="button-buy-bft"
+            >
+              {buyBftMutation.isPending ? (
+                "Connecting..."
+              ) : (
+                <>
+                  Buy BFT Tokens
+                  <ExternalLink className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
+            <span className="text-white/70">Secure SSO login to Token Platform</span>
+            <Badge className="bg-white/20 text-white border-0 w-fit">Pre-Launch Price</Badge>
+          </div>
         </CardContent>
       </Card>
 
