@@ -18,7 +18,9 @@ import {
   ShoppingCart,
   FileText,
   Gift,
-  Settings
+  Settings,
+  DollarSign,
+  Wallet
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
@@ -41,6 +43,15 @@ interface BftBalanceData {
   transactions: BftTransaction[];
 }
 
+interface WalletBalanceData {
+  earnedBft: number;
+  purchasedBft: number;
+  totalBft: number;
+  totalInvested: number;
+  purchaseCount: number;
+  lastPurchaseDate: string | null;
+}
+
 const transactionTypeConfig: Record<string, { label: string; icon: typeof Coins; color: string }> = {
   daily_login: { label: "Daily Login", icon: Calendar, color: "text-blue-600" },
   ambassador_signup: { label: "Ambassador Signup", icon: Users, color: "text-green-600" },
@@ -59,12 +70,23 @@ export default function BftWallet() {
     queryKey: ["/api/ambassador/bft/balance"],
   });
 
+  const { data: walletBalance, isLoading: walletLoading } = useQuery<WalletBalanceData>({
+    queryKey: ["/api/ambassador/wallet-balance"],
+    staleTime: 30000,
+  });
+
   const { data: allTransactions, isLoading: transactionsLoading } = useQuery<BftTransaction[]>({
     queryKey: ["/api/ambassador/bft/transactions"],
   });
 
-  const balance = parseFloat(bftData?.balance || "0");
-  const estimatedValue = balance * 0.02;
+  // Combined balance from both earned (local) and purchased (BitForceToken platform)
+  const earnedBft = walletBalance?.earnedBft ?? parseFloat(bftData?.balance || "0");
+  const purchasedBft = walletBalance?.purchasedBft ?? 0;
+  const totalBft = walletBalance?.totalBft ?? earnedBft;
+  const totalInvested = walletBalance?.totalInvested ?? 0;
+  const purchaseCount = walletBalance?.purchaseCount ?? 0;
+  
+  const estimatedValue = totalBft * 0.02;
   const transactions = allTransactions || bftData?.transactions || [];
 
   if (isLoading) {
@@ -93,17 +115,43 @@ export default function BftWallet() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-bft-balance">
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">BFT Balance</CardTitle>
-            <Coins className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total BFT Balance</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-bft-balance">{balance.toFixed(2)}</div>
+            <div className="text-3xl font-bold" data-testid="text-bft-balance">{totalBft.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground mt-1">
               <Sparkles className="inline h-3 w-3 mr-1" />
-              Pre-launch tokens
+              Earned + Purchased tokens
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-earned-bft">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Earned BFT</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600" data-testid="text-earned-bft">{earnedBft.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              From ambassador activities
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-purchased-bft">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Purchased BFT</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600" data-testid="text-purchased-bft">{purchasedBft.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {purchaseCount > 0 ? `${purchaseCount} purchase${purchaseCount !== 1 ? 's' : ''} ($${totalInvested.toLocaleString()})` : "From Token Platform"}
             </p>
           </CardContent>
         </Card>
@@ -111,29 +159,33 @@ export default function BftWallet() {
         <Card data-testid="card-estimated-value">
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Estimated Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-estimated-value">${estimatedValue.toFixed(2)}</div>
+            <div className="text-3xl font-bold" data-testid="text-estimated-value">${estimatedValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground mt-1">
               @ $0.02 per BFT
             </p>
           </CardContent>
         </Card>
-
-        <Card data-testid="card-launch-status">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Launch Status</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold" data-testid="text-launch-status">Pre-Launch</div>
-            <Badge variant="outline" className="mt-2" data-testid="badge-launch-countdown">
-              30 Days to On-Chain
-            </Badge>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20" data-testid="card-launch-status">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Launch Status
+          </CardTitle>
+          <Badge variant="outline" data-testid="badge-launch-countdown">
+            30 Days to On-Chain
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Your tokens will be available on-chain after the official launch. Both earned and purchased BFT will be combined in your wallet.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card className="border-primary/20 bg-primary/5" data-testid="card-earning-opportunities">
         <CardHeader>

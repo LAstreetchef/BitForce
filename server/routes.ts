@@ -893,6 +893,58 @@ export async function registerRoutes(
     }
   });
 
+  // Combined Wallet Balance (Earned + Purchased from BitForceToken)
+  app.get("/api/ambassador/wallet-balance", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = user.claims?.sub || user.id;
+      
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      if (!ambassador) {
+        return res.json({ 
+          earnedBft: 0, 
+          purchasedBft: 0, 
+          totalBft: 0,
+          totalInvested: 0,
+          purchaseCount: 0
+        });
+      }
+
+      // Get earned BFT from both sources:
+      // 1. New BFT ledger (ambassadorSubscriptions.bftBalance)
+      // 2. Legacy gamification points converted to BFT
+      const ledgerBalanceRaw = await storage.getAmbassadorBftBalance(ambassador.id);
+      const ledgerBalance = parseFloat(ledgerBalanceRaw || "0") || 0;
+      const { pointsToBft } = await import("./lib/bft-rewards");
+      const localPoints = await storage.getOrCreateAmbassadorPoints(userId);
+      const legacyBft = pointsToBft(localPoints.totalPoints);
+      const earnedBft = ledgerBalance + legacyBft;
+
+      // Fetch purchased BFT from BitForceToken platform
+      const { fetchPurchasedBftBalance } = await import("./services/bitforceToken");
+      const purchasedData = await fetchPurchasedBftBalance(ambassador.email);
+
+      const purchasedBft = purchasedData?.purchasedBft || 0;
+      const totalBft = earnedBft + purchasedBft;
+
+      res.json({ 
+        earnedBft: parseFloat(earnedBft.toFixed(2)),
+        purchasedBft,
+        totalBft: parseFloat(totalBft.toFixed(2)),
+        totalInvested: purchasedData?.totalInvested || 0,
+        purchaseCount: purchasedData?.purchaseCount || 0,
+        lastPurchaseDate: purchasedData?.lastPurchaseDate || null,
+      });
+    } catch (err: any) {
+      console.error("Get wallet balance error:", err);
+      res.status(500).json({ message: "Failed to get wallet balance" });
+    }
+  });
+
   // BFT Token Tracking Routes
   app.get("/api/ambassador/bft/balance", isAuthenticated, async (req: Request, res: Response) => {
     try {

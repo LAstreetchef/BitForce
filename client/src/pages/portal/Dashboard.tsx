@@ -67,6 +67,15 @@ interface TokenPriceData {
   lastUpdated: string;
 }
 
+interface WalletBalanceData {
+  earnedBft: number;
+  purchasedBft: number;
+  totalBft: number;
+  totalInvested: number;
+  purchaseCount: number;
+  lastPurchaseDate: string | null;
+}
+
 const badgeIcons: Record<string, typeof Star> = {
   star: Star,
   trophy: Trophy,
@@ -95,6 +104,11 @@ export default function Dashboard() {
     staleTime: 60000,
   });
 
+  const { data: walletBalance } = useQuery<WalletBalanceData>({
+    queryKey: ["/api/ambassador/wallet-balance"],
+    staleTime: 30000,
+  });
+
   const buyBftMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("GET", "/api/ambassador/sso-token");
@@ -112,7 +126,10 @@ export default function Dashboard() {
     },
   });
 
-  const bftBalance = stats?.bftBalance || 0;
+  // Use walletBalance for total BFT (earned + purchased), fallback to stats for earned only
+  const totalBft = walletBalance?.totalBft ?? stats?.bftBalance ?? 0;
+  const earnedBft = walletBalance?.earnedBft ?? stats?.bftBalance ?? 0;
+  const purchasedBft = walletBalance?.purchasedBft ?? 0;
   const bftPlatformAvailable = stats?.bftPlatformAvailable || false;
   const currentLevel = stats?.legacyPoints?.level || 1;
   const totalPoints = stats?.legacyPoints?.totalPoints || 0;
@@ -127,8 +144,8 @@ export default function Dashboard() {
   const summaryStats = [
     { 
       title: "BFT Balance", 
-      value: bftPlatformAvailable ? bftBalance.toFixed(2) : "—", 
-      change: bftPlatformAvailable ? "Token rewards" : "Connecting...", 
+      value: bftPlatformAvailable ? totalBft.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—", 
+      change: purchasedBft > 0 ? `${earnedBft.toFixed(2)} earned + ${purchasedBft.toLocaleString()} purchased` : (bftPlatformAvailable ? "Token rewards" : "Connecting..."), 
       icon: Sparkles,
       color: "text-emerald-600"
     },
@@ -257,11 +274,11 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          {bftPlatformAvailable && bftBalance > 0 && tokenPrice?.tokenPrice != null && (
+          {bftPlatformAvailable && totalBft > 0 && tokenPrice?.tokenPrice != null && (
             <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Your {bftBalance.toFixed(2)} BFT is worth</span>
+              <span className="text-muted-foreground">Your {totalBft.toLocaleString(undefined, { maximumFractionDigits: 2 })} BFT is worth</span>
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                ${(bftBalance * tokenPrice.tokenPrice).toFixed(2)}
+                ${(totalBft * tokenPrice.tokenPrice).toFixed(2)}
               </span>
             </div>
           )}

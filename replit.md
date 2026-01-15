@@ -89,13 +89,19 @@ Frontend page: `client/src/pages/portal/Tools.tsx`
 - `SYNC_API_KEY`: API key for cross-app sync with BitForceToken.replit.app (required for ambassador data sync)
 
 ### Cross-App Sync Endpoints (for BitForceToken integration)
-These endpoints allow the BFT Token Platform to pull ambassador data:
+These endpoints enable bidirectional sync between Ambassador Portal and BFT Token Platform:
 
+**Outbound (Ambassador Portal → Token Platform):**
 - `GET /api/metrics` - Returns ambassador count, customer count, monthly purchase volume (requires `x-api-key` header)
 - `GET /api/activities` - Returns recent ambassador actions for activity feed (requires `x-api-key` header)
 - `GET /api/sync/ambassadors/bft-leaderboard` - Returns ambassador BFT leaderboard with combined ledger + legacy balances (requires `x-api-key` header)
+- `GET /api/ambassador/sso-token` - Generates signed SSO token for secure redirect to Token Platform (session auth)
 
-All sync endpoints require the `SYNC_API_KEY` in the `x-api-key` header for authentication.
+**Inbound (Token Platform → Ambassador Portal):**
+- The Ambassador Portal calls `GET https://bitforcetoken.replit.app/api/sync/wallet-balance?email=...` to fetch purchased BFT balances
+- `GET /api/ambassador/wallet-balance` - Returns combined balance (earned + purchased BFT) for the logged-in ambassador
+
+All sync endpoints require the `SYNC_API_KEY` in the `x-api-key` header for authentication. SSO uses `SSO_SECRET` for HMAC-SHA256 token signing.
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migration tooling
