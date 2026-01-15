@@ -86,6 +86,16 @@ Frontend page: `client/src/pages/portal/Tools.tsx`
 - `STRIPE_PUBLISHABLE_KEY`: Stripe publishable key for frontend checkout (required)
 - `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret for signature verification (optional, recommended for production)
 - `ADMIN_USER_IDS`: Comma-separated list of Replit user IDs with admin access to support inbox (if empty, all authenticated users have admin access for development)
+- `SYNC_API_KEY`: API key for cross-app sync with BitForceToken.replit.app (required for ambassador data sync)
+
+### Cross-App Sync Endpoints (for BitForceToken integration)
+These endpoints allow the BFT Token Platform to pull ambassador data:
+
+- `GET /api/metrics` - Returns ambassador count, customer count, monthly purchase volume (requires `x-api-key` header)
+- `GET /api/activities` - Returns recent ambassador actions for activity feed (requires `x-api-key` header)
+- `GET /api/sync/ambassadors/bft-leaderboard` - Returns ambassador BFT leaderboard with combined ledger + legacy balances (requires `x-api-key` header)
+
+All sync endpoints require the `SYNC_API_KEY` in the `x-api-key` header for authentication.
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit`: Database ORM and migration tooling
