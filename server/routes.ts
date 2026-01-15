@@ -806,16 +806,31 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      const userId = user.claims?.sub || user.id;
+      
+      const ambassador = await storage.getAmbassadorByUserId(userId);
       if (!ambassador) {
-        return res.json({ balance: "0", transactions: [] });
+        return res.json({ balance: "0", legacyBft: "0", transactions: [] });
       }
 
-      const balance = await storage.getAmbassadorBftBalance(ambassador.id);
+      // Get BFT from both sources and combine them:
+      // 1. New BFT ledger (ambassadorSubscriptions.bftBalance) - for direct awards
+      // 2. Legacy gamification points converted to BFT - for existing activity
+      const ledgerBalance = await storage.getAmbassadorBftBalance(ambassador.id);
+      
+      const { pointsToBft } = await import("./lib/bft-rewards");
+      const localPoints = await storage.getOrCreateAmbassadorPoints(userId);
+      const legacyBft = pointsToBft(localPoints.totalPoints);
+      
+      // Total balance = ledger BFT + legacy points-derived BFT
+      const totalBft = parseFloat(ledgerBalance) + legacyBft;
+      
       const transactions = await storage.getBftTransactions(ambassador.id, 20);
 
       res.json({ 
-        balance,
+        balance: totalBft.toFixed(2),
+        ledgerBft: ledgerBalance,
+        legacyBft: legacyBft.toFixed(2),
         lastUpdated: ambassador.bftLastUpdated,
         transactions 
       });
