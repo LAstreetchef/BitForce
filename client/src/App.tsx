@@ -16,6 +16,7 @@ import Events from "@/pages/portal/Events";
 import Tools from "@/pages/portal/Tools";
 import Products from "@/pages/portal/Products";
 import LeadFinder from "@/pages/portal/LeadFinder";
+import BftWallet from "@/pages/portal/BftWallet";
 import PublicEvents from "@/pages/PublicEvents";
 import PublicProducts from "@/pages/PublicProducts";
 import ExplainerVideo from "@/pages/ExplainerVideo";
@@ -95,6 +96,11 @@ function Router() {
       <Route path="/portal/products">
         <PortalLayout>
           <Products />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/bft-wallet">
+        <PortalLayout>
+          <BftWallet />
         </PortalLayout>
       </Route>
       <Route path="/admin/support" component={SupportInbox} />

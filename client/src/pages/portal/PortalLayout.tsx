@@ -27,7 +27,8 @@ import {
   CalendarDays,
   Wrench,
   Package,
-  Target
+  Target,
+  Coins
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { SupportChat } from "@/components/SupportChat";
@@ -40,6 +41,7 @@ import SubscriptionRequired from "@/pages/SubscriptionRequired";
 
 const menuItems = [
   { title: "Dashboard", url: "/portal", icon: LayoutDashboard },
+  { title: "BFT Wallet", url: "/portal/bft-wallet", icon: Coins },
   { title: "Leads", url: "/portal/leads", icon: ClipboardList },
   { title: "Lead Finder", url: "/portal/lead-finder", icon: Target },
   { title: "Products", url: "/portal/products", icon: Package },
