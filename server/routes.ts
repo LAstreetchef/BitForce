@@ -281,6 +281,59 @@ export async function registerRoutes(
     }
   });
 
+  // AMBASSADOR BFT LEADERBOARD SYNC ENDPOINT (for BitForceToken app to pull data)
+  app.get("/api/sync/ambassadors/bft-leaderboard", async (req: Request, res: Response) => {
+    try {
+      const apiKey = req.headers["x-api-key"] as string;
+      const expectedKey = process.env.SYNC_API_KEY;
+
+      if (!expectedKey) {
+        console.error("[/api/sync/ambassadors/bft-leaderboard] SYNC_API_KEY not configured");
+        return res.status(500).json({ message: "SYNC_API_KEY not configured" });
+      }
+
+      if (!apiKey || apiKey !== expectedKey) {
+        return res.status(401).json({ message: "Invalid or missing API key" });
+      }
+
+      const { pointsToBft } = await import("./lib/bft-rewards");
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+      // Get all ambassadors with their BFT balances
+      const ambassadors = await storage.getAmbassadorsWithBftBalances(limit);
+
+      const leaderboard = ambassadors.map((amb: any, index: number) => {
+        // Combine ledger BFT + legacy points-derived BFT
+        const ledgerBft = parseFloat(amb.bftBalance || "0");
+        const legacyBft = pointsToBft(amb.totalPoints || 0);
+        const totalBft = ledgerBft + legacyBft;
+
+        return {
+          rank: index + 1,
+          ambassadorId: amb.id,
+          name: amb.name || amb.username || `Ambassador ${amb.id}`,
+          email: amb.email,
+          bftBalance: totalBft.toFixed(2),
+          ledgerBft: ledgerBft.toFixed(2),
+          legacyBft: legacyBft.toFixed(2),
+          totalPoints: amb.totalPoints || 0,
+          referralCount: amb.referralCount || 0,
+          joinedAt: amb.createdAt,
+        };
+      }).sort((a: any, b: any) => parseFloat(b.bftBalance) - parseFloat(a.bftBalance));
+
+      res.json({
+        success: true,
+        count: leaderboard.length,
+        leaderboard,
+        lastUpdated: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      console.error("[/api/sync/ambassadors/bft-leaderboard] Error:", err.message);
+      res.status(500).json({ message: "Failed to fetch ambassador leaderboard" });
+    }
+  });
+
   // BFT TOKEN ENDPOINTS (for ambassador dashboard to fetch from BFT platform)
   app.get("/api/bft/token-price", isAuthenticated, async (req: Request, res: Response) => {
     try {

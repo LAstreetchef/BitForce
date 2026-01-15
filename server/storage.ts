@@ -172,6 +172,7 @@ export interface IStorage {
   
   // BFT Token Tracking
   getAmbassadorBftBalance(ambassadorId: number): Promise<string>;
+  getAmbassadorsWithBftBalances(limit?: number): Promise<any[]>;
   recordBftTransaction(ambassadorId: number, transactionType: string, amount: number, description?: string, referenceId?: string, referenceType?: string, metadata?: Record<string, unknown>): Promise<BftTransaction>;
   getBftTransactions(ambassadorId: number, limit?: number): Promise<BftTransaction[]>;
 }
@@ -946,6 +947,46 @@ export class DatabaseStorage implements IStorage {
       .from(ambassadorSubscriptions)
       .where(eq(ambassadorSubscriptions.id, ambassadorId));
     return ambassador?.bftBalance ?? "0";
+  }
+
+  async getAmbassadorsWithBftBalances(limit: number = 100): Promise<any[]> {
+    const ambassadors = await getDb()
+      .select({
+        id: ambassadorSubscriptions.id,
+        userId: ambassadorSubscriptions.userId,
+        email: ambassadorSubscriptions.email,
+        fullName: ambassadorSubscriptions.fullName,
+        bftBalance: ambassadorSubscriptions.bftBalance,
+        referralCode: ambassadorSubscriptions.referralCode,
+        createdAt: ambassadorSubscriptions.createdAt,
+      })
+      .from(ambassadorSubscriptions)
+      .where(eq(ambassadorSubscriptions.subscriptionStatus, 'active'))
+      .limit(limit);
+
+    // Join with points data
+    const results = [];
+    for (const amb of ambassadors) {
+      const [points] = await getDb()
+        .select({ totalPoints: ambassadorPoints.totalPoints })
+        .from(ambassadorPoints)
+        .where(eq(ambassadorPoints.userId, amb.userId));
+      
+      // Count referrals
+      const [referralCount] = await getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(ambassadorSubscriptions)
+        .where(eq(ambassadorSubscriptions.referredByCode, amb.referralCode));
+      
+      results.push({
+        ...amb,
+        name: amb.fullName,
+        totalPoints: points?.totalPoints || 0,
+        referralCount: referralCount?.count || 0,
+      });
+    }
+    
+    return results;
   }
 
   async recordBftTransaction(
