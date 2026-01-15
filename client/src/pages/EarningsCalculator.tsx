@@ -532,6 +532,62 @@ export default function EarningsCalculator() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="space-y-3 pt-2 border-t" data-testid="section-cash-rewards">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-semibold">Cash Rewards Program</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        Earn real cash through referrals and team building
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 pl-6">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between p-2 rounded-md bg-green-500/10 cursor-help hover-elevate" data-testid="tile-referral-bonus">
+                              <span className="text-xs">Referral Bonus</span>
+                              <Badge className="bg-green-600 text-white text-xs" data-testid="text-referral-bonus">+$50</Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-sm">Earn $50 instant cash for each ambassador you recruit (after their first month)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between p-2 rounded-md bg-green-500/10 cursor-help hover-elevate" data-testid="tile-monthly-override">
+                              <span className="text-xs">Monthly Override</span>
+                              <Badge className="bg-green-600 text-white text-xs" data-testid="text-monthly-override">+$4/mo</Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-sm">Earn 20% of each referral's monthly subscription (~$4/month passive income per active referral)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between p-2 rounded-md bg-muted/50 cursor-help hover-elevate" data-testid="tile-signup-fee">
+                              <span className="text-xs">Signup Fee</span>
+                              <Badge variant="secondary" className="text-xs" data-testid="text-signup-fee">$29</Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-sm">One-time activation fee to join the ambassador program</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between p-2 rounded-md bg-muted/50 cursor-help hover-elevate" data-testid="tile-monthly-sub">
+                              <span className="text-xs">Monthly Sub</span>
+                              <Badge variant="secondary" className="text-xs" data-testid="text-monthly-sub">$19.99/mo</Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-sm">Monthly subscription to access ambassador tools and earn rewards</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
