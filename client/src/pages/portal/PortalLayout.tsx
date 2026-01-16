@@ -48,7 +48,7 @@ const menuItems = [
   { title: "Tools", url: "/portal/tools", icon: Wrench },
   { title: "My Team", url: "/portal/team", icon: Users },
   { title: "Events", url: "/portal/events", icon: CalendarDays },
-  { title: "Resources", url: "/portal/resources", icon: BookOpen },
+  { title: "Learn", url: "/portal/resources", icon: BookOpen },
   { title: "Settings", url: "/portal/settings", icon: Settings },
 ];
 
