@@ -536,12 +536,12 @@ function Scene6({ progress }: { progress: number }) {
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-3">
             <Globe className="w-5 h-5 text-blue-400" />
             <a 
-              href="https://BitForce.com/how-it-works"
+              href="https://BitForce.Biz/how-it-works"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-300 hover:text-blue-200 transition-colors"
             >
-              BitForce.com/how-it-works
+              BitForce.Biz/how-it-works
             </a>
           </div>
         </div>
