@@ -2,6 +2,18 @@ import puppeteer from 'puppeteer';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
+
+function getChromiumPath(): string {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  try {
+    return execSync('which chromium').toString().trim();
+  } catch {
+    return '/usr/bin/chromium';
+  }
+}
 
 const OUTPUT_DIR = path.join(process.cwd(), 'attached_assets', 'generated_videos');
 const FRAMES_DIR = path.join(OUTPUT_DIR, 'explainer_frames');
@@ -35,8 +47,12 @@ export async function recordExplainerVideo(baseUrl: string): Promise<string> {
 
   console.log('[ExplainerRecorder] Starting browser recording...');
   
+  const chromiumPath = getChromiumPath();
+  console.log(`[ExplainerRecorder] Using Chromium at: ${chromiumPath}`);
+  
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: chromiumPath,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
