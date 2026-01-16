@@ -1,0 +1,47 @@
+Based on the information from your BitForce Token and Ambassador Portal websites, here's a script for a 60-second informational video explaining BFT to new ambassadors in simple terms.
+
+### 🎬 Video Script: "Your Guide to Earning with BitForce Token (BFT)"
+
+**(Video opens with upbeat, clear visuals of a smiling person holding a smartphone. Friendly, approachable music begins.)**
+
+**0-10 seconds (The Hook):**
+> **(On-screen text: "Want to earn more as a BitForce Ambassador?")**
+>
+> **Narrator:** "You're already helping your community access services and earning commissions. But what if your success could also build something bigger that grows in value for everyone? That’s where the BitForce Token, or BFT, comes in."
+
+**10-30 seconds (The Core Concept - Simple Analogy):**
+> **(Visual: An animated graphic shows a small sapling growing into a large tree with many branches. Each branch has an icon for an "ambassador" or a "customer.")**
+>
+> **Narrator:** "Think of BFT as a 'growth token.' It's powered by the Solana blockchain. Every time an ambassador joins, a customer signs up, or a purchase is made, the entire BitForce ecosystem grows a little stronger. And just like a healthy tree becomes more valuable, the BFT token is designed to grow in value as the community grows."
+
+**30-45 seconds (How Ambassadors Earn BFT - The Direct Rewards):**
+> **(Visual: Quick, clean icons appear one by one next to a BFT token symbol.)**
+>
+> **Narrator:** "As an ambassador, you earn BFT directly in three key ways:
+>
+> 1.  A **500 BFT bonus** just for signing up.
+> 2.  **50 BFT** for every new customer you onboard.
+> 3.  **5% of every sale** you generate, paid in BFT tokens."
+>
+> **(On-screen text for each point reinforces the narrator.)**
+
+**45-55 seconds (The Bigger Picture - Growing Together):**
+> **(Visual: An animated chart shows a line gently rising. Milestone markers like "10 Ambassadors," "100 Customers" appear, causing the line to step up.)**
+>
+> **Narrator:** "Here's the powerful part: you're not just earning tokens for your own work. When the *entire community* hits goals—like reaching 10 ambassadors or 100 customers—it unlocks permanent **milestone bonuses** that increase the value of *every* BFT token. Your effort helps lift everyone."
+
+**55-60 seconds (Call to Action):**
+> **(Visual: A clean shot of the BitForceToken.replit.app website homepage. Then, the friendly person from the intro smiles and gives a thumbs-up.)**
+>
+> **Narrator:** "Ready to see how it works and join the pre-ICO opportunity? Visit **BitForceToken.replit.app** for the live token dashboard and to take the interactive briefing. Start earning and growing with us today!"
+>
+> **(Final screen with logos: BitForce Token & BitForce.biz)**
+
+### 💡 Key Themes for the Video
+
+This script focuses on three simple ideas to avoid confusion:
+*   **Community Growth = Token Growth:** Connects individual action to collective value.
+*   **Multiple Ways to Earn:** Clearly lists the direct BFT rewards.
+*   **Transparent & Live:** Points viewers to the live token website to see real-time metrics.
+
+I hope this script gives you a great foundation for your video! If you'd like, I can also suggest simple visuals or graphics for each section.
