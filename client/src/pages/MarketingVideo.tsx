@@ -37,6 +37,7 @@ import monthlySubscription from "@assets/generated_images/monthly_subscription_c
 import oneOnOneSession from "@assets/generated_images/one-on-one_tech_help_session.png";
 import bundlePackage from "@assets/generated_images/tech_companion_bundle_package_portrait.png";
 import backgroundMusic from "@assets/epic_1768573393286.mp3";
+import voiceOverAudio from "@assets/markaudio1onboardamb_1768574445613.mp3";
 
 interface Scene {
   id: number;
@@ -554,7 +555,10 @@ export default function MarketingVideo() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const voiceOverRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<number | null>(null);
+  const fadeTimeoutRef = useRef<number | null>(null);
+  const fadeIntervalRef = useRef<number | null>(null);
   const isPlayingRef = useRef(false);
 
   const progress = (currentTime / TOTAL_DURATION) * 100;
@@ -622,19 +626,80 @@ export default function MarketingVideo() {
     };
   }, [isPlaying]);
 
+  const clearFadeTimers = () => {
+    if (fadeTimeoutRef.current !== null) {
+      window.clearTimeout(fadeTimeoutRef.current);
+      fadeTimeoutRef.current = null;
+    }
+    if (fadeIntervalRef.current !== null) {
+      window.clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+  };
+
+  const fadeBackgroundMusic = (targetVolume: number, duration: number, onComplete?: () => void) => {
+    if (!audioRef.current) return;
+    clearFadeTimers();
+    
+    const startVolume = audioRef.current.volume;
+    const volumeDiff = targetVolume - startVolume;
+    const steps = 20;
+    const stepDuration = duration / steps;
+    let currentStep = 0;
+    
+    fadeIntervalRef.current = window.setInterval(() => {
+      currentStep++;
+      if (audioRef.current) {
+        audioRef.current.volume = Math.max(0, Math.min(1, startVolume + (volumeDiff * (currentStep / steps))));
+      }
+      if (currentStep >= steps) {
+        clearFadeTimers();
+        if (audioRef.current) {
+          audioRef.current.volume = targetVolume;
+        }
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    }, stepDuration);
+  };
+
   useEffect(() => {
+    clearFadeTimers();
+    
     if (audioRef.current) {
       if (isPlaying) {
+        audioRef.current.volume = 0;
         audioRef.current.play().catch(() => {});
+        fadeBackgroundMusic(0.25, 1000);
       } else {
-        audioRef.current.pause();
+        fadeBackgroundMusic(0, 500, () => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+        });
       }
     }
+    if (voiceOverRef.current) {
+      voiceOverRef.current.volume = 1.0;
+      if (isPlaying) {
+        voiceOverRef.current.play().catch(() => {});
+      } else {
+        voiceOverRef.current.pause();
+      }
+    }
+    
+    return () => {
+      clearFadeTimers();
+    };
   }, [isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.muted = isMuted;
+    }
+    if (voiceOverRef.current) {
+      voiceOverRef.current.muted = isMuted;
     }
   }, [isMuted]);
 
@@ -660,6 +725,9 @@ export default function MarketingVideo() {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
     }
+    if (voiceOverRef.current) {
+      voiceOverRef.current.currentTime = 0;
+    }
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -670,6 +738,9 @@ export default function MarketingVideo() {
     setCurrentTime(newTime);
     if (audioRef.current) {
       audioRef.current.currentTime = newTime;
+    }
+    if (voiceOverRef.current) {
+      voiceOverRef.current.currentTime = newTime;
     }
   };
 
@@ -704,6 +775,10 @@ export default function MarketingVideo() {
         ref={audioRef}
         src={backgroundMusic}
         loop
+      />
+      <audio
+        ref={voiceOverRef}
+        src={voiceOverAudio}
       />
 
       <div className="flex-1 relative overflow-hidden">
