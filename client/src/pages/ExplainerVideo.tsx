@@ -18,8 +18,13 @@ import {
   Sparkles,
   Wrench,
   Package,
+  Download,
+  Loader2,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 import BitForceBuddy from "@/components/BitForceBuddy";
 import toolAiAssistant from "@assets/Screenshot_2026-01-09_153919_1767991243060.png";
@@ -669,17 +674,44 @@ function Scene5({ progress }: { progress: number }) {
 }
 
 export default function ExplainerVideo() {
+  const searchString = useSearch();
+  const isRecordingMode = searchString.includes('recording=true');
+  
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentScene, setCurrentScene] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
+
+  const { data: videoStatus, refetch: refetchStatus } = useQuery<{ exists: boolean }>({
+    queryKey: ['/api/video/explainer-presentation-status'],
+    enabled: !isRecordingMode,
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: () => apiRequest('POST', '/api/video/record-explainer-presentation'),
+    onSuccess: () => {
+      toast({ title: "Video generated!", description: "Your presentation video is ready for download." });
+      refetchStatus();
+    },
+    onError: (err: any) => {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleDownload = () => {
+    window.open('/api/video/explainer-presentation', '_blank');
+  };
 
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         setCurrentTime((prev) => {
           if (prev >= TOTAL_DURATION) {
+            if (isRecordingMode) {
+              return TOTAL_DURATION;
+            }
             return 0;
           }
           return prev + 0.1;
@@ -696,7 +728,7 @@ export default function ExplainerVideo() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, isRecordingMode]);
 
   useEffect(() => {
     let elapsed = 0;
@@ -747,86 +779,128 @@ export default function ExplainerVideo() {
       {currentScene === 6 && <Scene4 progress={sceneProgress} />}
       {currentScene === 7 && <Scene5 progress={sceneProgress} />}
 
-      <BitForceBuddy 
-        currentScene={currentScene} 
-        sceneProgress={sceneProgress} 
-        isPlaying={isPlaying} 
-      />
+      {!isRecordingMode && (
+        <BitForceBuddy 
+          currentScene={currentScene} 
+          sceneProgress={sceneProgress} 
+          isPlaying={isPlaying} 
+        />
+      )}
 
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
-        <div className="max-w-4xl mx-auto space-y-3">
-          <Progress value={progressPercent} className="h-1 bg-white/20" />
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/20"
-                onClick={() => setIsPlaying(!isPlaying)}
-                data-testid="button-play-pause"
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </Button>
+      {!isRecordingMode && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
+          <div className="max-w-4xl mx-auto space-y-3">
+            <Progress value={progressPercent} className="h-1 bg-white/20" />
+            
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-white hover:bg-white/20"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  data-testid="button-play-pause"
+                >
+                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                </Button>
+                
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-white hover:bg-white/20"
+                  onClick={() => setIsMuted(!isMuted)}
+                  data-testid="button-mute"
+                >
+                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </Button>
+                
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-white hover:bg-white/20"
+                  onClick={handleRestart}
+                  data-testid="button-restart"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </Button>
+              </div>
               
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/20"
-                onClick={() => setIsMuted(!isMuted)}
-                data-testid="button-mute"
-              >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </Button>
+              <div className="text-white/80 text-sm hidden sm:block">
+                {scenes[currentScene].title}
+              </div>
               
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/20"
-                onClick={handleRestart}
-                data-testid="button-restart"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="text-white/60 text-sm">
+                  {Math.floor(currentTime)}s / {TOTAL_DURATION}s
+                </div>
+                
+                {videoStatus?.exists ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-white/20"
+                    onClick={handleDownload}
+                    data-testid="button-download-video"
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => generateMutation.mutate()}
+                    disabled={generateMutation.isPending}
+                    data-testid="button-generate-video"
+                  >
+                    {generateMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-1" />
+                        Generate Video
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
             
-            <div className="text-white/80 text-sm hidden sm:block">
-              {scenes[currentScene].title}
+            <div className="flex gap-1">
+              {scenes.map((scene, i) => (
+                <div
+                  key={scene.id}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    i < currentScene
+                      ? "bg-blue-500"
+                      : i === currentScene
+                      ? "bg-blue-400"
+                      : "bg-white/20"
+                  }`}
+                />
+              ))}
             </div>
-            
-            <div className="text-white/60 text-sm">
-              {Math.floor(currentTime)}s / {TOTAL_DURATION}s
-            </div>
-          </div>
-          
-          <div className="flex gap-1">
-            {scenes.map((scene, i) => (
-              <div
-                key={scene.id}
-                className={`h-1 flex-1 rounded-full transition-colors ${
-                  i < currentScene
-                    ? "bg-blue-500"
-                    : i === currentScene
-                    ? "bg-blue-400"
-                    : "bg-white/20"
-                }`}
-              />
-            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="absolute top-4 right-4">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            className="text-white/60 hover:text-white hover:bg-white/10"
-            data-testid="button-exit"
-          >
-            Exit
-          </Button>
-        </Link>
-      </div>
+      {!isRecordingMode && (
+        <div className="absolute top-4 right-4">
+          <Link href="/">
+            <Button
+              variant="ghost"
+              className="text-white/60 hover:text-white hover:bg-white/10"
+              data-testid="button-exit"
+            >
+              Exit
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

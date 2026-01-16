@@ -8,7 +8,7 @@ const FRAMES_DIR = path.join(OUTPUT_DIR, 'explainer_frames');
 const OUTPUT_FILE = 'bitforce_explainer_presentation.mp4';
 
 const TOTAL_DURATION = 78;
-const FPS = 24;
+const FPS = 10;
 const VIEWPORT_WIDTH = 1920;
 const VIEWPORT_HEIGHT = 1080;
 
@@ -55,7 +55,12 @@ export async function recordExplainerVideo(baseUrl: string): Promise<string> {
     
     await page.goto(explainerUrl, { waitUntil: 'networkidle0', timeout: 60000 });
     
-    await page.waitForSelector('[data-testid="button-play-pause"]', { timeout: 10000 });
+    await page.waitForFunction(
+      () => document.querySelector('.bg-gradient-to-br') !== null,
+      { timeout: 10000 }
+    );
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     console.log('[ExplainerRecorder] Starting frame capture...');
     
