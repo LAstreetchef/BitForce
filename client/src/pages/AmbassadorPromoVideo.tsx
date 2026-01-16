@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Play,
   Pause,
@@ -22,8 +24,12 @@ import {
   Rocket,
   Gift,
   TrendingUp,
+  CheckCircle,
+  Loader2,
+  Send,
 } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 import bitforceLogo from "@assets/Bitforce_1767872339442.jpg";
 import bftToken from "@assets/generated_images/bitforce_token_cryptocurrency_coin.png";
@@ -42,6 +48,7 @@ const scenes: Scene[] = [
   { id: 2, title: "Step 1: Learn Products", duration: 18, bgGradient: "from-blue-900 via-indigo-900 to-purple-900" },
   { id: 3, title: "Step 2: Recruit Ambassadors", duration: 16, bgGradient: "from-purple-900 via-violet-800 to-pink-900" },
   { id: 4, title: "Step 3: Support Your Network", duration: 14, bgGradient: "from-emerald-900 via-teal-800 to-cyan-900" },
+  { id: 5, title: "Get Started", duration: 60, bgGradient: "from-blue-900 via-purple-900 to-pink-900" },
 ];
 
 const TOTAL_DURATION = scenes.reduce((sum, s) => sum + s.duration, 0);
@@ -433,10 +440,186 @@ function Scene4({ progress }: { progress: number }) {
   );
 }
 
+interface Scene5Props {
+  progress: number;
+  onFormSubmit: (name: string, email: string) => Promise<void>;
+  formStatus: "idle" | "submitting" | "success" | "error";
+  formError: string | null;
+}
+
+function Scene5({ progress, onFormSubmit, formStatus, formError }: Scene5Props) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim() && email.trim()) {
+      await onFormSubmit(name.trim(), email.trim());
+    }
+  };
+
+  if (formStatus === "success") {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8">
+        <FloatingParticles />
+
+        <div
+          className="relative z-10 text-center transition-all duration-1000"
+          style={{
+            opacity: 1,
+            transform: "scale(1)",
+          }}
+        >
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl p-6 md:p-10 max-w-md mx-auto">
+            <CheckCircle className="w-16 h-16 md:w-20 md:h-20 text-green-400 mx-auto mb-4" />
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+              Thank You!
+            </h2>
+            <p className="text-white/80 mb-6 text-sm md:text-base">
+              We've received your information and will be in touch soon about becoming a BitForce Ambassador!
+            </p>
+            <Link href="/become-ambassador">
+              <Button
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3"
+                data-testid="button-become-ambassador"
+              >
+                <Rocket className="w-4 h-4 mr-2" />
+                Become an Ambassador Now
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto">
+      <FloatingParticles />
+
+      <div
+        className="relative z-10 text-center mb-4 md:mb-6 transition-all duration-1000"
+        style={{
+          opacity: progress > 5 ? 1 : 0,
+          transform: `translateY(${progress > 5 ? 0 : -30}px)`,
+        }}
+      >
+        <img
+          src={bitforceLogo}
+          alt="BitForce Logo"
+          className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 rounded-xl shadow-lg"
+        />
+        <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
+          Ready to Get Started?
+        </h2>
+        <p className="text-sm md:text-lg text-white/80">
+          Enter your info and we'll help you take the next step
+        </p>
+      </div>
+
+      <div
+        className="relative z-10 w-full max-w-sm transition-all duration-1000"
+        style={{
+          opacity: progress > 20 ? 1 : 0,
+          transform: `translateY(${progress > 20 ? 0 : 20}px)`,
+        }}
+      >
+        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 md:p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-white text-sm md:text-base">
+              Your Name
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Smith"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
+              required
+              data-testid="input-name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-white text-sm md:text-base">
+              Email Address
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="john@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
+              required
+              data-testid="input-email"
+            />
+          </div>
+
+          {formError && (
+            <p className="text-red-400 text-sm text-center">{formError}</p>
+          )}
+
+          <Button
+            type="submit"
+            disabled={formStatus === "submitting" || !name.trim() || !email.trim()}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 md:h-12 text-sm md:text-base"
+            data-testid="button-submit-lead"
+          >
+            {formStatus === "submitting" ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Get Started
+              </>
+            )}
+          </Button>
+        </form>
+      </div>
+
+      <div
+        className="relative z-10 mt-4 md:mt-6 transition-all duration-700"
+        style={{
+          opacity: progress > 40 ? 1 : 0,
+        }}
+      >
+        <p className="text-white/60 text-xs md:text-sm text-center px-4">
+          By submitting, you agree to receive communications from BitForce about ambassador opportunities.
+        </p>
+      </div>
+
+      <div
+        className="relative z-10 mt-4 md:mt-6 transition-all duration-700"
+        style={{
+          opacity: progress > 50 ? 1 : 0,
+        }}
+      >
+        <Link href="/become-ambassador">
+          <Button
+            variant="ghost"
+            className="text-white/70 hover:text-white hover:bg-white/10 text-sm"
+            data-testid="button-skip-to-signup"
+          >
+            Already ready? Sign up now
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function AmbassadorPromoVideo() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [formError, setFormError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const voiceOverRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<number | null>(null);
@@ -445,6 +628,25 @@ export default function AmbassadorPromoVideo() {
   const isPlayingRef = useRef(false);
 
   const progress = (currentTime / TOTAL_DURATION) * 100;
+
+  const handleFormSubmit = async (name: string, email: string) => {
+    setFormStatus("submitting");
+    setFormError(null);
+    
+    try {
+      await apiRequest("POST", "/api/leads", {
+        fullName: name,
+        email: email,
+        phone: "Not provided",
+        address: "Ambassador Video Lead",
+        interests: "Ambassador Program - Video Lead",
+      });
+      setFormStatus("success");
+    } catch (err: any) {
+      setFormStatus("error");
+      setFormError(err.message || "Failed to submit. Please try again.");
+    }
+  };
 
   const getCurrentScene = () => {
     let accumulated = 0;
@@ -643,6 +845,15 @@ export default function AmbassadorPromoVideo() {
         return <Scene3 progress={sceneProgress} />;
       case 4:
         return <Scene4 progress={sceneProgress} />;
+      case 5:
+        return (
+          <Scene5
+            progress={sceneProgress}
+            onFormSubmit={handleFormSubmit}
+            formStatus={formStatus}
+            formError={formError}
+          />
+        );
       default:
         return <Scene1 progress={sceneProgress} />;
     }
