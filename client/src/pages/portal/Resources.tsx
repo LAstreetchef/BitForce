@@ -190,8 +190,8 @@ export default function Resources() {
   return (
     <div className="space-y-6" data-testid="page-resources">
       <div>
-        <h1 className="text-2xl font-bold" data-testid="text-page-title">Training & Resources</h1>
-        <p className="text-xl font-bold text-amber-500">Learn AI & Earn BFT</p>
+        <h1 className="text-2xl font-bold text-amber-500" data-testid="text-page-title">Learn AI & Earn BFT</h1>
+        <p className="text-muted-foreground">Training & Resources</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
