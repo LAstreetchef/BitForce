@@ -36,6 +36,7 @@ import techBuddy from "@assets/generated_images/friendly_tech_buddy_subscription
 import monthlySubscription from "@assets/generated_images/monthly_subscription_community.png";
 import oneOnOneSession from "@assets/generated_images/one-on-one_tech_help_session.png";
 import bundlePackage from "@assets/generated_images/tech_companion_bundle_package_portrait.png";
+import backgroundMusic from "@assets/epic_1768573393286.mp3";
 
 interface Scene {
   id: number;
@@ -635,11 +636,20 @@ export default function MarketingVideo() {
     if (currentTime >= TOTAL_DURATION) {
       setCurrentTime(0);
     }
-    setIsPlaying(!isPlaying);
+    const newPlayingState = !isPlaying;
+    isPlayingRef.current = newPlayingState;
+    if (newPlayingState) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+    setIsPlaying(newPlayingState);
   };
 
   const handleRestart = () => {
     setCurrentTime(0);
+    isPlayingRef.current = true;
+    startTimer();
     setIsPlaying(true);
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
@@ -686,7 +696,7 @@ export default function MarketingVideo() {
     <div className="min-h-screen bg-black flex flex-col">
       <audio
         ref={audioRef}
-        src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3"
+        src={backgroundMusic}
         loop
       />
 
