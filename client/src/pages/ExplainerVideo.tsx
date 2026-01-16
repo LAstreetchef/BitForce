@@ -18,13 +18,10 @@ import {
   Sparkles,
   Wrench,
   Package,
-  Download,
-  Loader2,
 } from "lucide-react";
 import { Link } from "wouter";
 
 import BitForceBuddy from "@/components/BitForceBuddy";
-import { generateExplainerPdf } from "@/lib/explainerPdfGenerator";
 import toolAiAssistant from "@assets/Screenshot_2026-01-09_153919_1767991243060.png";
 import toolSecurityCheck from "@assets/Screenshot_2026-01-09_153928_1767991243060.png";
 import toolFriendFinder from "@assets/Screenshot_2026-01-09_153937_1767991243059.png";
@@ -676,19 +673,7 @@ export default function ExplainerVideo() {
   const [isMuted, setIsMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentScene, setCurrentScene] = useState(0);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      await generateExplainerPdf();
-    } catch (error) {
-      console.error("Failed to generate PDF:", error);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
 
   useEffect(() => {
     if (isPlaying) {
@@ -831,21 +816,7 @@ export default function ExplainerVideo() {
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          className="text-white/60 hover:text-white hover:bg-white/10"
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf}
-          data-testid="button-download-pdf"
-        >
-          {isGeneratingPdf ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Download className="w-4 h-4 mr-2" />
-          )}
-          {isGeneratingPdf ? "Generating..." : "Download PDF"}
-        </Button>
+      <div className="absolute top-4 right-4">
         <Link href="/">
           <Button
             variant="ghost"
