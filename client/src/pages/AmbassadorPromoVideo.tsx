@@ -554,7 +554,7 @@ export default function AmbassadorPromoVideo() {
       if (isPlaying) {
         audioRef.current.volume = 0;
         audioRef.current.play().catch(() => {});
-        fadeBackgroundMusic(0.15, 1000);
+        fadeBackgroundMusic(0.05, 1000);
       } else {
         fadeBackgroundMusic(0, 500, () => {
           if (audioRef.current) {

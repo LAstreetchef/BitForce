@@ -697,7 +697,7 @@ export default function WallStreetVideo() {
           voiceOverRef.current.play()
         ]);
         
-        fadeBackgroundMusic(0.15, 1500);
+        fadeBackgroundMusic(0.05, 1500);
       } catch (err) {
         console.log("Audio playback failed:", err);
       }
