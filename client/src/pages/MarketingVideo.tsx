@@ -416,6 +416,9 @@ function Scene5({ progress }: { progress: number }) {
             <p className="text-white/80 text-lg mb-4">
               Our proprietary cryptocurrency, powered by the equity and growth of BitForce
             </p>
+            <p className="text-white/70 text-base mb-2">
+              Besides earning cash, ambassadors also earn BFT:
+            </p>
           </div>
 
           <div
@@ -427,15 +430,15 @@ function Scene5({ progress }: { progress: number }) {
           >
             <div className="flex items-center gap-3 justify-center md:justify-start">
               <BookOpen className="w-5 h-5 text-amber-400" />
-              <span className="text-white/90">Earn BFT by completing training programs</span>
+              <span className="text-white/90">By completing training programs</span>
             </div>
             <div className="flex items-center gap-3 justify-center md:justify-start">
               <Coins className="w-5 h-5 text-yellow-400" />
-              <span className="text-white/90">Earn BFT by selling products</span>
+              <span className="text-white/90">By selling products</span>
             </div>
             <div className="flex items-center gap-3 justify-center md:justify-start">
               <Users className="w-5 h-5 text-orange-400" />
-              <span className="text-white/90">Earn BFT by recruiting ambassadors</span>
+              <span className="text-white/90">By recruiting ambassadors</span>
             </div>
           </div>
 
@@ -447,7 +450,7 @@ function Scene5({ progress }: { progress: number }) {
           >
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 rounded-lg px-4 py-2">
               <Award className="w-5 h-5 text-amber-400" />
-              <span className="text-amber-300 text-sm">BFT offers ambassadors ownership in BitForce</span>
+              <span className="text-amber-300 text-sm">BFT offers ambassadors ownership in BitForce and additional money making opportunities</span>
             </div>
           </div>
 
@@ -523,8 +526,11 @@ function Scene6({ progress }: { progress: number }) {
             opacity: progress > 70 ? 1 : 0,
           }}
         >
-          <p className="text-2xl text-white font-semibold mb-6">
+          <p className="text-2xl text-white font-semibold mb-4">
             Join the BitForce
+          </p>
+          <p className="text-lg text-white/70 mb-3">
+            learn more at:
           </p>
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-3">
             <Globe className="w-5 h-5 text-blue-400" />
