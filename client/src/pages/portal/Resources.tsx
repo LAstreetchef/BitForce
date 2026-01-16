@@ -24,7 +24,8 @@ import {
   GraduationCap,
   Flame,
   Star,
-  Lock
+  Lock,
+  Coins
 } from "lucide-react";
 import { trainingModules, categories, getTotalDuration, type TrainingModule } from "@/data/trainingModules";
 import { TrainingModuleModal } from "@/components/TrainingModuleModal";
@@ -180,6 +181,12 @@ export default function Resources() {
     Advanced: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
   };
 
+  const getModuleBftReward = (lessonCount: number) => {
+    const lessonBft = lessonCount * 5;
+    const moduleBonusBft = 25;
+    return lessonBft + moduleBonusBft;
+  };
+
   return (
     <div className="space-y-6" data-testid="page-resources">
       <div>
@@ -333,6 +340,10 @@ export default function Resources() {
                       <BookOpen className="w-3 h-3" />
                       {specialModule.lessons.length} lessons
                     </span>
+                    <Badge className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" data-testid={`bft-reward-special-${specialModule.id}`}>
+                      <Coins className="w-3 h-3 mr-1" />
+                      {getModuleBftReward(specialModule.lessons.length)} BFT
+                    </Badge>
                     <Badge className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                       Charts & Examples
                     </Badge>
@@ -454,6 +465,10 @@ export default function Resources() {
                                   <BookOpen className="w-3 h-3" />
                                   {module.lessons.length} lessons
                                 </span>
+                                <Badge className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" data-testid={`bft-reward-${module.id}`}>
+                                  <Coins className="w-3 h-3 mr-1" />
+                                  {getModuleBftReward(module.lessons.length)} BFT
+                                </Badge>
                                 <Badge variant="outline" className="text-xs">
                                   {module.category}
                                 </Badge>
@@ -547,9 +562,15 @@ export default function Resources() {
                     <div className={`${nextModule.color} w-10 h-10 rounded-lg flex items-center justify-center text-white`}>
                       <IconComponent className="w-5 h-5" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{nextModule.title}</p>
-                      <p className="text-xs text-muted-foreground">{nextModule.duration} • {nextModule.lessons.length} lessons</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-muted-foreground">{nextModule.duration} • {nextModule.lessons.length} lessons</span>
+                        <Badge className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 py-0" data-testid="bft-reward-recommended">
+                          <Coins className="w-2.5 h-2.5 mr-0.5" />
+                          {getModuleBftReward(nextModule.lessons.length)} BFT
+                        </Badge>
+                      </div>
                     </div>
                     <Button size="sm" data-testid="button-start-recommended">
                       Start
