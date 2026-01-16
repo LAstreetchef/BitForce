@@ -191,7 +191,7 @@ export default function Resources() {
     <div className="space-y-6" data-testid="page-resources">
       <div>
         <h1 className="text-2xl font-bold" data-testid="text-page-title">Training & Resources</h1>
-        <p className="text-muted-foreground">Everything you need to become a top ambassador</p>
+        <p className="text-muted-foreground">Learn AI & Earn BFT</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
