@@ -31,6 +31,7 @@ import EarningsCalculator from "@/pages/EarningsCalculator";
 import MarketingVideo from "@/pages/MarketingVideo";
 import AmbassadorPromoVideo from "@/pages/AmbassadorPromoVideo";
 import BFTInfoVideo from "@/pages/BFTInfoVideo";
+import WallStreetVideo from "@/pages/WallStreetVideo";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/marketing-video" component={MarketingVideo}/>
       <Route path="/ambassador-video" component={AmbassadorPromoVideo}/>
       <Route path="/bft-video" component={BFTInfoVideo}/>
+      <Route path="/wallstreet-video" component={WallStreetVideo}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
