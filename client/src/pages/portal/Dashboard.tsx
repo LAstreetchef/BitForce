@@ -21,7 +21,8 @@ import {
   Coins,
   Info,
   ExternalLink,
-  ShoppingCart
+  ShoppingCart,
+  Wallet
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -274,14 +275,38 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          {bftPlatformAvailable && totalBft > 0 && tokenPrice?.tokenPrice != null && (
-            <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Your {totalBft.toLocaleString(undefined, { maximumFractionDigits: 2 })} BFT is worth</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                ${(totalBft * tokenPrice.tokenPrice).toFixed(2)}
-              </span>
-            </div>
-          )}
+          <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {bftPlatformAvailable && totalBft > 0 && tokenPrice?.tokenPrice != null ? (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Your {totalBft.toLocaleString(undefined, { maximumFractionDigits: 2 })} BFT is worth</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 ml-2">
+                  ${(totalBft * tokenPrice.tokenPrice).toFixed(2)}
+                </span>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Access your unified BFT wallet on the Token Platform
+              </div>
+            )}
+            <Button
+              onClick={() => buyBftMutation.mutate()}
+              disabled={buyBftMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-950 gap-2"
+              data-testid="button-view-wallet"
+            >
+              {buyBftMutation.isPending ? (
+                "Connecting..."
+              ) : (
+                <>
+                  <Wallet className="w-4 h-4" />
+                  View Wallet
+                  <ExternalLink className="w-3 h-3" />
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
