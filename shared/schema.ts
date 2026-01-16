@@ -272,6 +272,8 @@ export const ACTION_POINTS = {
   STREAK_BONUS_7: 25,
   STREAK_BONUS_30: 100,
   GENERATE_DESIGN: 15,
+  COMPLETE_LESSON: 5,
+  COMPLETE_MODULE: 25,
 } as const;
 
 // Level thresholds
@@ -314,9 +316,27 @@ export const BADGE_DEFINITIONS = {
   SALES_50: { name: "Sales Legend", description: "Made 50 sales", icon: "crown" },
   LEVEL_5: { name: "Rising Star", description: "Reached level 5", icon: "sparkles" },
   LEVEL_10: { name: "Elite Ambassador", description: "Reached level 10", icon: "award" },
+  TRAINING_COMPLETE: { name: "Certified Ambassador", description: "Completed all training modules", icon: "graduation-cap" },
 } as const;
 
 export type BadgeType = keyof typeof BADGE_DEFINITIONS;
+
+// Training Progress - tracks completed lessons for ambassadors
+export const trainingProgress = pgTable("training_progress", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  lessonId: text("lesson_id").notNull(),
+  moduleId: text("module_id").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+export const insertTrainingProgressSchema = createInsertSchema(trainingProgress).omit({ 
+  id: true, 
+  completedAt: true 
+});
+
+export type TrainingProgress = typeof trainingProgress.$inferSelect;
+export type InsertTrainingProgress = z.infer<typeof insertTrainingProgressSchema>;
 
 // Support Messages - "Charlie" style communication between ambassadors and management
 export const supportMessages = pgTable("support_messages", {

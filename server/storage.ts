@@ -19,6 +19,7 @@ import {
   sharedCouponBooks,
   savedLeads,
   bftTransactions,
+  trainingProgress,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -57,6 +58,8 @@ import {
   type BftTransaction,
   type InsertBftTransaction,
   type InsertSavedLead,
+  type TrainingProgress,
+  type InsertTrainingProgress,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -175,6 +178,12 @@ export interface IStorage {
   getAmbassadorsWithBftBalances(limit?: number): Promise<any[]>;
   recordBftTransaction(ambassadorId: number, transactionType: string, amount: number, description?: string, referenceId?: string, referenceType?: string, metadata?: Record<string, unknown>): Promise<BftTransaction>;
   getBftTransactions(ambassadorId: number, limit?: number): Promise<BftTransaction[]>;
+  
+  // Training Progress
+  completeLesson(userId: string, lessonId: string, moduleId: string): Promise<TrainingProgress>;
+  getCompletedLessons(userId: string): Promise<TrainingProgress[]>;
+  isLessonCompleted(userId: string, lessonId: string): Promise<boolean>;
+  getModuleCompletedLessons(userId: string, moduleId: string): Promise<TrainingProgress[]>;
 }
 
 function generateReferralCode(): string {
@@ -1036,6 +1045,56 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bftTransactions.ambassadorId, ambassadorId))
       .orderBy(desc(bftTransactions.createdAt))
       .limit(limit);
+  }
+
+  // Training Progress
+  async completeLesson(userId: string, lessonId: string, moduleId: string): Promise<TrainingProgress> {
+    const existing = await this.isLessonCompleted(userId, lessonId);
+    if (existing) {
+      const [progress] = await getDb()
+        .select()
+        .from(trainingProgress)
+        .where(and(
+          eq(trainingProgress.userId, userId),
+          eq(trainingProgress.lessonId, lessonId)
+        ));
+      return progress;
+    }
+    
+    const [progress] = await getDb()
+      .insert(trainingProgress)
+      .values({ userId, lessonId, moduleId })
+      .returning();
+    return progress;
+  }
+
+  async getCompletedLessons(userId: string): Promise<TrainingProgress[]> {
+    return getDb()
+      .select()
+      .from(trainingProgress)
+      .where(eq(trainingProgress.userId, userId))
+      .orderBy(desc(trainingProgress.completedAt));
+  }
+
+  async isLessonCompleted(userId: string, lessonId: string): Promise<boolean> {
+    const [result] = await getDb()
+      .select()
+      .from(trainingProgress)
+      .where(and(
+        eq(trainingProgress.userId, userId),
+        eq(trainingProgress.lessonId, lessonId)
+      ));
+    return !!result;
+  }
+
+  async getModuleCompletedLessons(userId: string, moduleId: string): Promise<TrainingProgress[]> {
+    return getDb()
+      .select()
+      .from(trainingProgress)
+      .where(and(
+        eq(trainingProgress.userId, userId),
+        eq(trainingProgress.moduleId, moduleId)
+      ));
   }
 }
 

@@ -2846,6 +2846,141 @@ export async function registerRoutes(
     }
   });
 
+  // Training Progress - Get completed lessons for the current user
+  app.get("/api/training/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const completedLessons = await storage.getCompletedLessons(userId);
+      res.json(completedLessons.map(p => p.lessonId));
+    } catch (err) {
+      console.error("Get training progress error:", err);
+      res.status(500).json({ message: "Failed to get training progress" });
+    }
+  });
+
+  // Training Progress - Mark a lesson as complete and award BFT
+  app.post("/api/training/complete-lesson", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { lessonId, moduleId } = req.body;
+      
+      if (!lessonId || !moduleId) {
+        return res.status(400).json({ message: "lessonId and moduleId are required" });
+      }
+
+      const numericModuleId = parseInt(moduleId, 10);
+      if (isNaN(numericModuleId)) {
+        return res.status(400).json({ message: "Invalid moduleId" });
+      }
+
+      // Server-side validation of lesson/module against trusted configuration
+      const { getModuleConfig, isValidLesson, getTotalLessonsCount } = await import("@shared/data/trainingModulesConfig");
+      
+      const moduleConfig = getModuleConfig(numericModuleId);
+      if (!moduleConfig) {
+        return res.status(400).json({ message: "Invalid module" });
+      }
+      
+      if (!isValidLesson(numericModuleId, lessonId)) {
+        return res.status(400).json({ message: "Invalid lesson for this module" });
+      }
+
+      // Check if already completed
+      const alreadyCompleted = await storage.isLessonCompleted(userId, lessonId);
+      if (alreadyCompleted) {
+        return res.json({ 
+          success: true, 
+          alreadyCompleted: true,
+          message: "Lesson already completed" 
+        });
+      }
+
+      // Mark lesson as complete
+      await storage.completeLesson(userId, lessonId, numericModuleId.toString());
+
+      // Award BFT for lesson completion
+      const lessonBftResult = await awardBftTokens(
+        userId,
+        "COMPLETE_LESSON",
+        ACTION_POINTS.COMPLETE_LESSON,
+        `Completed lesson in ${moduleConfig.title}`,
+        { lessonId, moduleId: numericModuleId }
+      );
+
+      // Log the action
+      await storage.logAmbassadorAction({
+        userId,
+        actionType: "COMPLETE_LESSON",
+        pointsAwarded: ACTION_POINTS.COMPLETE_LESSON,
+        leadId: null,
+        leadServiceId: null,
+        description: `Completed lesson ${lessonId}`,
+      });
+
+      // Check if module is now complete using server-side lesson count
+      let moduleCompleted = false;
+      let moduleBftResult = null;
+      
+      const completedInModule = await storage.getModuleCompletedLessons(userId, numericModuleId.toString());
+      if (completedInModule.length >= moduleConfig.lessonIds.length) {
+        moduleCompleted = true;
+        
+        // Award bonus BFT for completing entire module
+        moduleBftResult = await awardBftTokens(
+          userId,
+          "COMPLETE_MODULE",
+          ACTION_POINTS.COMPLETE_MODULE,
+          `Completed training module: ${moduleConfig.title}`,
+          { moduleId: numericModuleId, moduleTitle: moduleConfig.title }
+        );
+
+        // Log the module completion
+        await storage.logAmbassadorAction({
+          userId,
+          actionType: "COMPLETE_MODULE",
+          pointsAwarded: ACTION_POINTS.COMPLETE_MODULE,
+          leadId: null,
+          leadServiceId: null,
+          description: `Completed module: ${moduleConfig.title}`,
+        });
+      }
+
+      // Check if all training is complete - award badge
+      const allCompletedLessons = await storage.getCompletedLessons(userId);
+      const totalLessons = getTotalLessonsCount();
+      
+      if (allCompletedLessons.length >= totalLessons) {
+        const hasBadge = await storage.hasBadge(userId, "TRAINING_COMPLETE");
+        if (!hasBadge) {
+          await storage.awardBadge(userId, "TRAINING_COMPLETE");
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        lessonBftAwarded: lessonBftResult.bftAwarded,
+        lessonPointsEquivalent: ACTION_POINTS.COMPLETE_LESSON,
+        moduleCompleted,
+        moduleBftAwarded: moduleBftResult?.bftAwarded || 0,
+        modulePointsEquivalent: moduleCompleted ? ACTION_POINTS.COMPLETE_MODULE : 0,
+        totalLessonsCompleted: allCompletedLessons.length,
+      });
+    } catch (err) {
+      console.error("Complete lesson error:", err);
+      res.status(500).json({ message: "Failed to complete lesson" });
+    }
+  });
+
   // Initialize providers and run scraper asynchronously after startup
   // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
   // Check for PORT env var as indicator of Cloud Run (it's always set there)

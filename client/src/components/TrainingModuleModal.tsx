@@ -121,7 +121,8 @@ interface TrainingModuleModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   completedLessons: string[];
-  onLessonComplete: (lessonId: string) => void;
+  onLessonComplete: (lessonId: string, moduleId: number, moduleLessonsCount: number, moduleTitle: string) => void;
+  isCompletingLesson?: boolean;
 }
 
 export function TrainingModuleModal({
@@ -130,6 +131,7 @@ export function TrainingModuleModal({
   onOpenChange,
   completedLessons,
   onLessonComplete,
+  isCompletingLesson = false,
 }: TrainingModuleModalProps) {
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -158,7 +160,7 @@ export function TrainingModuleModal({
   };
 
   const handleMarkComplete = (lessonId: string) => {
-    onLessonComplete(lessonId);
+    onLessonComplete(lessonId, module.id, module.lessons.length, module.title);
     const currentIndex = module.lessons.findIndex((l) => l.id === lessonId);
     if (currentIndex < module.lessons.length - 1) {
       setExpandedLesson(module.lessons[currentIndex + 1].id);
@@ -392,10 +394,11 @@ export function TrainingModuleModal({
                             {!isCompleted ? (
                               <Button
                                 onClick={() => handleMarkComplete(lesson.id)}
+                                disabled={isCompletingLesson}
                                 data-testid={`button-complete-${lesson.id}`}
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Mark as Complete
+                                {isCompletingLesson ? "Saving..." : "Mark as Complete"}
                               </Button>
                             ) : (
                               <Badge

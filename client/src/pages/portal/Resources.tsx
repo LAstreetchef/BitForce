@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,9 @@ import {
 } from "lucide-react";
 import { trainingModules, categories, getTotalDuration, type TrainingModule } from "@/data/trainingModules";
 import { TrainingModuleModal } from "@/components/TrainingModuleModal";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const resources = [
   {
@@ -97,35 +100,51 @@ const tips = [
   },
 ];
 
-const STORAGE_KEY = "training_progress";
-
-function loadProgress(): string[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveProgress(completedLessons: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(completedLessons));
-}
-
 export default function Resources() {
-  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [selectedModule, setSelectedModule] = useState<TrainingModule | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setCompletedLessons(loadProgress());
-  }, []);
+  const { data: completedLessons = [], isLoading: progressLoading } = useQuery<string[]>({
+    queryKey: ["/api/training/progress"],
+  });
 
-  const handleLessonComplete = (lessonId: string) => {
-    const updated = [...completedLessons, lessonId];
-    setCompletedLessons(updated);
-    saveProgress(updated);
+  const completeLessonMutation = useMutation({
+    mutationFn: async (params: { lessonId: string; moduleId: number; moduleLessonsCount: number; moduleTitle: string }) => {
+      const response = await apiRequest("POST", "/api/training/complete-lesson", params);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/training/progress"] });
+      
+      if (data.alreadyCompleted) {
+        return;
+      }
+      
+      if (data.moduleCompleted) {
+        toast({
+          title: "Module Complete!",
+          description: `You earned ${data.lessonBftAwarded + data.moduleBftAwarded} BFT for completing the module!`,
+        });
+      } else {
+        toast({
+          title: "Lesson Complete!",
+          description: `You earned ${data.lessonBftAwarded} BFT`,
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLessonComplete = (lessonId: string, moduleId: number, moduleLessonsCount: number, moduleTitle: string) => {
+    completeLessonMutation.mutate({ lessonId, moduleId, moduleLessonsCount, moduleTitle });
   };
 
   const getModuleProgress = (module: TrainingModule) => {
@@ -640,6 +659,7 @@ export default function Resources() {
         onOpenChange={setModalOpen}
         completedLessons={completedLessons}
         onLessonComplete={handleLessonComplete}
+        isCompletingLesson={completeLessonMutation.isPending}
       />
     </div>
   );
