@@ -73,6 +73,21 @@ Located at `/portal/tools`, this feature provides ambassadors with access to fre
 Backend service: `server/services/propertyData.ts`
 Frontend page: `client/src/pages/portal/Tools.tsx`
 
+### BFT Training Rewards System
+Located at `/portal/resources`, ambassadors earn BFT tokens by completing training modules:
+- **Lesson Rewards**: 5 BFT per completed lesson
+- **Module Bonus**: 25 BFT bonus for completing an entire module
+- **Idempotency**: Prevents duplicate awards on retries using unique keys (userId_lessonId)
+- **Durable Ledger**: All BFT transactions recorded in `bftTransactions` table before success
+
+Key files:
+- `server/lib/bft-rewards.ts` - Core BFT award logic with idempotency guards
+- `shared/data/trainingModulesConfig.ts` - Server-side module/lesson validation
+- `client/src/pages/portal/Resources.tsx` - Training UI with BFT badges
+
+API endpoint: `POST /api/training/complete-lesson` with `{lessonId, moduleId}`
+Flow: Award lesson BFT → Check/award module BFT → Mark lesson complete (retry-safe)
+
 ## External Dependencies
 
 ### Database

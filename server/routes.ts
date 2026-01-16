@@ -248,8 +248,8 @@ export async function registerRoutes(
       }
 
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-      const recentActions = await storage.getAllRecentActions(limit);
-
+      const source = req.query.source as string;
+      
       const activityTypeMap: Record<string, string> = {
         'SUGGEST_SERVICE': 'customer_onboarded',
         'CONTACT_LEAD': 'customer_onboarded',
@@ -260,8 +260,30 @@ export async function registerRoutes(
         'STREAK_BONUS_30': 'bonus_earned',
         'GENERATE_DESIGN': 'tokens_earned',
         'AMBASSADOR_JOINED': 'ambassador_joined',
+        'COMPLETE_LESSON': 'training_completed',
+        'COMPLETE_MODULE': 'training_completed',
       };
 
+      // If source=ledger, pull from bftTransactions table (authoritative BFT ledger)
+      if (source === 'ledger') {
+        const transactions = await storage.getAllRecentBftTransactions(limit);
+        const ledgerActivities = transactions.map(tx => ({
+          id: `txn-${tx.id}`,
+          type: activityTypeMap[tx.transactionType] || 'tokens_earned',
+          actorName: tx.ambassadorName,
+          description: tx.description || `Earned ${tx.amount} BFT for ${tx.transactionType.toLowerCase().replace(/_/g, ' ')}`,
+          value: parseFloat(tx.amount),
+          timestamp: tx.createdAt?.toISOString() || new Date().toISOString(),
+          transactionType: tx.transactionType,
+          referenceId: tx.referenceId,
+          referenceType: tx.referenceType,
+          metadata: tx.metadata ? JSON.parse(tx.metadata) : null,
+        }));
+        return res.json(ledgerActivities);
+      }
+
+      // Default: pull from ambassador actions (legacy)
+      const recentActions = await storage.getAllRecentActions(limit);
       const activities = recentActions.map(action => {
         const bftTokens = Math.floor(action.pointsAwarded / 10);
         return {
@@ -2905,10 +2927,8 @@ export async function registerRoutes(
         });
       }
 
-      // Mark lesson as complete
-      await storage.completeLesson(userId, lessonId, numericModuleId.toString());
-
-      // Award BFT for lesson completion
+      // STEP 1: Award BFT for lesson completion FIRST (before marking complete)
+      // This ensures retries can still award tokens if this fails
       const lessonBftResult = await awardBftTokens(
         userId,
         "COMPLETE_LESSON",
@@ -2917,7 +2937,50 @@ export async function registerRoutes(
         { lessonId, moduleId: numericModuleId }
       );
 
-      // Log the action
+      // If BFT ledger recording failed, return error (lesson NOT marked complete - can retry)
+      if (!lessonBftResult.success) {
+        console.error(`[Training] BFT award failed for lesson ${lessonId}:`, lessonBftResult.error);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Failed to record BFT reward. Please try again.",
+          error: lessonBftResult.error 
+        });
+      }
+
+      // STEP 2: Check if this lesson completes the module
+      // We need to pre-check to award module bonus BEFORE marking lesson complete
+      const completedInModule = await storage.getModuleCompletedLessons(userId, numericModuleId.toString());
+      const willCompleteModule = completedInModule.length + 1 >= moduleConfig.lessonIds.length;
+      
+      let moduleCompleted = false;
+      let moduleBftResult = null;
+      
+      if (willCompleteModule) {
+        // Award bonus BFT for completing entire module BEFORE marking lesson
+        moduleBftResult = await awardBftTokens(
+          userId,
+          "COMPLETE_MODULE",
+          ACTION_POINTS.COMPLETE_MODULE,
+          `Completed training module: ${moduleConfig.title}`,
+          { moduleId: numericModuleId, moduleTitle: moduleConfig.title }
+        );
+
+        // If module BFT ledger recording failed, return error (can retry entire flow)
+        if (!moduleBftResult.success) {
+          console.error(`[Training] Module BFT award failed for module ${numericModuleId}:`, moduleBftResult.error);
+          return res.status(500).json({ 
+            success: false, 
+            message: "Failed to record module bonus BFT. Please try again.",
+            error: moduleBftResult.error 
+          });
+        }
+        moduleCompleted = true;
+      }
+
+      // STEP 3: NOW mark lesson as complete (after all BFT is recorded)
+      await storage.completeLesson(userId, lessonId, numericModuleId.toString());
+
+      // Log the lesson action
       await storage.logAmbassadorAction({
         userId,
         actionType: "COMPLETE_LESSON",
@@ -2927,24 +2990,8 @@ export async function registerRoutes(
         description: `Completed lesson ${lessonId}`,
       });
 
-      // Check if module is now complete using server-side lesson count
-      let moduleCompleted = false;
-      let moduleBftResult = null;
-      
-      const completedInModule = await storage.getModuleCompletedLessons(userId, numericModuleId.toString());
-      if (completedInModule.length >= moduleConfig.lessonIds.length) {
-        moduleCompleted = true;
-        
-        // Award bonus BFT for completing entire module
-        moduleBftResult = await awardBftTokens(
-          userId,
-          "COMPLETE_MODULE",
-          ACTION_POINTS.COMPLETE_MODULE,
-          `Completed training module: ${moduleConfig.title}`,
-          { moduleId: numericModuleId, moduleTitle: moduleConfig.title }
-        );
-
-        // Log the module completion
+      // Log module completion if applicable
+      if (moduleCompleted) {
         await storage.logAmbassadorAction({
           userId,
           actionType: "COMPLETE_MODULE",
@@ -2966,14 +3013,23 @@ export async function registerRoutes(
         }
       }
 
+      // Check if BFT was properly recorded - warn if not
+      const lessonRecorded = lessonBftResult.transactionRecorded;
+      const moduleRecorded = !moduleCompleted || (moduleBftResult?.transactionRecorded ?? false);
+      const allRecorded = lessonRecorded && moduleRecorded;
+
       res.json({ 
         success: true, 
         lessonBftAwarded: lessonBftResult.bftAwarded,
         lessonPointsEquivalent: ACTION_POINTS.COMPLETE_LESSON,
+        lessonTransactionRecorded: lessonRecorded,
         moduleCompleted,
         moduleBftAwarded: moduleBftResult?.bftAwarded || 0,
         modulePointsEquivalent: moduleCompleted ? ACTION_POINTS.COMPLETE_MODULE : 0,
+        moduleTransactionRecorded: moduleBftResult?.transactionRecorded || false,
         totalLessonsCompleted: allCompletedLessons.length,
+        bftSyncComplete: allRecorded,
+        warning: allRecorded ? undefined : "BFT rewards recorded locally but may need sync to token portal",
       });
     } catch (err) {
       console.error("Complete lesson error:", err);

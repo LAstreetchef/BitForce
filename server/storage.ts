@@ -178,6 +178,8 @@ export interface IStorage {
   getAmbassadorsWithBftBalances(limit?: number): Promise<any[]>;
   recordBftTransaction(ambassadorId: number, transactionType: string, amount: number, description?: string, referenceId?: string, referenceType?: string, metadata?: Record<string, unknown>): Promise<BftTransaction>;
   getBftTransactions(ambassadorId: number, limit?: number): Promise<BftTransaction[]>;
+  getAllRecentBftTransactions(limit?: number): Promise<(BftTransaction & { ambassadorName: string })[]>;
+  hasBftTransaction(ambassadorId: number, transactionType: string, referenceId: string): Promise<boolean>;
   
   // Training Progress
   completeLesson(userId: string, lessonId: string, moduleId: string): Promise<TrainingProgress>;
@@ -1045,6 +1047,45 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bftTransactions.ambassadorId, ambassadorId))
       .orderBy(desc(bftTransactions.createdAt))
       .limit(limit);
+  }
+
+  async getAllRecentBftTransactions(limit: number = 50): Promise<(BftTransaction & { ambassadorName: string })[]> {
+    const results = await getDb()
+      .select({
+        id: bftTransactions.id,
+        ambassadorId: bftTransactions.ambassadorId,
+        transactionType: bftTransactions.transactionType,
+        amount: bftTransactions.amount,
+        balanceAfter: bftTransactions.balanceAfter,
+        referenceId: bftTransactions.referenceId,
+        referenceType: bftTransactions.referenceType,
+        description: bftTransactions.description,
+        metadata: bftTransactions.metadata,
+        createdAt: bftTransactions.createdAt,
+        ambassadorName: ambassadorSubscriptions.fullName,
+      })
+      .from(bftTransactions)
+      .leftJoin(ambassadorSubscriptions, eq(bftTransactions.ambassadorId, ambassadorSubscriptions.id))
+      .orderBy(desc(bftTransactions.createdAt))
+      .limit(limit);
+
+    return results.map(r => ({
+      ...r,
+      ambassadorName: r.ambassadorName || 'Unknown Ambassador',
+    }));
+  }
+
+  async hasBftTransaction(ambassadorId: number, transactionType: string, referenceId: string): Promise<boolean> {
+    const [result] = await getDb()
+      .select({ id: bftTransactions.id })
+      .from(bftTransactions)
+      .where(and(
+        eq(bftTransactions.ambassadorId, ambassadorId),
+        eq(bftTransactions.transactionType, transactionType),
+        eq(bftTransactions.referenceId, referenceId)
+      ))
+      .limit(1);
+    return !!result;
   }
 
   // Training Progress
