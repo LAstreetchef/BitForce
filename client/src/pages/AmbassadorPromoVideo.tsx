@@ -27,6 +27,17 @@ import {
   CheckCircle,
   Loader2,
   Send,
+  Cloud,
+  Home,
+  MapPin,
+  Search,
+  Shield,
+  UserSearch,
+  Bot,
+  Headphones,
+  Package,
+  ScanLine,
+  DollarSign,
 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -447,6 +458,41 @@ interface Scene5Props {
   formError: string | null;
 }
 
+function ToolCard({ icon: Icon, title, description, color }: { icon: any; title: string; description: string; color: string }) {
+  return (
+    <div className={`bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 flex items-start gap-3`}>
+      <div className={`p-2 rounded-lg ${color}`}>
+        <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-white font-semibold text-sm md:text-base truncate">{title}</h4>
+        <p className="text-white/70 text-xs md:text-sm line-clamp-2">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ title, price, priceLabel, commission, color, icon: Icon }: { title: string; price: string; priceLabel: string; commission: string; color: string; icon: any }) {
+  return (
+    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`p-1.5 rounded-lg ${color}`}>
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+        <h4 className="text-white font-semibold text-sm md:text-base truncate flex-1">{title}</h4>
+      </div>
+      <div className="flex items-baseline gap-1 mb-2">
+        <span className="text-xl md:text-2xl font-bold text-white">{price}</span>
+        <span className="text-white/60 text-xs">{priceLabel}</span>
+      </div>
+      <div className="flex items-center gap-1 text-green-400 text-xs md:text-sm">
+        <DollarSign className="w-3 h-3" />
+        <span>{commission}</span>
+      </div>
+    </div>
+  );
+}
+
 function Scene5({ progress, onFormSubmit, formStatus, formError }: Scene5Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -493,122 +539,179 @@ function Scene5({ progress, onFormSubmit, formStatus, formError }: Scene5Props) 
     );
   }
 
+  // Phase timing within Scene 5 (60 seconds total):
+  // Phase 1: Property Intelligence Tools (0-15% = 0-9s)
+  // Phase 2: Ambassador Tools (15-35% = 9-21s)
+  // Phase 3: AI Buddy Products (35-55% = 21-33s)
+  // Phase 4: Lead Capture Form (55-100% = 33-60s)
+
+  const propertyToolsOpacity = progress < 15 ? Math.min(1, progress / 5) : Math.max(0, 1 - (progress - 15) / 5);
+  const ambassadorToolsOpacity = progress >= 15 && progress < 35 ? Math.min(1, (progress - 15) / 5) : progress >= 35 ? Math.max(0, 1 - (progress - 35) / 5) : 0;
+  const aiBuddyOpacity = progress >= 35 && progress < 55 ? Math.min(1, (progress - 35) / 5) : progress >= 55 ? Math.max(0, 1 - (progress - 55) / 5) : 0;
+  const formOpacity = progress >= 55 ? Math.min(1, (progress - 55) / 10) : 0;
+
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto">
       <FloatingParticles />
 
+      {/* Property Intelligence Tools */}
       <div
-        className="relative z-10 text-center mb-4 md:mb-6 transition-all duration-1000"
-        style={{
-          opacity: progress > 5 ? 1 : 0,
-          transform: `translateY(${progress > 5 ? 0 : -30}px)`,
-        }}
+        className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 transition-opacity duration-500 pointer-events-none"
+        style={{ opacity: propertyToolsOpacity }}
       >
-        <img
-          src={bitforceLogo}
-          alt="BitForce Logo"
-          className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 rounded-xl shadow-lg"
-        />
-        <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-          Ready to Get Started?
-        </h2>
-        <p className="text-sm md:text-lg text-white/80">
-          Enter your info and we'll help you take the next step
-        </p>
+        <div className="relative z-10 text-center mb-4 md:mb-6">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-2">
+            Property Intelligence Tools
+          </h2>
+          <p className="text-sm md:text-lg text-white/80">
+            Real data to help close more deals
+          </p>
+        </div>
+        <div className="relative z-10 w-full max-w-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 px-2">
+          <ToolCard icon={Cloud} title="Weather Intelligence" description="Real-time weather data, alerts, and forecasts from NOAA" color="bg-blue-500" />
+          <ToolCard icon={Home} title="Neighborhood Data" description="Census Bureau stats: income, home values, ownership rates" color="bg-green-500" />
+          <ToolCard icon={MapPin} title="Location Mapping" description="OpenStreetMap integration for precise geocoding" color="bg-red-500" />
+        </div>
       </div>
 
+      {/* Ambassador Tools */}
       <div
-        className="relative z-10 w-full max-w-sm transition-all duration-1000"
-        style={{
-          opacity: progress > 20 ? 1 : 0,
-          transform: `translateY(${progress > 20 ? 0 : 20}px)`,
-        }}
+        className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 transition-opacity duration-500 pointer-events-none"
+        style={{ opacity: ambassadorToolsOpacity }}
       >
-        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 md:p-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-white text-sm md:text-base">
-              Your Name
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Smith"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
-              required
-              data-testid="input-name"
-            />
-          </div>
+        <div className="relative z-10 text-center mb-4 md:mb-6">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-2">
+            Ambassador Tools
+          </h2>
+          <p className="text-sm md:text-lg text-white/80">
+            Everything you need to serve your customers
+          </p>
+        </div>
+        <div className="relative z-10 w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 px-2">
+          <ToolCard icon={Search} title="Property Lookup" description="Generate comprehensive property reports from any address" color="bg-blue-600" />
+          <ToolCard icon={Shield} title="Security Risk Check" description="Email exposure scan, password safety, personal security score" color="bg-indigo-500" />
+          <ToolCard icon={UserSearch} title="Friend & Family Finder" description="Help customers reconnect using public records" color="bg-purple-500" />
+          <ToolCard icon={Bot} title="Ask AI Assistant" description="Instant help with sales tips and objection handling" color="bg-cyan-500" />
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white text-sm md:text-base">
-              Email Address
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="john@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
-              required
-              data-testid="input-email"
-            />
-          </div>
+      {/* AI Buddy Products */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 transition-opacity duration-500 pointer-events-none"
+        style={{ opacity: aiBuddyOpacity }}
+      >
+        <div className="relative z-10 text-center mb-4 md:mb-6">
+          <h2 className="text-xl md:text-3xl font-bold text-white mb-2">
+            AI Buddy Products
+          </h2>
+          <p className="text-sm md:text-lg text-white/80">
+            Services you can sell with great commissions
+          </p>
+        </div>
+        <div className="relative z-10 w-full max-w-2xl grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 px-2">
+          <ProductCard icon={Headphones} title="Monthly Sub" price="$29" priceLabel="/month" commission="$8/mo recurring" color="bg-blue-500" />
+          <ProductCard icon={Zap} title="One-Time" price="$79" priceLabel="session" commission="$20 per sale" color="bg-green-500" />
+          <ProductCard icon={Package} title="Bundle" price="$199" priceLabel="3 sessions" commission="$50 per sale" color="bg-orange-500" />
+          <ProductCard icon={ScanLine} title="Scanner" price="Free" priceLabel="included" commission="$2/signup" color="bg-purple-500" />
+        </div>
+      </div>
 
-          {formError && (
-            <p className="text-red-400 text-sm text-center">{formError}</p>
-          )}
+      {/* Lead Capture Form */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto transition-opacity duration-500"
+        style={{ opacity: formOpacity, pointerEvents: formOpacity > 0.5 ? "auto" : "none" }}
+      >
+        <div className="relative z-10 text-center mb-4 md:mb-6">
+          <img
+            src={bitforceLogo}
+            alt="BitForce Logo"
+            className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 rounded-xl shadow-lg"
+          />
+          <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
+            Ready to Get Started?
+          </h2>
+          <p className="text-sm md:text-lg text-white/80">
+            Enter your info and we'll help you take the next step
+          </p>
+        </div>
 
-          <Button
-            type="submit"
-            disabled={formStatus === "submitting" || !name.trim() || !email.trim()}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 md:h-12 text-sm md:text-base"
-            data-testid="button-submit-lead"
-          >
-            {formStatus === "submitting" ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Get Started
-              </>
+        <div className="relative z-10 w-full max-w-sm">
+          <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 md:p-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-white text-sm md:text-base">
+                Your Name
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
+                required
+                data-testid="input-name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white text-sm md:text-base">
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-white/10 border-white/30 text-white placeholder:text-white/50 h-11 md:h-12"
+                required
+                data-testid="input-email"
+              />
+            </div>
+
+            {formError && (
+              <p className="text-red-400 text-sm text-center">{formError}</p>
             )}
-          </Button>
-        </form>
-      </div>
 
-      <div
-        className="relative z-10 mt-4 md:mt-6 transition-all duration-700"
-        style={{
-          opacity: progress > 40 ? 1 : 0,
-        }}
-      >
-        <p className="text-white/60 text-xs md:text-sm text-center px-4">
-          By submitting, you agree to receive communications from BitForce about ambassador opportunities.
-        </p>
-      </div>
+            <Button
+              type="submit"
+              disabled={formStatus === "submitting" || !name.trim() || !email.trim()}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 md:h-12 text-sm md:text-base"
+              data-testid="button-submit-lead"
+            >
+              {formStatus === "submitting" ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Get Started
+                </>
+              )}
+            </Button>
+          </form>
+        </div>
 
-      <div
-        className="relative z-10 mt-4 md:mt-6 transition-all duration-700"
-        style={{
-          opacity: progress > 50 ? 1 : 0,
-        }}
-      >
-        <Link href="/become-ambassador">
-          <Button
-            variant="ghost"
-            className="text-white/70 hover:text-white hover:bg-white/10 text-sm"
-            data-testid="button-skip-to-signup"
-          >
-            Already ready? Sign up now
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </Link>
+        <div className="relative z-10 mt-4 md:mt-6">
+          <p className="text-white/60 text-xs md:text-sm text-center px-4">
+            By submitting, you agree to receive communications from BitForce about ambassador opportunities.
+          </p>
+        </div>
+
+        <div className="relative z-10 mt-4 md:mt-6">
+          <Link href="/become-ambassador">
+            <Button
+              variant="ghost"
+              className="text-white/70 hover:text-white hover:bg-white/10 text-sm"
+              data-testid="button-skip-to-signup"
+            >
+              Already ready? Sign up now
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -756,7 +859,7 @@ export default function AmbassadorPromoVideo() {
       if (isPlaying) {
         audioRef.current.volume = 0;
         audioRef.current.play().catch(() => {});
-        fadeBackgroundMusic(0.05, 1000);
+        fadeBackgroundMusic(0.02, 1000);
       } else {
         fadeBackgroundMusic(0, 500, () => {
           if (audioRef.current) {
