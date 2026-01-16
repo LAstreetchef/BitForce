@@ -28,6 +28,7 @@ import SupportInbox from "@/pages/admin/SupportInbox";
 import TokenPitch from "@/pages/TokenPitch";
 import ExplainerVideos from "@/pages/ExplainerVideos";
 import EarningsCalculator from "@/pages/EarningsCalculator";
+import MarketingVideo from "@/pages/MarketingVideo";
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/token" component={TokenPitch}/>
       <Route path="/explainer-videos" component={ExplainerVideos}/>
       <Route path="/calculator" component={EarningsCalculator}/>
+      <Route path="/marketing-video" component={MarketingVideo}/>
       <Route path="/portal">
         <PortalLayout>
           <Dashboard />
