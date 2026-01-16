@@ -894,11 +894,21 @@ export async function registerRoutes(
         return res.status(500).json({ message: "SSO not configured" });
       }
 
+      // Fetch ambassador's BFT balance for syncing with Token Platform
+      const ledgerBalanceRaw = await storage.getAmbassadorBftBalance(ambassador.id);
+      const ledgerBalance = parseFloat(ledgerBalanceRaw || "0") || 0;
+      const { pointsToBft } = await import("./lib/bft-rewards");
+      const localPoints = await storage.getOrCreateAmbassadorPoints(userId);
+      const totalPoints = localPoints?.totalPoints ?? 0;
+      const legacyBft = pointsToBft(totalPoints);
+      const totalEarnedBft = ledgerBalance + legacyBft;
+
       const crypto = await import("crypto");
       const payload = {
         email: ambassador.email,
         name: ambassador.fullName,
         ambassadorId: ambassador.id.toString(),
+        tokenBalance: totalEarnedBft,  // BFT earned in Ambassador Portal to sync with Token Platform
         exp: Date.now() + 5 * 60 * 1000  // 5 minute expiry
       };
 
