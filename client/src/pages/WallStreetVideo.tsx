@@ -212,8 +212,8 @@ function Scene1({ progress }: { progress: number }) {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
       <GridBackground />
       
-      <div className="z-10 w-full max-w-6xl px-6">
-        <div className="flex flex-col md:flex-row items-center gap-12">
+      <div className="z-10 w-full max-w-6xl px-4 md:px-6">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12">
           <div className="flex-1">
             <div
               className="transition-all duration-1000"
@@ -222,8 +222,8 @@ function Scene1({ progress }: { progress: number }) {
                 transform: `translateX(${progress > 5 ? 0 : -30}px)`,
               }}
             >
-              <div className="text-blue-400 text-sm font-mono mb-2 tracking-wider">VALUE PROPOSITION & STRUCTURAL THESIS</div>
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              <div className="text-blue-400 text-xs md:text-sm font-mono mb-2 tracking-wider">VALUE PROPOSITION & STRUCTURAL THESIS</div>
+              <h2 className="text-xl md:text-3xl lg:text-5xl font-bold text-white mb-4">
                 BitForce Token
                 <span className="text-blue-400"> (BFT)</span>
               </h2>
@@ -236,10 +236,10 @@ function Scene1({ progress }: { progress: number }) {
                 transform: `translateX(${progress > 25 ? 0 : -30}px)`,
               }}
             >
-              <p className="text-lg text-white/80 mb-4">
+              <p className="text-sm md:text-lg text-white/80 mb-3 md:mb-4">
                 A <span className="text-emerald-400 font-semibold">digital incentive mechanism</span> engineered to create a <span className="text-blue-400 font-semibold">high-velocity growth flywheel</span>.
               </p>
-              <p className="text-base text-white/70 mb-6">
+              <p className="text-xs md:text-base text-white/70 mb-4 md:mb-6">
                 Not a speculative asset in search of utility—a <span className="text-amber-400">purpose-built, programmable incentive layer</span> on the <span className="text-purple-400">Solana blockchain</span> designed to systematically align stakeholder actions with ecosystem value accrual.
               </p>
             </div>
@@ -277,7 +277,7 @@ function Scene1({ progress }: { progress: number }) {
         </div>
 
         <div
-          className="mt-8 grid grid-cols-3 gap-4 transition-all duration-1000"
+          className="mt-4 md:mt-8 grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 transition-all duration-1000"
           style={{ opacity: progress > 70 ? 1 : 0 }}
         >
           <MetricCard icon={TrendingUp} value="High-Velocity" label="Growth Flywheel" delay={70} progress={progress} />
@@ -811,20 +811,20 @@ export default function WallStreetVideo() {
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 z-20">
             <div className="text-center">
               <div className="mb-8">
-                <div className="text-blue-400 text-sm font-mono mb-4 tracking-widest">INVESTOR BRIEFING</div>
-                <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
+                <div className="text-blue-400 text-xs md:text-sm font-mono mb-4 tracking-widest">INVESTOR BRIEFING</div>
+                <h1 className="text-2xl md:text-4xl lg:text-6xl font-bold text-white mb-2">
                   BitForce Token
                   <span className="text-blue-400"> Analysis</span>
                 </h1>
-                <p className="text-xl text-white/70">Strategic Investment Opportunity</p>
+                <p className="text-base md:text-xl text-white/70">Strategic Investment Opportunity</p>
               </div>
               <Button
                 onClick={togglePlay}
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-6 text-xl rounded-lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 md:px-8 py-4 md:py-6 text-lg md:text-xl rounded-lg"
                 data-testid="button-play-video"
               >
-                <Play className="w-8 h-8 mr-2" />
+                <Play className="w-6 h-6 md:w-8 md:h-8 mr-2" />
                 Begin Briefing
               </Button>
             </div>
@@ -832,10 +832,10 @@ export default function WallStreetVideo() {
         )}
       </div>
 
-      <div className="bg-slate-900/90 backdrop-blur-sm border-t border-white/10 p-4">
+      <div className="bg-slate-900/90 backdrop-blur-sm border-t border-white/10 p-3 md:p-4">
         <div className="max-w-4xl mx-auto">
           <div 
-            className="h-2 bg-white/20 rounded-full mb-4 cursor-pointer"
+            className="h-3 md:h-2 bg-white/20 rounded-full mb-3 md:mb-4 cursor-pointer touch-manipulation"
             onClick={handleProgressClick}
             data-testid="progress-bar"
           >
@@ -845,50 +845,51 @@ export default function WallStreetVideo() {
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button
                 onClick={togglePlay}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-toggle-play"
               >
-                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                {isPlaying ? <Pause className="w-5 h-5 md:w-6 md:h-6" /> : <Play className="w-5 h-5 md:w-6 md:h-6" />}
               </Button>
 
               <Button
                 onClick={restart}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-restart"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
 
               <Button
                 onClick={toggleMute}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-toggle-mute"
               >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-4 h-4 md:w-5 md:h-5" /> : <Volume2 className="w-4 h-4 md:w-5 md:h-5" />}
               </Button>
 
-              <span className="text-white/70 text-sm ml-2 font-mono">
+              <span className="text-white/70 text-xs md:text-sm ml-1 md:ml-2 font-mono">
                 {formatTime(currentTime)} / {formatTime(TOTAL_DURATION)}
               </span>
             </div>
 
-            <div className="text-white/50 text-sm font-mono">
+            <div className="text-white/50 text-xs md:text-sm font-mono hidden md:block">
               {currentScene.id}/{scenes.length}: {currentScene.title}
             </div>
 
             <Link href="/">
-              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10" data-testid="button-back-home">
-                Back to Home
+              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-3" data-testid="button-back-home">
+                <span className="hidden md:inline">Back to Home</span>
+                <span className="md:hidden">Home</span>
               </Button>
             </Link>
           </div>

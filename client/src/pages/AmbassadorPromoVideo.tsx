@@ -672,20 +672,20 @@ export default function AmbassadorPromoVideo() {
             <Button
               size="lg"
               onClick={handlePlayPause}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-8 rounded-full text-xl gap-3"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 md:px-12 py-6 md:py-8 rounded-full text-lg md:text-xl gap-2 md:gap-3"
               data-testid="button-play-video"
             >
-              <Play className="w-8 h-8" />
+              <Play className="w-6 h-6 md:w-8 md:h-8" />
               Watch Now
             </Button>
           </div>
         )}
       </div>
 
-      <div className="bg-black/90 backdrop-blur-sm border-t border-white/10 p-4">
-        <div className="max-w-4xl mx-auto space-y-3">
+      <div className="bg-black/90 backdrop-blur-sm border-t border-white/10 p-3 md:p-4">
+        <div className="max-w-4xl mx-auto space-y-2 md:space-y-3">
           <div
-            className="relative h-2 bg-white/20 rounded-full cursor-pointer overflow-hidden"
+            className="relative h-3 md:h-2 bg-white/20 rounded-full cursor-pointer overflow-hidden touch-manipulation"
             onClick={handleProgressClick}
             data-testid="progress-bar"
           >
@@ -695,13 +695,13 @@ export default function AmbassadorPromoVideo() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={handlePlayPause}
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-play-pause"
               >
                 {isPlaying ? (
@@ -715,32 +715,32 @@ export default function AmbassadorPromoVideo() {
                 size="icon"
                 variant="ghost"
                 onClick={handleRestart}
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-restart"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
 
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={() => setIsMuted(!isMuted)}
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-mute"
               >
                 {isMuted ? (
-                  <VolumeX className="w-5 h-5" />
+                  <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
                 ) : (
-                  <Volume2 className="w-5 h-5" />
+                  <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
                 )}
               </Button>
 
-              <span className="text-white/70 text-sm ml-2">
+              <span className="text-white/70 text-xs md:text-sm ml-1 md:ml-2">
                 {formatTime(currentTime)} / {formatTime(TOTAL_DURATION)}
               </span>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <span className="text-white/50 text-sm hidden md:block">
                 {currentScene.title}
               </span>
@@ -748,10 +748,11 @@ export default function AmbassadorPromoVideo() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-white/70 hover:text-white hover:bg-white/10"
+                  className="text-white/70 hover:text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-3"
                   data-testid="button-back-home"
                 >
-                  Back to Home
+                  <span className="hidden md:inline">Back to Home</span>
+                  <span className="md:hidden">Home</span>
                 </Button>
               </Link>
             </div>

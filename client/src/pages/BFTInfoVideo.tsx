@@ -724,19 +724,19 @@ export default function BFTInfoVideo() {
                   alt="BFT Token" 
                   className="w-32 h-32 mx-auto mb-4 drop-shadow-2xl"
                 />
-                <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
+                <h1 className="text-2xl md:text-4xl lg:text-6xl font-bold text-white mb-2 px-4">
                   Your Guide to Earning with{" "}
                   <span className="bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">BFT</span>
                 </h1>
-                <p className="text-xl text-white/70">BitForce Token Informational Video</p>
+                <p className="text-base md:text-xl text-white/70">BitForce Token Informational Video</p>
               </div>
               <Button
                 onClick={togglePlay}
                 size="lg"
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white px-8 py-6 text-xl rounded-full"
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white px-6 md:px-8 py-4 md:py-6 text-lg md:text-xl rounded-full"
                 data-testid="button-play-video"
               >
-                <Play className="w-8 h-8 mr-2" />
+                <Play className="w-6 h-6 md:w-8 md:h-8 mr-2" />
                 Watch Now
               </Button>
             </div>
@@ -744,10 +744,10 @@ export default function BFTInfoVideo() {
         )}
       </div>
 
-      <div className="bg-black/80 backdrop-blur-sm border-t border-white/10 p-4">
+      <div className="bg-black/80 backdrop-blur-sm border-t border-white/10 p-3 md:p-4">
         <div className="max-w-4xl mx-auto">
           <div 
-            className="h-2 bg-white/20 rounded-full mb-4 cursor-pointer"
+            className="h-3 md:h-2 bg-white/20 rounded-full mb-3 md:mb-4 cursor-pointer touch-manipulation"
             onClick={handleProgressClick}
             data-testid="progress-bar"
           >
@@ -757,50 +757,51 @@ export default function BFTInfoVideo() {
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button
                 onClick={togglePlay}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-toggle-play"
               >
-                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                {isPlaying ? <Pause className="w-5 h-5 md:w-6 md:h-6" /> : <Play className="w-5 h-5 md:w-6 md:h-6" />}
               </Button>
 
               <Button
                 onClick={restart}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-restart"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
 
               <Button
                 onClick={toggleMute}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10"
+                className="text-white hover:bg-white/10 h-9 w-9 md:h-10 md:w-10"
                 data-testid="button-toggle-mute"
               >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-4 h-4 md:w-5 md:h-5" /> : <Volume2 className="w-4 h-4 md:w-5 md:h-5" />}
               </Button>
 
-              <span className="text-white/70 text-sm ml-2">
+              <span className="text-white/70 text-xs md:text-sm ml-1 md:ml-2">
                 {formatTime(currentTime)} / {formatTime(TOTAL_DURATION)}
               </span>
             </div>
 
-            <div className="text-white/50 text-sm">
+            <div className="text-white/50 text-xs md:text-sm hidden md:block">
               Scene {currentScene.id}: {currentScene.title}
             </div>
 
             <Link href="/">
-              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10" data-testid="button-back-home">
-                Back to Home
+              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-3" data-testid="button-back-home">
+                <span className="hidden md:inline">Back to Home</span>
+                <span className="md:hidden">Home</span>
               </Button>
             </Link>
           </div>
