@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Package, Star, Check, ExternalLink, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Package, Star, Check, ExternalLink, Sparkles, Users, Clock, Repeat, DollarSign, Crown, Zap, Gift } from "lucide-react";
 import { products, type Product } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { useToast } from "@/hooks/use-toast";
@@ -245,6 +245,141 @@ export default function Products() {
           </Card>
         </motion.div>
       )}
+
+      <motion.div 
+        className="pt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        data-testid="section-plan-comparison"
+      >
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2" data-testid="text-comparison-title">Choose Your AI Buddy Plan</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Three simple options to match your customer's needs. Compare features and help them pick the perfect fit.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {products
+            .filter((p) => ["monthly-subscription", "one-time-session", "bundle-package"].includes(p.id))
+            .sort((a, b) => {
+              const order = ["monthly-subscription", "one-time-session", "bundle-package"];
+              return order.indexOf(a.id) - order.indexOf(b.id);
+            })
+            .map((product, index) => {
+              const isPopular = product.badgeType === "popular";
+              const isBestValue = product.badgeType === "bestValue";
+              const Icon = product.id === "monthly-subscription" ? Repeat : product.id === "one-time-session" ? Clock : Gift;
+              const commissionAmount = product.commissionInfo.replace("Earn ", "").replace(" commission", "").replace(" per session sold", "").replace(" per bundle sold", "");
+              const commissionNote = isPopular ? "Builds over time!" : isBestValue ? "Highest payout!" : "Great for quick sales";
+              const ctaText = isPopular ? "Best for ongoing support" : isBestValue ? "Best value overall" : "Best for single issues";
+              
+              return (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
+                  className="relative"
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="bg-primary text-white border-0 shadow-lg px-3 py-1" data-testid={`badge-popular-${product.id}`}>
+                        <Crown className="w-3 h-3 mr-1" />
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+                  {isBestValue && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="bg-green-600 text-white border-0 shadow-lg px-3 py-1" data-testid={`badge-value-${product.id}`}>
+                        <Zap className="w-3 h-3 mr-1" />
+                        Best Value
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  <Card 
+                    className={`h-full ${isPopular ? 'ring-2 ring-primary shadow-lg' : ''} ${isBestValue ? 'ring-2 ring-green-600 shadow-lg' : ''}`}
+                    data-testid={`card-plan-${product.id}`}
+                  >
+                    <CardHeader className="pb-2 pt-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`p-2 rounded-lg ${isPopular ? 'bg-primary/10' : isBestValue ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                          <Icon className={`w-5 h-5 ${isPopular ? 'text-primary' : isBestValue ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </div>
+                        <CardTitle className="text-lg" data-testid={`text-plan-name-${product.id}`}>{product.name}</CardTitle>
+                      </div>
+                      <p className="text-sm text-muted-foreground" data-testid={`text-plan-tagline-${product.id}`}>{product.tagline}</p>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-4">
+                      <div className="flex items-baseline gap-1">
+                        <span 
+                          className={`text-3xl font-bold ${isPopular ? 'text-primary' : isBestValue ? 'text-green-600' : ''}`}
+                          data-testid={`text-plan-price-${product.id}`}
+                        >
+                          {product.price}
+                        </span>
+                        <span className="text-muted-foreground text-sm" data-testid={`text-plan-price-detail-${product.id}`}>{product.priceDetail}</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {product.features.slice(0, 4).map((feature, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-sm" data-testid={`text-plan-feature-${product.id}-${idx}`}>
+                            <Check className={`w-4 h-4 shrink-0 mt-0.5 ${isPopular ? 'text-primary' : isBestValue ? 'text-green-600' : 'text-green-600'}`} />
+                            <span>{feature.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground mb-1">Best for:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {product.bestFor.map((type, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs" data-testid={`badge-bestfor-${product.id}-${idx}`}>
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className={`p-3 rounded-lg ${isPopular ? 'bg-primary/5' : isBestValue ? 'bg-green-50 dark:bg-green-950/30' : 'bg-muted/50'}`}
+                        data-testid={`block-commission-${product.id}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <DollarSign className={`w-4 h-4 ${isPopular ? 'text-primary' : isBestValue ? 'text-green-600' : 'text-muted-foreground'}`} />
+                          <div>
+                            <p 
+                              className={`font-semibold text-sm ${isPopular ? 'text-primary' : isBestValue ? 'text-green-600' : ''}`}
+                              data-testid={`text-plan-commission-${product.id}`}
+                            >
+                              Earn {commissionAmount}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{commissionNote}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-center text-xs text-muted-foreground font-medium pt-2" data-testid={`text-plan-cta-${product.id}`}>
+                        {ctaText}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            <Users className="w-4 h-4 inline-block mr-1" />
+            All plans include patient, friendly support in plain language - no tech jargon!
+          </p>
+        </div>
+      </motion.div>
 
       <div className="pt-4">
         <h2 className="text-xl font-semibold mb-4" data-testid="text-all-products-title">All Products</h2>
