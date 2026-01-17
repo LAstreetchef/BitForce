@@ -10,10 +10,19 @@ const MONTHLY_SUB = 19.99;
 const REFERRAL_BONUS = 50;
 const MONTHLY_OVERRIDE = 4;
 
+const BASIC_PRICE = 29;
+const PRO_PRICE = 79;
+const PREMIUM_PRICE = 199;
+
 export default function PaymentScheme() {
   const [initialAmbassadors, setInitialAmbassadors] = useState(100);
   const [referralsPerAmbassador, setReferralsPerAmbassador] = useState(2);
   const [months, setMonths] = useState(12);
+  
+  const [basicSales, setBasicSales] = useState(3);
+  const [proSales, setProSales] = useState(2);
+  const [premiumSales, setPremiumSales] = useState(1);
+  const [avgSubscriptionMonths, setAvgSubscriptionMonths] = useState(6);
 
   const revenuePerAmbassador = SIGNUP_FEE + (MONTHLY_SUB * months);
   const payoutPerReferral = REFERRAL_BONUS + (MONTHLY_OVERRIDE * months);
@@ -21,13 +30,26 @@ export default function PaymentScheme() {
   const totalReferrals = initialAmbassadors * referralsPerAmbassador;
   const totalAmbassadors = initialAmbassadors + totalReferrals;
   
-  const totalRevenue = totalAmbassadors * revenuePerAmbassador;
+  const ambassadorRevenue = totalAmbassadors * revenuePerAmbassador;
+  
+  const totalBasicSales = totalAmbassadors * basicSales;
+  const totalProSales = totalAmbassadors * proSales;
+  const totalPremiumSales = totalAmbassadors * premiumSales;
+  
+  const basicRevenue = totalBasicSales * BASIC_PRICE * avgSubscriptionMonths;
+  const proRevenue = totalProSales * PRO_PRICE * avgSubscriptionMonths;
+  const premiumRevenue = totalPremiumSales * PREMIUM_PRICE * avgSubscriptionMonths;
+  const productRevenue = basicRevenue + proRevenue + premiumRevenue;
+  
+  const totalRevenue = ambassadorRevenue + productRevenue;
   const totalPayouts = totalReferrals * payoutPerReferral;
   const netRevenue = totalRevenue - totalPayouts;
 
   const revenueData = [
-    { name: "Signup Fees", amount: totalAmbassadors * SIGNUP_FEE },
-    { name: "Subscriptions", amount: totalAmbassadors * MONTHLY_SUB * months },
+    { name: "Ambassador Fees", amount: ambassadorRevenue },
+    { name: "Basic ($29/mo)", amount: basicRevenue },
+    { name: "Pro ($79/mo)", amount: proRevenue },
+    { name: "Premium ($199/mo)", amount: premiumRevenue },
   ];
 
   const payoutData = [
@@ -56,7 +78,7 @@ export default function PaymentScheme() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Scenario Parameters</CardTitle>
+            <CardTitle>Ambassador Parameters</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -133,14 +155,125 @@ export default function PaymentScheme() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Sales Parameters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="basic-sales">Basic Sales/Ambassador ($29/mo)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="basic-sales-slider"
+                    data-testid="slider-basic-sales"
+                    value={[basicSales]}
+                    onValueChange={(v) => setBasicSales(v[0])}
+                    min={0}
+                    max={20}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="basic-sales"
+                    data-testid="input-basic-sales"
+                    type="number"
+                    value={basicSales}
+                    onChange={(e) => setBasicSales(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="pro-sales">Pro Sales/Ambassador ($79/mo)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="pro-sales-slider"
+                    data-testid="slider-pro-sales"
+                    value={[proSales]}
+                    onValueChange={(v) => setProSales(v[0])}
+                    min={0}
+                    max={20}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="pro-sales"
+                    data-testid="input-pro-sales"
+                    type="number"
+                    value={proSales}
+                    onChange={(e) => setProSales(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="premium-sales">Premium Sales/Ambassador ($199/mo)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="premium-sales-slider"
+                    data-testid="slider-premium-sales"
+                    value={[premiumSales]}
+                    onValueChange={(v) => setPremiumSales(v[0])}
+                    min={0}
+                    max={20}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="premium-sales"
+                    data-testid="input-premium-sales"
+                    type="number"
+                    value={premiumSales}
+                    onChange={(e) => setPremiumSales(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="sub-months">Avg Subscription Length (months)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="sub-months-slider"
+                    data-testid="slider-sub-months"
+                    value={[avgSubscriptionMonths]}
+                    onValueChange={(v) => setAvgSubscriptionMonths(v[0])}
+                    min={1}
+                    max={24}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="sub-months"
+                    data-testid="input-sub-months"
+                    type="number"
+                    value={avgSubscriptionMonths}
+                    onChange={(e) => setAvgSubscriptionMonths(Math.min(24, Math.max(1, parseInt(e.target.value) || 1)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground">Total Revenue</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-green-600" data-testid="text-total-revenue">{formatCurrency(totalRevenue)}</p>
-              <p className="text-xs text-muted-foreground">{totalAmbassadors} total ambassadors</p>
+              <p className="text-xs text-muted-foreground">{totalAmbassadors} ambassadors</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Product Revenue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-500" data-testid="text-product-revenue">{formatCurrency(productRevenue)}</p>
+              <p className="text-xs text-muted-foreground">{totalBasicSales + totalProSales + totalPremiumSales} subscriptions</p>
             </CardContent>
           </Card>
           <Card>
@@ -180,12 +313,12 @@ export default function PaymentScheme() {
               <CardTitle>Revenue Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" tickFormatter={formatCurrency} />
-                    <YAxis type="category" dataKey="name" width={100} />
+                    <YAxis type="category" dataKey="name" width={120} />
                     <Tooltip formatter={(v: number) => [formatCurrency(v), "Amount"]} />
                     <Bar dataKey="amount" fill="#22c55e" radius={4} />
                   </BarChart>
@@ -193,12 +326,20 @@ export default function PaymentScheme() {
               </div>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
-                  <span>Signup Fees ({totalAmbassadors} × ${SIGNUP_FEE})</span>
-                  <span className="font-medium">{formatCurrency(totalAmbassadors * SIGNUP_FEE)}</span>
+                  <span>Ambassador Fees</span>
+                  <span className="font-medium">{formatCurrency(ambassadorRevenue)}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span>Subscriptions ({totalAmbassadors} × ${MONTHLY_SUB} × {months}mo)</span>
-                  <span className="font-medium">{formatCurrency(totalAmbassadors * MONTHLY_SUB * months)}</span>
+                  <span>Basic ({totalBasicSales} × ${BASIC_PRICE} × {avgSubscriptionMonths}mo)</span>
+                  <span className="font-medium">{formatCurrency(basicRevenue)}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span>Pro ({totalProSales} × ${PRO_PRICE} × {avgSubscriptionMonths}mo)</span>
+                  <span className="font-medium">{formatCurrency(proRevenue)}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span>Premium ({totalPremiumSales} × ${PREMIUM_PRICE} × {avgSubscriptionMonths}mo)</span>
+                  <span className="font-medium">{formatCurrency(premiumRevenue)}</span>
                 </div>
               </div>
             </CardContent>
@@ -209,12 +350,12 @@ export default function PaymentScheme() {
               <CardTitle>Payout Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={payoutData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" tickFormatter={formatCurrency} />
-                    <YAxis type="category" dataKey="name" width={100} />
+                    <YAxis type="category" dataKey="name" width={120} />
                     <Tooltip formatter={(v: number) => [formatCurrency(v), "Amount"]} />
                     <Bar dataKey="amount" fill="#ef4444" radius={4} />
                   </BarChart>
@@ -270,19 +411,19 @@ export default function PaymentScheme() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Revenue per Ambassador</p>
-                <p className="text-lg font-bold">{formatCurrency(revenuePerAmbassador)}</p>
+                <p className="text-lg font-bold">{formatCurrency(totalRevenue / totalAmbassadors)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Payout per Referral</p>
                 <p className="text-lg font-bold">{formatCurrency(payoutPerReferral)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Break-even Referrals</p>
-                <p className="text-lg font-bold">{payoutPerReferral > 0 ? (revenuePerAmbassador / payoutPerReferral).toFixed(2) : '∞'}</p>
+                <p className="text-muted-foreground">Product Rev/Ambassador</p>
+                <p className="text-lg font-bold">{formatCurrency(productRevenue / totalAmbassadors)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Current Ratio</p>
-                <p className="text-lg font-bold">{referralsPerAmbassador} referrals/amb</p>
+                <p className="text-muted-foreground">Payout Ratio</p>
+                <p className="text-lg font-bold">{totalRevenue > 0 ? ((totalPayouts / totalRevenue) * 100).toFixed(1) : 0}%</p>
               </div>
             </div>
           </CardContent>
