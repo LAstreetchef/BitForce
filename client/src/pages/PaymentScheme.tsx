@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
 
 const SIGNUP_FEE = 29;
 const MONTHLY_SUB = 19.99;
@@ -23,6 +23,11 @@ export default function PaymentScheme() {
   const [proSales, setProSales] = useState(2);
   const [premiumSales, setPremiumSales] = useState(1);
   const [avgSubscriptionMonths, setAvgSubscriptionMonths] = useState(6);
+
+  const [buybackPercent, setBuybackPercent] = useState(10);
+  const [currentBftPrice, setCurrentBftPrice] = useState(0.0055);
+  const [circulatingSupply, setCirculatingSupply] = useState(10_000_000);
+  const [priceElasticity, setPriceElasticity] = useState(1.5);
 
   const revenuePerAmbassador = SIGNUP_FEE + (MONTHLY_SUB * months);
   const payoutPerReferral = REFERRAL_BONUS + (MONTHLY_OVERRIDE * months);
@@ -44,6 +49,28 @@ export default function PaymentScheme() {
   const totalRevenue = ambassadorRevenue + productRevenue;
   const totalPayouts = totalReferrals * payoutPerReferral;
   const netRevenue = totalRevenue - totalPayouts;
+
+  const monthlyProfit = months > 0 ? netRevenue / months : 0;
+  const monthlyBuybackAmount = monthlyProfit > 0 ? monthlyProfit * (buybackPercent / 100) : 0;
+  const rawMonthlyTokensBurned = currentBftPrice > 0 ? monthlyBuybackAmount / currentBftPrice : 0;
+  const rawTotalTokensBurned = rawMonthlyTokensBurned * months;
+  const totalTokensBurned = Math.min(rawTotalTokensBurned, circulatingSupply);
+  const supplyReductionPercent = circulatingSupply > 0 ? Math.min((totalTokensBurned / circulatingSupply) * 100, 100) : 0;
+  const projectedPriceIncrease = supplyReductionPercent * (priceElasticity / 100);
+  const projectedBftPrice = currentBftPrice * (1 + projectedPriceIncrease);
+  const totalBuybackSpend = monthlyBuybackAmount * months;
+  const buybackExceedsSupply = rawTotalTokensBurned > circulatingSupply;
+
+  const priceProjectionData = Array.from({ length: months + 1 }, (_, i) => {
+    const tokensBurnedSoFar = Math.min(rawMonthlyTokensBurned * i, circulatingSupply);
+    const supplyReductionSoFar = circulatingSupply > 0 ? Math.min((tokensBurnedSoFar / circulatingSupply) * 100, 100) : 0;
+    const priceIncreaseSoFar = supplyReductionSoFar * (priceElasticity / 100);
+    return {
+      month: i,
+      price: currentBftPrice * (1 + priceIncreaseSoFar),
+      baseline: currentBftPrice,
+    };
+  });
 
   const revenueData = [
     { name: "Ambassador Fees", amount: ambassadorRevenue },
@@ -425,6 +452,202 @@ export default function PaymentScheme() {
                 <p className="text-muted-foreground">Payout Ratio</p>
                 <p className="text-lg font-bold">{totalRevenue > 0 ? ((totalPayouts / totalRevenue) * 100).toFixed(1) : 0}%</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-500/30 bg-purple-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>BFT Buyback Parameters</span>
+              <span className="text-xs font-normal text-muted-foreground">(BitForceToken.replit.app)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="buyback-percent">Buyback % of Monthly Profit</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="buyback-percent-slider"
+                    data-testid="slider-buyback-percent"
+                    value={[buybackPercent]}
+                    onValueChange={(v) => setBuybackPercent(v[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="buyback-percent"
+                    data-testid="input-buyback-percent"
+                    type="number"
+                    value={buybackPercent}
+                    onChange={(e) => setBuybackPercent(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="bft-price">Current BFT Price ($)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="bft-price-slider"
+                    data-testid="slider-bft-price"
+                    value={[currentBftPrice * 1000]}
+                    onValueChange={(v) => setCurrentBftPrice(v[0] / 1000)}
+                    min={1}
+                    max={100}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="bft-price"
+                    data-testid="input-bft-price"
+                    type="number"
+                    step="0.0001"
+                    value={currentBftPrice}
+                    onChange={(e) => setCurrentBftPrice(Math.max(0.0001, parseFloat(e.target.value) || 0.0055))}
+                    className="w-20"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="circulating-supply">Circulating Supply (M)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="circulating-supply-slider"
+                    data-testid="slider-circulating-supply"
+                    value={[circulatingSupply / 1_000_000]}
+                    onValueChange={(v) => setCirculatingSupply(v[0] * 1_000_000)}
+                    min={1}
+                    max={500}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="circulating-supply"
+                    data-testid="input-circulating-supply"
+                    type="number"
+                    value={circulatingSupply / 1_000_000}
+                    onChange={(e) => setCirculatingSupply(Math.min(1000, Math.max(1, parseFloat(e.target.value) || 10)) * 1_000_000)}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="price-elasticity">Price Elasticity (%)</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="price-elasticity-slider"
+                    data-testid="slider-price-elasticity"
+                    value={[priceElasticity]}
+                    onValueChange={(v) => setPriceElasticity(v[0])}
+                    min={0.5}
+                    max={5}
+                    step={0.1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="price-elasticity"
+                    data-testid="input-price-elasticity"
+                    type="number"
+                    step="0.1"
+                    value={priceElasticity}
+                    onChange={(e) => setPriceElasticity(Math.min(10, Math.max(0.1, parseFloat(e.target.value) || 1.5)))}
+                    className="w-16"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {buybackExceedsSupply && (
+          <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md text-sm text-yellow-700 dark:text-yellow-400">
+            Note: At these settings, buyback would exceed circulating supply. Values are capped at 100% of circulating tokens.
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card className="border-purple-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Total Buyback</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600" data-testid="text-total-buyback">{formatCurrency(totalBuybackSpend)}</p>
+              <p className="text-xs text-muted-foreground">over {months} months</p>
+            </CardContent>
+          </Card>
+          <Card className="border-purple-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Monthly Buyback</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600" data-testid="text-monthly-buyback">{formatCurrency(monthlyBuybackAmount)}</p>
+              <p className="text-xs text-muted-foreground">{buybackPercent}% of profit</p>
+            </CardContent>
+          </Card>
+          <Card className="border-purple-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Tokens Burned</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600" data-testid="text-tokens-burned">
+                {totalTokensBurned >= 1_000_000 ? `${(totalTokensBurned / 1_000_000).toFixed(2)}M` : totalTokensBurned >= 1000 ? `${(totalTokensBurned / 1000).toFixed(1)}K` : totalTokensBurned.toFixed(0)}
+              </p>
+              <p className="text-xs text-muted-foreground">{buybackExceedsSupply ? "(capped)" : `over ${months} months`}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-purple-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Supply Reduction</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600" data-testid="text-supply-reduction">{supplyReductionPercent.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">{buybackExceedsSupply ? "(max 100%)" : "of circulating"}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-purple-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Projected Price</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600" data-testid="text-projected-price">${projectedBftPrice.toFixed(4)}</p>
+              <p className="text-xs text-muted-foreground">+{(projectedPriceIncrease * 100).toFixed(1)}% from buyback</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-purple-500/30">
+          <CardHeader>
+            <CardTitle>BFT Price Projection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={priceProjectionData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" label={{ value: 'Month', position: 'bottom', offset: -5 }} />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    tickFormatter={(v) => `$${v.toFixed(4)}`}
+                  />
+                  <Tooltip formatter={(v: number) => [`$${v.toFixed(4)}`, '']} labelFormatter={(l) => `Month ${l}`} />
+                  <Legend />
+                  <Line type="monotone" dataKey="baseline" name="No Buyback" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
+                  <Line type="monotone" dataKey="price" name="With Buyback" stroke="#a855f7" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 p-3 bg-muted/50 rounded-md text-xs text-muted-foreground">
+              <p className="font-medium mb-1">Model Assumptions:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Price elasticity: {priceElasticity}% price increase per 1% supply reduction</li>
+                <li>Total supply: 1B BFT (from BitForceToken tokenomics)</li>
+                <li>Linear monthly buyback from net profit allocation</li>
+                <li>Tokens are burned (removed from circulation permanently)</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
