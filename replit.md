@@ -88,6 +88,17 @@ Key files:
 API endpoint: `POST /api/training/complete-lesson` with `{lessonId, moduleId}`
 Flow: Award lesson BFT → Check/award module BFT → Mark lesson complete (retry-safe)
 
+### Payment Scheme Scenario Analysis
+Located at `/payment-scheme`, this page provides stakeholder visibility into ambassador program economics:
+- **Ambassador Parameters**: Initial ambassadors, referrals per ambassador, time frame (months)
+- **Product Sales Parameters**: Sales per ambassador for Basic ($29/mo), Pro ($79/mo), Premium ($199/mo) tiers, plus average subscription length
+- **5 KPI Summary Cards**: Total Revenue, Product Revenue, Total Payouts, Net Revenue, Margin
+- **Revenue Breakdown Chart**: Shows all 4 revenue sources (Ambassador Fees, Basic, Pro, Premium)
+- **Payout Breakdown Chart**: Shows referral bonuses and recurring overrides
+- **Unit Economics**: Revenue per ambassador, payout per referral, product rev/ambassador, payout ratio
+
+Frontend page: `client/src/pages/PaymentScheme.tsx`
+
 ## External Dependencies
 
 ### Database
