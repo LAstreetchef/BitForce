@@ -121,6 +121,21 @@ Frontend page: `client/src/pages/PaymentScheme.tsx`
 - `ADMIN_USER_IDS`: Comma-separated list of Replit user IDs with admin access to support inbox (if empty, all authenticated users have admin access for development)
 - `SYNC_API_KEY`: API key for cross-app sync with BitForceToken.replit.app (required for ambassador data sync)
 
+### Wallet Status & Distribution Eligibility
+The dashboard displays wallet linking status from the BFT Token Platform:
+- **Wallet Status Card**: Shows "Verified" (green), "Pending" (yellow), or "Not Linked" (orange) status
+- **Distribution Eligibility Badge**: Indicates if ambassador qualifies for BFT token distributions
+- **Link Wallet CTA**: Redirects unverified users to Token Platform via SSO to link their Solana wallet
+- **Truncated Wallet Display**: Shows mainnet wallet address when verified
+
+API endpoints:
+- `GET /api/ambassador/wallet-status` - Fetches current ambassador's wallet status from Token Platform
+- `GET /api/bft/distribution-eligibility?network=mainnet|devnet` - Fetches all ambassadors' distribution eligibility
+
+Key files:
+- `server/lib/bft-api-client.ts` - BFT Platform API client with wallet status methods
+- `client/src/pages/portal/Dashboard.tsx` - Dashboard with wallet status card
+
 ### Cross-App Sync Endpoints (for BitForceToken integration)
 These endpoints enable bidirectional sync between Ambassador Portal and BFT Token Platform:
 
