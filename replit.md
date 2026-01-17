@@ -97,6 +97,13 @@ Located at `/payment-scheme`, this page provides stakeholder visibility into amb
 - **Payout Breakdown Chart**: Shows referral bonuses and recurring overrides
 - **Unit Economics**: Revenue per ambassador, payout per referral, product rev/ambassador, payout ratio
 
+**BFT Buyback Impact Analysis** (uses live tokenomics from BitForceToken.replit.app):
+- **Buyback Parameters**: % of monthly profit, current BFT price ($0.0055 default), circulating supply (10M default), price elasticity (1.5%)
+- **5 Buyback KPI Cards**: Total Buyback spend, Monthly Buyback, Tokens Burned, Supply Reduction %, Projected Price
+- **Price Projection Chart**: Line chart comparing price with vs without buyback over time
+- **Supply Capping**: Automatically caps at 100% of circulating supply with warning message
+- **Model Assumptions**: Documents elasticity formula and burn mechanics for stakeholder clarity
+
 Frontend page: `client/src/pages/PaymentScheme.tsx`
 
 ## External Dependencies
