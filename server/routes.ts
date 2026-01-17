@@ -141,7 +141,11 @@ export async function registerRoutes(
           const customerId = invoice.customer as string;
 
           const ambassador = await storage.getAmbassadorByStripeCustomerId(customerId);
-          if (ambassador && !ambassador.firstMonthCompleted) {
+          if (!ambassador) break;
+
+          // STEP 1: If this ambassador just completed their first month as a referral,
+          // mark the referrer's bonus as "qualified" (not paid yet - referrer must pay first)
+          if (!ambassador.firstMonthCompleted) {
             await storage.updateAmbassadorSubscription(ambassador.id, {
               firstMonthCompleted: true,
             });
@@ -154,17 +158,63 @@ export async function registerRoutes(
                   b => b.referredAmbassadorId === ambassador.id && b.status === "pending"
                 );
                 if (pendingBonus) {
-                  await storage.updateReferralBonusStatus(pendingBonus.id, "paid", new Date());
+                  // Mark as qualified - will be paid when referrer makes their next payment
+                  await storage.markBonusQualified(pendingBonus.id);
+                  console.log(`[Payout Safeguard] Bonus ${pendingBonus.id} marked as qualified. Waiting for referrer ${referrer.id} to pay.`);
                 }
+              }
+            }
+          }
 
-                const currentMonth = new Date().toISOString().slice(0, 7);
-                await storage.createRecurringOverride({
-                  ambassadorId: referrer.id,
-                  referredAmbassadorId: ambassador.id,
-                  monthlyAmount: "4.00",
-                  month: currentMonth,
-                  status: "paid",
-                });
+          // STEP 2: This ambassador just paid their subscription.
+          // Pay out any qualified bonuses they have pending (from their referrals).
+          // This ensures the referrer is still actively paying before receiving payouts.
+          if (ambassador.subscriptionStatus === "active") {
+            const qualifiedBonuses = await storage.getQualifiedBonusesByAmbassador(ambassador.id);
+            
+            for (const bonus of qualifiedBonuses) {
+              // Pay the $50 bonus now that the referrer has proven continued commitment
+              await storage.updateReferralBonusStatus(bonus.id, "paid", new Date());
+              console.log(`[Payout] Paid $50 bonus ${bonus.id} to ambassador ${ambassador.id} for referral ${bonus.referredAmbassadorId}`);
+              
+              // Also create the first recurring override for this referral
+              const currentMonth = new Date().toISOString().slice(0, 7);
+              await storage.createRecurringOverride({
+                ambassadorId: ambassador.id,
+                referredAmbassadorId: bonus.referredAmbassadorId,
+                monthlyAmount: "4.00",
+                month: currentMonth,
+                status: "paid",
+              });
+              console.log(`[Payout] Created $4 recurring override for ambassador ${ambassador.id}`);
+            }
+
+            // STEP 3: For existing paid referrals, create monthly overrides
+            // (only for referrals whose bonus was already paid in previous months)
+            const allBonuses = await storage.getReferralBonusesByAmbassador(ambassador.id);
+            const paidBonuses = allBonuses.filter(b => b.status === "paid");
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            const existingOverrides = await storage.getRecurringOverridesByAmbassador(ambassador.id);
+            
+            for (const bonus of paidBonuses) {
+              // Check if we already created an override for this referral this month
+              const alreadyPaidThisMonth = existingOverrides.some(
+                o => o.referredAmbassadorId === bonus.referredAmbassadorId && o.month === currentMonth
+              );
+              
+              if (!alreadyPaidThisMonth) {
+                // Verify the referred ambassador is still active
+                const referredAmbassador = await storage.getAmbassadorById(bonus.referredAmbassadorId);
+                if (referredAmbassador && referredAmbassador.subscriptionStatus === "active") {
+                  await storage.createRecurringOverride({
+                    ambassadorId: ambassador.id,
+                    referredAmbassadorId: bonus.referredAmbassadorId,
+                    monthlyAmount: "4.00",
+                    month: currentMonth,
+                    status: "paid",
+                  });
+                  console.log(`[Payout] Monthly $4 override for ambassador ${ambassador.id} from referral ${bonus.referredAmbassadorId}`);
+                }
               }
             }
           }
@@ -177,9 +227,21 @@ export async function registerRoutes(
 
           const ambassador = await storage.getAmbassadorByStripeCustomerId(customerId);
           if (ambassador) {
+            // Mark subscription as canceled
             await storage.updateAmbassadorSubscription(ambassador.id, {
               subscriptionStatus: "canceled",
             });
+
+            // SAFEGUARD: Forfeit all pending and qualified bonuses
+            // Prevents gaming the system by signing up, referring, then canceling
+            const forfeitedCount = await storage.forfeitPendingBonuses(
+              ambassador.id, 
+              "referrer_canceled_subscription"
+            );
+            
+            if (forfeitedCount > 0) {
+              console.log(`[Payout Safeguard] Forfeited ${forfeitedCount} pending/qualified bonuses for canceled ambassador ${ambassador.id}`);
+            }
           }
           break;
         }

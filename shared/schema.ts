@@ -61,20 +61,26 @@ export type BftTransaction = typeof bftTransactions.$inferSelect;
 export type InsertBftTransaction = z.infer<typeof insertBftTransactionSchema>;
 
 // Track referral bonuses ($50 per qualified referral)
+// Status flow: "pending" -> "qualified" (referral completed first month) -> "paid" (referrer paid next invoice) or "forfeited" (referrer canceled)
 export const referralBonuses = pgTable("referral_bonuses", {
   id: serial("id").primaryKey(),
   ambassadorId: integer("ambassador_id").notNull(),
   referredAmbassadorId: integer("referred_ambassador_id").notNull(),
   bonusAmount: decimal("bonus_amount", { precision: 10, scale: 2 }).notNull().default("50.00"),
-  status: text("status").default("pending"),
+  status: text("status").default("pending"), // pending, qualified, paid, forfeited
+  qualifiedAt: timestamp("qualified_at"), // when referral completed their first month
   paidAt: timestamp("paid_at"),
+  forfeitedAt: timestamp("forfeited_at"),
+  forfeitReason: text("forfeit_reason"), // e.g., "referrer_canceled_subscription"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertReferralBonusSchema = createInsertSchema(referralBonuses).omit({ 
   id: true, 
   createdAt: true, 
-  paidAt: true 
+  paidAt: true,
+  qualifiedAt: true,
+  forfeitedAt: true 
 });
 
 export type ReferralBonus = typeof referralBonuses.$inferSelect;

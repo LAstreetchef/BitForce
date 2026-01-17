@@ -72,6 +72,7 @@ export interface IStorage {
   createEventRegistration(registration: InsertEventRegistration): Promise<EventRegistration>;
   
   createAmbassadorSubscription(subscription: InsertAmbassadorSubscription): Promise<AmbassadorSubscription>;
+  getAmbassadorById(id: number): Promise<AmbassadorSubscription | null>;
   getAmbassadorByUserId(userId: string): Promise<AmbassadorSubscription | null>;
   getAmbassadorByEmail(email: string): Promise<AmbassadorSubscription | null>;
   getAmbassadorByReferralCode(code: string): Promise<AmbassadorSubscription | null>;
@@ -81,6 +82,9 @@ export interface IStorage {
   createReferralBonus(bonus: InsertReferralBonus): Promise<ReferralBonus>;
   getReferralBonusesByAmbassador(ambassadorId: number): Promise<ReferralBonus[]>;
   updateReferralBonusStatus(id: number, status: string, paidAt?: Date): Promise<ReferralBonus>;
+  markBonusQualified(id: number): Promise<ReferralBonus>;
+  getQualifiedBonusesByAmbassador(ambassadorId: number): Promise<ReferralBonus[]>;
+  forfeitPendingBonuses(ambassadorId: number, reason: string): Promise<number>;
   
   createRecurringOverride(override: InsertRecurringOverride): Promise<RecurringOverride>;
   getRecurringOverridesByAmbassador(ambassadorId: number): Promise<RecurringOverride[]>;
@@ -225,6 +229,13 @@ export class DatabaseStorage implements IStorage {
     return subscription;
   }
 
+  async getAmbassadorById(id: number): Promise<AmbassadorSubscription | null> {
+    const [subscription] = await getDb().select()
+      .from(ambassadorSubscriptions)
+      .where(eq(ambassadorSubscriptions.id, id));
+    return subscription || null;
+  }
+
   async getAmbassadorByUserId(userId: string): Promise<AmbassadorSubscription | null> {
     const [subscription] = await getDb().select()
       .from(ambassadorSubscriptions)
@@ -280,6 +291,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(referralBonuses.id, id))
       .returning();
     return bonus;
+  }
+
+  async markBonusQualified(id: number): Promise<ReferralBonus> {
+    const [bonus] = await getDb().update(referralBonuses)
+      .set({ status: "qualified", qualifiedAt: new Date() })
+      .where(eq(referralBonuses.id, id))
+      .returning();
+    return bonus;
+  }
+
+  async getQualifiedBonusesByAmbassador(ambassadorId: number): Promise<ReferralBonus[]> {
+    return getDb().select()
+      .from(referralBonuses)
+      .where(and(
+        eq(referralBonuses.ambassadorId, ambassadorId),
+        eq(referralBonuses.status, "qualified")
+      ));
+  }
+
+  async forfeitPendingBonuses(ambassadorId: number, reason: string): Promise<number> {
+    const result = await getDb().update(referralBonuses)
+      .set({ 
+        status: "forfeited", 
+        forfeitedAt: new Date(),
+        forfeitReason: reason 
+      })
+      .where(and(
+        eq(referralBonuses.ambassadorId, ambassadorId),
+        or(
+          eq(referralBonuses.status, "pending"),
+          eq(referralBonuses.status, "qualified")
+        )
+      ))
+      .returning();
+    return result.length;
   }
 
   async createRecurringOverride(insertOverride: InsertRecurringOverride): Promise<RecurringOverride> {
