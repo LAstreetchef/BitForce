@@ -71,3 +71,12 @@
            active:translate-y-0 active:shadow-md transition-all duration-200;
   }
 }
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
