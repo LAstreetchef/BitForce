@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
+import { InvestorEcosystemDialog } from "@/components/InvestorEcosystemDialog";
 
 const SIGNUP_FEE = 29;
 const MONTHLY_SUB = 19.99;
@@ -101,6 +102,9 @@ export default function PaymentScheme() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold" data-testid="text-page-title">Ambassador Payment Scheme</h1>
           <p className="text-muted-foreground mt-2">Scenario analysis for revenue and payouts</p>
+          <div className="mt-3">
+            <InvestorEcosystemDialog />
+          </div>
         </div>
 
         <Card>
