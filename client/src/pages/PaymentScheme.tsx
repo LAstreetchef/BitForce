@@ -11,21 +11,23 @@ const REFERRAL_BONUS = 50;
 const MONTHLY_OVERRIDE = 4;
 
 export default function PaymentScheme() {
-  const [ambassadors, setAmbassadors] = useState(100);
+  const [initialAmbassadors, setInitialAmbassadors] = useState(100);
   const [referralsPerAmbassador, setReferralsPerAmbassador] = useState(2);
   const [months, setMonths] = useState(12);
 
   const revenuePerAmbassador = SIGNUP_FEE + (MONTHLY_SUB * months);
   const payoutPerReferral = REFERRAL_BONUS + (MONTHLY_OVERRIDE * months);
   
-  const totalReferrals = ambassadors * referralsPerAmbassador;
-  const totalRevenue = ambassadors * revenuePerAmbassador;
+  const totalReferrals = initialAmbassadors * referralsPerAmbassador;
+  const totalAmbassadors = initialAmbassadors + totalReferrals;
+  
+  const totalRevenue = totalAmbassadors * revenuePerAmbassador;
   const totalPayouts = totalReferrals * payoutPerReferral;
   const netRevenue = totalRevenue - totalPayouts;
 
   const revenueData = [
-    { name: "Signup Fees", amount: ambassadors * SIGNUP_FEE },
-    { name: "Subscriptions", amount: ambassadors * MONTHLY_SUB * months },
+    { name: "Signup Fees", amount: totalAmbassadors * SIGNUP_FEE },
+    { name: "Subscriptions", amount: totalAmbassadors * MONTHLY_SUB * months },
   ];
 
   const payoutData = [
@@ -59,13 +61,13 @@ export default function PaymentScheme() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-3">
-                <Label htmlFor="ambassadors">Number of Ambassadors</Label>
+                <Label htmlFor="ambassadors">Initial Ambassadors</Label>
                 <div className="flex items-center gap-3">
                   <Slider
                     id="ambassadors-slider"
                     data-testid="slider-ambassadors"
-                    value={[ambassadors]}
-                    onValueChange={(v) => setAmbassadors(v[0])}
+                    value={[initialAmbassadors]}
+                    onValueChange={(v) => setInitialAmbassadors(v[0])}
                     min={10}
                     max={1000}
                     step={10}
@@ -75,8 +77,8 @@ export default function PaymentScheme() {
                     id="ambassadors"
                     data-testid="input-ambassadors"
                     type="number"
-                    value={ambassadors}
-                    onChange={(e) => setAmbassadors(Math.min(1000, Math.max(10, parseInt(e.target.value) || 10)))}
+                    value={initialAmbassadors}
+                    onChange={(e) => setInitialAmbassadors(Math.min(1000, Math.max(10, parseInt(e.target.value) || 10)))}
                     className="w-20"
                   />
                 </div>
@@ -138,7 +140,7 @@ export default function PaymentScheme() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-green-600" data-testid="text-total-revenue">{formatCurrency(totalRevenue)}</p>
-              <p className="text-xs text-muted-foreground">{ambassadors} ambassadors</p>
+              <p className="text-xs text-muted-foreground">{totalAmbassadors} total ambassadors</p>
             </CardContent>
           </Card>
           <Card>
@@ -191,12 +193,12 @@ export default function PaymentScheme() {
               </div>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
-                  <span>Signup Fees ({ambassadors} × ${SIGNUP_FEE})</span>
-                  <span className="font-medium">{formatCurrency(ambassadors * SIGNUP_FEE)}</span>
+                  <span>Signup Fees ({totalAmbassadors} × ${SIGNUP_FEE})</span>
+                  <span className="font-medium">{formatCurrency(totalAmbassadors * SIGNUP_FEE)}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span>Subscriptions ({ambassadors} × ${MONTHLY_SUB} × {months}mo)</span>
-                  <span className="font-medium">{formatCurrency(ambassadors * MONTHLY_SUB * months)}</span>
+                  <span>Subscriptions ({totalAmbassadors} × ${MONTHLY_SUB} × {months}mo)</span>
+                  <span className="font-medium">{formatCurrency(totalAmbassadors * MONTHLY_SUB * months)}</span>
                 </div>
               </div>
             </CardContent>
