@@ -95,14 +95,28 @@ export default function PaymentScheme() {
   const totalBftAwarded = signupBft + loginBft + contactBft + interestBft + saleBft + streakBft + lessonBft + moduleBft;
   const bftAwardedValue = totalBftAwarded * currentBftPrice;
   const netBftFlow = totalBftAwarded - totalTokensBurned;
+  
+  const monthlyBftAwarded = months > 0 ? totalBftAwarded / months : 0;
+  const netSupplyChange = totalTokensBurned - totalBftAwarded;
+  const netSupplyChangePercent = circulatingSupply > 0 ? (netSupplyChange / circulatingSupply) * 100 : 0;
+  const netPriceChange = netSupplyChangePercent * (priceElasticity / 100);
+  const netProjectedPrice = currentBftPrice * (1 + netPriceChange);
 
   const priceProjectionData = Array.from({ length: months + 1 }, (_, i) => {
     const tokensBurnedSoFar = Math.min(rawMonthlyTokensBurned * i, circulatingSupply);
+    const tokensAwardedSoFar = monthlyBftAwarded * i;
+    
     const supplyReductionSoFar = circulatingSupply > 0 ? Math.min((tokensBurnedSoFar / circulatingSupply) * 100, 100) : 0;
-    const priceIncreaseSoFar = supplyReductionSoFar * (priceElasticity / 100);
+    const priceIncreaseBuyback = supplyReductionSoFar * (priceElasticity / 100);
+    
+    const netChangeSoFar = tokensBurnedSoFar - tokensAwardedSoFar;
+    const netChangePercent = circulatingSupply > 0 ? (netChangeSoFar / circulatingSupply) * 100 : 0;
+    const priceChangeNet = netChangePercent * (priceElasticity / 100);
+    
     return {
       month: i,
-      price: currentBftPrice * (1 + priceIncreaseSoFar),
+      buybackOnly: currentBftPrice * (1 + priceIncreaseBuyback),
+      netEffect: currentBftPrice * (1 + priceChangeNet),
       baseline: currentBftPrice,
     };
   });
@@ -860,18 +874,19 @@ export default function PaymentScheme() {
                   />
                   <Tooltip formatter={(v: number) => [`$${v.toFixed(4)}`, '']} labelFormatter={(l) => `Month ${l}`} />
                   <Legend />
-                  <Line type="monotone" dataKey="baseline" name="No Buyback" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
-                  <Line type="monotone" dataKey="price" name="With Buyback" stroke="#a855f7" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="baseline" name="No Change" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
+                  <Line type="monotone" dataKey="buybackOnly" name="Buyback Only" stroke="#a855f7" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="netEffect" name="Net Effect" stroke={netBftFlow > 0 ? "#ef4444" : "#22c55e"} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-4 p-3 bg-muted/50 rounded-md text-xs text-muted-foreground">
               <p className="font-medium mb-1">Model Assumptions:</p>
               <ul className="list-disc list-inside space-y-1">
-                <li>Price elasticity: {priceElasticity}% price increase per 1% supply reduction</li>
-                <li>Total supply: 1B BFT (from BitForceToken tokenomics)</li>
-                <li>Linear monthly buyback from net profit allocation</li>
-                <li>Tokens are burned (removed from circulation permanently)</li>
+                <li>Price elasticity: {priceElasticity}% price increase per 1% supply change</li>
+                <li><span className="text-purple-600 font-medium">Buyback Only:</span> Tokens burned from profit allocation (deflationary)</li>
+                <li><span className={netBftFlow > 0 ? "text-red-600 font-medium" : "text-green-600 font-medium"}>Net Effect:</span> Tokens burned minus tokens awarded to ambassadors ({netBftFlow > 0 ? "inflationary" : "deflationary"})</li>
+                <li>Net supply impact: {netSupplyChangePercent > 0 ? "+" : ""}{netSupplyChangePercent.toFixed(2)}% of circulating supply</li>
               </ul>
             </div>
           </CardContent>
