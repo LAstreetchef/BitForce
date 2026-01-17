@@ -15,6 +15,18 @@ const BASIC_PRICE = 29;
 const PRO_PRICE = 79;
 const PREMIUM_PRICE = 199;
 
+const BFT_REWARDS = {
+  AMBASSADOR_SIGNUP: 50,
+  DAILY_LOGIN: 0.2,
+  CUSTOMER_CONTACT: 1,
+  INTEREST_SHOWN: 1.5,
+  SALE_CLOSED: 5,
+  SEVEN_DAY_STREAK: 2.5,
+  THIRTY_DAY_STREAK: 10,
+  LESSON_COMPLETED: 5,
+  MODULE_COMPLETED: 25,
+};
+
 export default function PaymentScheme() {
   const [initialAmbassadors, setInitialAmbassadors] = useState(100);
   const [referralsPerAmbassador, setReferralsPerAmbassador] = useState(2);
@@ -29,6 +41,12 @@ export default function PaymentScheme() {
   const [currentBftPrice, setCurrentBftPrice] = useState(0.0055);
   const [circulatingSupply, setCirculatingSupply] = useState(10_000_000);
   const [priceElasticity, setPriceElasticity] = useState(1.5);
+
+  const [avgLoginsPerMonth, setAvgLoginsPerMonth] = useState(20);
+  const [avgContactsPerMonth, setAvgContactsPerMonth] = useState(30);
+  const [avgInterestsPerMonth, setAvgInterestsPerMonth] = useState(10);
+  const [avgLessonsCompleted, setAvgLessonsCompleted] = useState(8);
+  const [avgModulesCompleted, setAvgModulesCompleted] = useState(2);
 
   const revenuePerAmbassador = SIGNUP_FEE + (MONTHLY_SUB * months);
   const payoutPerReferral = REFERRAL_BONUS + (MONTHLY_OVERRIDE * months);
@@ -61,6 +79,22 @@ export default function PaymentScheme() {
   const projectedBftPrice = currentBftPrice * (1 + projectedPriceIncrease);
   const totalBuybackSpend = monthlyBuybackAmount * months;
   const buybackExceedsSupply = rawTotalTokensBurned > circulatingSupply;
+
+  const signupBft = totalAmbassadors * BFT_REWARDS.AMBASSADOR_SIGNUP;
+  const loginBft = totalAmbassadors * avgLoginsPerMonth * months * BFT_REWARDS.DAILY_LOGIN;
+  const contactBft = totalAmbassadors * avgContactsPerMonth * months * BFT_REWARDS.CUSTOMER_CONTACT;
+  const interestBft = totalAmbassadors * avgInterestsPerMonth * months * BFT_REWARDS.INTEREST_SHOWN;
+  const totalSales = totalBasicSales + totalProSales + totalPremiumSales;
+  const saleBft = totalSales * BFT_REWARDS.SALE_CLOSED;
+  const sevenDayStreaks = Math.floor((months * 30) / 7);
+  const thirtyDayStreaks = months;
+  const streakBft = totalAmbassadors * (sevenDayStreaks * BFT_REWARDS.SEVEN_DAY_STREAK + thirtyDayStreaks * BFT_REWARDS.THIRTY_DAY_STREAK);
+  const lessonBft = totalAmbassadors * avgLessonsCompleted * BFT_REWARDS.LESSON_COMPLETED;
+  const moduleBft = totalAmbassadors * avgModulesCompleted * BFT_REWARDS.MODULE_COMPLETED;
+  
+  const totalBftAwarded = signupBft + loginBft + contactBft + interestBft + saleBft + streakBft + lessonBft + moduleBft;
+  const bftAwardedValue = totalBftAwarded * currentBftPrice;
+  const netBftFlow = totalBftAwarded - totalTokensBurned;
 
   const priceProjectionData = Array.from({ length: months + 1 }, (_, i) => {
     const tokensBurnedSoFar = Math.min(rawMonthlyTokensBurned * i, circulatingSupply);
@@ -566,6 +600,193 @@ export default function PaymentScheme() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>BFT Activity Parameters</span>
+              <span className="text-xs font-normal text-muted-foreground">(Ambassador Rewards)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="avg-logins">Avg Logins/Month</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="avg-logins-slider"
+                    data-testid="slider-avg-logins"
+                    value={[avgLoginsPerMonth]}
+                    onValueChange={(v) => setAvgLoginsPerMonth(v[0])}
+                    min={0}
+                    max={30}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="avg-logins"
+                    data-testid="input-avg-logins"
+                    type="number"
+                    value={avgLoginsPerMonth}
+                    onChange={(e) => setAvgLoginsPerMonth(Math.min(31, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-14"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="avg-contacts">Avg Contacts/Month</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="avg-contacts-slider"
+                    data-testid="slider-avg-contacts"
+                    value={[avgContactsPerMonth]}
+                    onValueChange={(v) => setAvgContactsPerMonth(v[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="avg-contacts"
+                    data-testid="input-avg-contacts"
+                    type="number"
+                    value={avgContactsPerMonth}
+                    onChange={(e) => setAvgContactsPerMonth(Math.min(200, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-14"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="avg-interests">Avg Interests/Month</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="avg-interests-slider"
+                    data-testid="slider-avg-interests"
+                    value={[avgInterestsPerMonth]}
+                    onValueChange={(v) => setAvgInterestsPerMonth(v[0])}
+                    min={0}
+                    max={50}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="avg-interests"
+                    data-testid="input-avg-interests"
+                    type="number"
+                    value={avgInterestsPerMonth}
+                    onChange={(e) => setAvgInterestsPerMonth(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-14"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="avg-lessons">Lessons Completed</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="avg-lessons-slider"
+                    data-testid="slider-avg-lessons"
+                    value={[avgLessonsCompleted]}
+                    onValueChange={(v) => setAvgLessonsCompleted(v[0])}
+                    min={0}
+                    max={30}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="avg-lessons"
+                    data-testid="input-avg-lessons"
+                    type="number"
+                    value={avgLessonsCompleted}
+                    onChange={(e) => setAvgLessonsCompleted(Math.min(50, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-14"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="avg-modules">Modules Completed</Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    id="avg-modules-slider"
+                    data-testid="slider-avg-modules"
+                    value={[avgModulesCompleted]}
+                    onValueChange={(v) => setAvgModulesCompleted(v[0])}
+                    min={0}
+                    max={10}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Input
+                    id="avg-modules"
+                    data-testid="input-avg-modules"
+                    type="number"
+                    value={avgModulesCompleted}
+                    onChange={(e) => setAvgModulesCompleted(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-14"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-muted-foreground">
+              <p className="font-medium mb-1">BFT Reward Rates:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1">
+                <span>Signup: +{BFT_REWARDS.AMBASSADOR_SIGNUP}</span>
+                <span>Login: +{BFT_REWARDS.DAILY_LOGIN}</span>
+                <span>Contact: +{BFT_REWARDS.CUSTOMER_CONTACT}</span>
+                <span>Interest: +{BFT_REWARDS.INTEREST_SHOWN}</span>
+                <span>Sale: +{BFT_REWARDS.SALE_CLOSED}</span>
+                <span>7-Day Streak: +{BFT_REWARDS.SEVEN_DAY_STREAK}</span>
+                <span>30-Day Streak: +{BFT_REWARDS.THIRTY_DAY_STREAK}</span>
+                <span>Lesson: +{BFT_REWARDS.LESSON_COMPLETED}</span>
+                <span>Module: +{BFT_REWARDS.MODULE_COMPLETED}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-amber-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Total BFT Awarded</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-amber-600" data-testid="text-total-bft-awarded">
+                {totalBftAwarded >= 1_000_000 ? `${(totalBftAwarded / 1_000_000).toFixed(2)}M` : totalBftAwarded >= 1000 ? `${(totalBftAwarded / 1000).toFixed(1)}K` : totalBftAwarded.toFixed(0)}
+              </p>
+              <p className="text-xs text-muted-foreground">to {totalAmbassadors} ambassadors</p>
+            </CardContent>
+          </Card>
+          <Card className="border-amber-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">BFT Value Awarded</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-amber-600" data-testid="text-bft-value-awarded">{formatCurrency(bftAwardedValue)}</p>
+              <p className="text-xs text-muted-foreground">at ${currentBftPrice}/BFT</p>
+            </CardContent>
+          </Card>
+          <Card className="border-amber-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">BFT per Ambassador</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-amber-600" data-testid="text-bft-per-ambassador">
+                {(totalBftAwarded / totalAmbassadors).toFixed(0)}
+              </p>
+              <p className="text-xs text-muted-foreground">over {months} months</p>
+            </CardContent>
+          </Card>
+          <Card className={netBftFlow > 0 ? "border-red-500/30" : "border-green-500/30"}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Net Token Flow</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-2xl font-bold ${netBftFlow > 0 ? "text-red-600" : "text-green-600"}`} data-testid="text-net-token-flow">
+                {netBftFlow >= 0 ? "+" : ""}{netBftFlow >= 1_000_000 ? `${(netBftFlow / 1_000_000).toFixed(2)}M` : netBftFlow >= 1000 || netBftFlow <= -1000 ? `${(netBftFlow / 1000).toFixed(1)}K` : netBftFlow.toFixed(0)}
+              </p>
+              <p className="text-xs text-muted-foreground">{netBftFlow > 0 ? "inflationary" : "deflationary"}</p>
+            </CardContent>
+          </Card>
+        </div>
 
         {buybackExceedsSupply && (
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md text-sm text-yellow-700 dark:text-yellow-400">
