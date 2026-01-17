@@ -112,6 +112,7 @@ export interface IStorage {
   // Ambassador Gamification
   getOrCreateAmbassadorPoints(userId: string): Promise<AmbassadorPoints>;
   updateAmbassadorPoints(userId: string, pointsToAdd: number): Promise<AmbassadorPoints>;
+  updateStreakAndActivity(userId: string, currentStreak: number, longestStreak: number, lastActivityDate: Date): Promise<AmbassadorPoints>;
   logAmbassadorAction(action: InsertAmbassadorAction): Promise<AmbassadorAction>;
   getAmbassadorActions(userId: string, limit?: number): Promise<AmbassadorAction[]>;
   getAllRecentActions(limit?: number): Promise<(AmbassadorAction & { actorName: string })[]>;
@@ -539,6 +540,23 @@ export class DatabaseStorage implements IStorage {
         currentStreak: newStreak,
         longestStreak: Math.max(current.longestStreak, newStreak),
         lastActivityDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(ambassadorPoints.userId, userId))
+      .returning();
+    
+    return updated;
+  }
+
+  async updateStreakAndActivity(userId: string, currentStreak: number, longestStreak: number, lastActivityDate: Date): Promise<AmbassadorPoints> {
+    // Ensure the record exists
+    await this.getOrCreateAmbassadorPoints(userId);
+    
+    const [updated] = await getDb().update(ambassadorPoints)
+      .set({
+        currentStreak,
+        longestStreak,
+        lastActivityDate,
         updatedAt: new Date(),
       })
       .where(eq(ambassadorPoints.userId, userId))

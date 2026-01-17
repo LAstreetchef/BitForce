@@ -1476,16 +1476,20 @@ export async function registerRoutes(
       // Award points based on status change
       let pointsToAward = 0;
       let actionType = "";
+      let bftTransactionType = ""; // Use snake_case for BFT ledger
       
       if (status === "contacted") {
         pointsToAward = ACTION_POINTS.CONTACT_LEAD;
         actionType = "CONTACT_LEAD";
+        bftTransactionType = "customer_contact";
       } else if (status === "interested") {
         pointsToAward = ACTION_POINTS.LEAD_INTERESTED;
         actionType = "LEAD_INTERESTED";
+        bftTransactionType = "interest_shown";
       } else if (status === "sold") {
         pointsToAward = ACTION_POINTS.MAKE_SALE;
         actionType = "MAKE_SALE";
+        bftTransactionType = "sale_closed";
         
         // Check for first sale badge
         const hasBadge = await storage.hasBadge(userId, "FIRST_SALE");
@@ -1495,10 +1499,10 @@ export async function registerRoutes(
       }
 
       if (pointsToAward > 0) {
-        // Award BFT tokens for status change
+        // Award BFT tokens for status change (use snake_case type for ledger)
         await awardBftTokens(
           userId,
-          actionType,
+          bftTransactionType,
           pointsToAward,
           `Status changed to ${status}`,
           { leadId: updatedService.leadId, leadServiceId: id, status }
@@ -1577,6 +1581,134 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Get leaderboard error:", err);
       res.status(500).json({ message: "Failed to get leaderboard" });
+    }
+  });
+
+  // Daily check-in endpoint - awards BFT for daily login
+  app.post("/api/ambassador/daily-checkin", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(userId);
+      if (!ambassador) {
+        return res.status(404).json({ message: "Ambassador not found" });
+      }
+
+      // Check if already claimed daily login today
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const dailyLoginKey = `${userId}_daily_${today}`;
+      
+      const alreadyClaimed = await storage.hasBftTransaction(
+        ambassador.id,
+        'daily_login',
+        dailyLoginKey
+      );
+
+      if (alreadyClaimed) {
+        return res.json({
+          success: true,
+          alreadyClaimed: true,
+          message: "Daily login already claimed today",
+          bftAwarded: 0,
+        });
+      }
+
+      // Calculate streak
+      const localPoints = await storage.getOrCreateAmbassadorPoints(userId);
+      const lastActivityDate = localPoints.lastActivityDate;
+      const yesterdayDate = new Date();
+      yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+      const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+      
+      let newStreak = 1;
+      if (lastActivityDate) {
+        const lastDateStr = lastActivityDate.toISOString().split('T')[0];
+        if (lastDateStr === yesterdayStr) {
+          // Consecutive day - increment streak
+          newStreak = (localPoints.currentStreak || 0) + 1;
+        } else if (lastDateStr === today) {
+          // Same day - keep streak
+          newStreak = localPoints.currentStreak || 1;
+        }
+        // Otherwise reset to 1
+      }
+
+      // Award daily login BFT (0.2 BFT = 2 points)
+      const DAILY_LOGIN_BFT = 0.2;
+      await storage.recordBftTransaction(
+        ambassador.id,
+        'daily_login',
+        DAILY_LOGIN_BFT,
+        'Daily login reward',
+        dailyLoginKey,
+        'daily',
+        { date: today, streak: newStreak }
+      );
+      console.log(`[Daily Checkin] Awarded ${DAILY_LOGIN_BFT} BFT to ambassador ${ambassador.id} for daily login (streak: ${newStreak})`);
+
+      // Update streak and last activity
+      const longestStreak = Math.max(localPoints.longestStreak || 0, newStreak);
+      await storage.updateStreakAndActivity(userId, newStreak, longestStreak, new Date());
+
+      // Check for streak bonuses
+      let streakBonusAwarded = 0;
+      
+      // 7-day streak bonus
+      if (newStreak === 7) {
+        const streakKey = `${userId}_streak7_${today}`;
+        const alreadyHas7Streak = await storage.hasBftTransaction(ambassador.id, 'streak_7day', streakKey);
+        if (!alreadyHas7Streak) {
+          const STREAK_7_BFT = 2.5;
+          await storage.recordBftTransaction(
+            ambassador.id,
+            'streak_7day',
+            STREAK_7_BFT,
+            '7-day login streak bonus',
+            streakKey,
+            'streak',
+            { streakDays: 7 }
+          );
+          streakBonusAwarded += STREAK_7_BFT;
+          console.log(`[Daily Checkin] Awarded ${STREAK_7_BFT} BFT for 7-day streak to ambassador ${ambassador.id}`);
+        }
+      }
+
+      // 30-day streak bonus
+      if (newStreak === 30) {
+        const streakKey = `${userId}_streak30_${today}`;
+        const alreadyHas30Streak = await storage.hasBftTransaction(ambassador.id, 'streak_30day', streakKey);
+        if (!alreadyHas30Streak) {
+          const STREAK_30_BFT = 10;
+          await storage.recordBftTransaction(
+            ambassador.id,
+            'streak_30day',
+            STREAK_30_BFT,
+            '30-day login streak bonus',
+            streakKey,
+            'streak',
+            { streakDays: 30 }
+          );
+          streakBonusAwarded += STREAK_30_BFT;
+          console.log(`[Daily Checkin] Awarded ${STREAK_30_BFT} BFT for 30-day streak to ambassador ${ambassador.id}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        alreadyClaimed: false,
+        bftAwarded: DAILY_LOGIN_BFT + streakBonusAwarded,
+        dailyBft: DAILY_LOGIN_BFT,
+        streakBonus: streakBonusAwarded,
+        currentStreak: newStreak,
+        longestStreak,
+      });
+    } catch (err) {
+      console.error("Daily checkin error:", err);
+      res.status(500).json({ message: "Failed to process daily checkin" });
     }
   });
 

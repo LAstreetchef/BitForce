@@ -20,7 +20,8 @@ import {
   Gift,
   Settings,
   DollarSign,
-  Wallet
+  Wallet,
+  Award
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
@@ -63,6 +64,10 @@ const transactionTypeConfig: Record<string, { label: string; icon: typeof Coins;
   service_logged: { label: "Service Logged", icon: FileText, color: "text-cyan-600" },
   referral_bonus: { label: "Referral Bonus", icon: Gift, color: "text-pink-600" },
   admin_adjustment: { label: "Admin Adjustment", icon: Settings, color: "text-gray-600" },
+  GENERATE_DESIGN: { label: "Design Generated", icon: Star, color: "text-indigo-600" },
+  SUGGEST_SERVICE: { label: "Service Suggested", icon: FileText, color: "text-teal-600" },
+  COMPLETE_LESSON: { label: "Lesson Completed", icon: Award, color: "text-blue-600" },
+  COMPLETE_MODULE: { label: "Module Completed", icon: Award, color: "text-amber-600" },
 };
 
 export default function BftWallet() {

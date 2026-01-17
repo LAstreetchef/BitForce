@@ -29,6 +29,7 @@ import {
   Clock
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -151,6 +152,38 @@ export default function Dashboard() {
       });
     },
   });
+
+  // Daily checkin - awards BFT for daily login
+  const dailyCheckinRef = useRef(false);
+  const dailyCheckinMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/ambassador/daily-checkin");
+      return response.json();
+    },
+    onSuccess: (data: { success: boolean; alreadyClaimed: boolean; bftAwarded: number; currentStreak?: number; streakBonus?: number }) => {
+      if (data.success && !data.alreadyClaimed && data.bftAwarded > 0) {
+        const streakMsg = data.streakBonus && data.streakBonus > 0 
+          ? ` (includes ${data.streakBonus} BFT streak bonus!)` 
+          : "";
+        toast({
+          title: "Daily Login Reward!",
+          description: `You earned ${data.bftAwarded.toFixed(2)} BFT${streakMsg}. Streak: ${data.currentStreak || 1} days.`,
+        });
+      }
+    },
+    onError: () => {
+      // Silently fail - don't disturb user experience
+      console.log("[Daily Checkin] Failed to claim daily reward");
+    },
+  });
+
+  // Auto-trigger daily checkin when dashboard loads
+  useEffect(() => {
+    if (!dailyCheckinRef.current) {
+      dailyCheckinRef.current = true;
+      dailyCheckinMutation.mutate();
+    }
+  }, []);
 
   // Use walletBalance for total BFT (earned + purchased), fallback to stats for earned only
   const totalBft = walletBalance?.totalBft ?? stats?.bftBalance ?? 0;
