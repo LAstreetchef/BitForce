@@ -87,6 +87,70 @@ export interface LeaderboardResponse {
   lastUpdated: string;
 }
 
+// Wallet status interfaces (from Token Platform)
+export interface WalletInfo {
+  address: string;
+  status: string;
+  verified: boolean;
+  linkedAt?: string;
+  verifiedAt?: string;
+}
+
+export interface WalletStatus {
+  devnet: WalletInfo | null;
+  mainnet: WalletInfo | null;
+}
+
+export interface AmbassadorWithWallet {
+  id: string;
+  externalId: string;
+  name: string;
+  tokensEarned: number;
+  usdValue: number;
+  currentPrice: number;
+  walletStatus: WalletStatus;
+  hasVerifiedWallet: boolean;
+}
+
+export interface WalletStatusResponse {
+  ambassadorId: string;
+  externalId: string;
+  name: string;
+  wallets: WalletStatus;
+  hasVerifiedWallet: boolean;
+  hasPendingWallet: boolean;
+  eligibleForDistribution: boolean;
+  tokensEarned: number;
+}
+
+export interface EligibleAmbassador {
+  ambassadorId: string;
+  externalId: string;
+  name: string;
+  tokensEarned: number;
+  usdValue: number;
+  wallet: {
+    address: string;
+    verified: boolean;
+    verifiedAt: string;
+  } | null;
+  eligible: boolean;
+  ineligibleReason: string | null;
+}
+
+export interface DistributionEligibilityResponse {
+  network: string;
+  summary: {
+    totalAmbassadors: number;
+    eligibleCount: number;
+    ineligibleCount: number;
+    totalTokensToDistribute: number;
+    totalUsdValue: number;
+  };
+  eligible: EligibleAmbassador[];
+  ineligible: EligibleAmbassador[];
+}
+
 class BFTApiClient {
   private cachedClient: AxiosInstance | null = null;
   private cachedBaseUrl: string = '';
@@ -167,6 +231,29 @@ class BFTApiClient {
     const client = this.getClient();
     const params = limit ? { limit } : {};
     const response = await client.get<LeaderboardResponse>('/api/sync/leaderboard', { params });
+    return response.data;
+  }
+
+  async getAmbassadorWalletStatus(externalId: string): Promise<WalletStatusResponse> {
+    this.ensureConfigured();
+    const client = this.getClient();
+    const response = await client.get<WalletStatusResponse>(`/api/sync/ambassador/${externalId}/wallet-status`);
+    return response.data;
+  }
+
+  async getAmbassadorWithWallet(externalId: string): Promise<AmbassadorWithWallet> {
+    this.ensureConfigured();
+    const client = this.getClient();
+    const response = await client.get<AmbassadorWithWallet>(`/api/sync/ambassador/${externalId}`);
+    return response.data;
+  }
+
+  async getDistributionEligibility(network: 'devnet' | 'mainnet' = 'mainnet'): Promise<DistributionEligibilityResponse> {
+    this.ensureConfigured();
+    const client = this.getClient();
+    const response = await client.get<DistributionEligibilityResponse>('/api/sync/distribution-eligibility', {
+      params: { network }
+    });
     return response.data;
   }
 

@@ -22,7 +22,11 @@ import {
   Info,
   ExternalLink,
   ShoppingCart,
-  Wallet
+  Wallet,
+  CheckCircle,
+  AlertCircle,
+  Link2,
+  Clock
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -77,6 +81,21 @@ interface WalletBalanceData {
   lastPurchaseDate: string | null;
 }
 
+interface WalletStatusData {
+  ambassadorId?: string;
+  externalId?: string;
+  name?: string;
+  wallets?: {
+    devnet: { address: string; status: string; verified: boolean; linkedAt?: string; verifiedAt?: string } | null;
+    mainnet: { address: string; status: string; verified: boolean; linkedAt?: string; verifiedAt?: string } | null;
+  };
+  hasVerifiedWallet: boolean;
+  hasPendingWallet: boolean;
+  eligibleForDistribution: boolean;
+  tokensEarned: number;
+  error?: string;
+}
+
 const badgeIcons: Record<string, typeof Star> = {
   star: Star,
   trophy: Trophy,
@@ -108,6 +127,12 @@ export default function Dashboard() {
   const { data: walletBalance } = useQuery<WalletBalanceData>({
     queryKey: ["/api/ambassador/wallet-balance"],
     staleTime: 30000,
+  });
+
+  const { data: walletStatus, isLoading: walletStatusLoading } = useQuery<WalletStatusData>({
+    queryKey: ["/api/ambassador/wallet-status"],
+    staleTime: 60000,
+    retry: false,
   });
 
   const buyBftMutation = useMutation({
@@ -345,6 +370,107 @@ export default function Dashboard() {
             <span className="text-white/70">Secure SSO login to Token Platform</span>
             <Badge className="bg-white/20 text-white border-0 w-fit">Pre-Launch Price</Badge>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Wallet Status & Distribution Eligibility Card */}
+      <Card 
+        className={`border-2 ${
+          walletStatus?.hasVerifiedWallet 
+            ? "border-green-500/30 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30" 
+            : walletStatus?.hasPendingWallet
+              ? "border-yellow-500/30 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30"
+              : "border-orange-500/30 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30"
+        }`}
+        data-testid="section-wallet-status"
+      >
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-full ${
+                walletStatus?.hasVerifiedWallet 
+                  ? "bg-green-100 dark:bg-green-900/50" 
+                  : walletStatus?.hasPendingWallet
+                    ? "bg-yellow-100 dark:bg-yellow-900/50"
+                    : "bg-orange-100 dark:bg-orange-900/50"
+              }`}>
+                {walletStatus?.hasVerifiedWallet ? (
+                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                ) : walletStatus?.hasPendingWallet ? (
+                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                ) : (
+                  <Link2 className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  Wallet Status
+                  {walletStatusLoading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <Badge 
+                      className={
+                        walletStatus?.hasVerifiedWallet 
+                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" 
+                          : walletStatus?.hasPendingWallet
+                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                      }
+                    >
+                      {walletStatus?.hasVerifiedWallet ? "Verified" : walletStatus?.hasPendingWallet ? "Pending" : "Not Linked"}
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {walletStatus?.hasVerifiedWallet 
+                    ? "Your Solana wallet is verified and ready for BFT token distributions." 
+                    : walletStatus?.hasPendingWallet
+                      ? "Your wallet is linked but awaiting verification. Complete verification to receive distributions."
+                      : "Link your Solana wallet to receive BFT token distributions and airdrops."}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {walletStatus?.eligibleForDistribution ? (
+                <Badge className="bg-green-600 text-white">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Distribution Eligible
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-muted-foreground">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  Not Eligible
+                </Badge>
+              )}
+              {!walletStatus?.hasVerifiedWallet && (
+                <Button
+                  onClick={() => buyBftMutation.mutate()}
+                  disabled={buyBftMutation.isPending}
+                  size="sm"
+                  className="gap-2"
+                  data-testid="button-link-wallet"
+                >
+                  {buyBftMutation.isPending ? (
+                    "Connecting..."
+                  ) : (
+                    <>
+                      <Link2 className="w-4 h-4" />
+                      Link Wallet
+                      <ExternalLink className="w-3 h-3" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+          {walletStatus?.wallets?.mainnet && (
+            <div className="mt-4 pt-4 border-t text-sm">
+              <span className="text-muted-foreground">Mainnet Wallet: </span>
+              <code className="text-xs bg-muted px-2 py-1 rounded">
+                {walletStatus.wallets.mainnet.address.slice(0, 8)}...{walletStatus.wallets.mainnet.address.slice(-6)}
+              </code>
+            </div>
+          )}
         </CardContent>
       </Card>
 

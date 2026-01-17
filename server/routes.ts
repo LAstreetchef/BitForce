@@ -446,6 +446,70 @@ export async function registerRoutes(
     }
   });
 
+  // WALLET STATUS ENDPOINT - Get current ambassador's wallet linking status from Token Platform
+  app.get("/api/ambassador/wallet-status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      const user = req.user as any;
+      
+      if (!user?.id) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ 
+          message: "BFT integration not configured",
+          walletStatus: null 
+        });
+      }
+
+      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      if (!ambassador) {
+        return res.json({
+          walletStatus: null,
+          hasVerifiedWallet: false,
+          hasPendingWallet: false,
+          eligibleForDistribution: false,
+          tokensEarned: 0,
+          message: "Ambassador not found"
+        });
+      }
+
+      const externalId = `portal-${ambassador.id}`;
+      const walletStatus = await bftApiClient.getAmbassadorWalletStatus(externalId);
+      res.json(walletStatus);
+    } catch (err: any) {
+      console.error("[/api/ambassador/wallet-status] Error:", err.message);
+      // Return graceful fallback for network errors
+      res.json({
+        walletStatus: null,
+        hasVerifiedWallet: false,
+        hasPendingWallet: false,
+        eligibleForDistribution: false,
+        tokensEarned: 0,
+        error: err.message
+      });
+    }
+  });
+
+  // DISTRIBUTION ELIGIBILITY ENDPOINT - Get all ambassadors' distribution eligibility
+  app.get("/api/bft/distribution-eligibility", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { bftApiClient } = await import("./lib/bft-api-client");
+      
+      if (!bftApiClient.isAvailable()) {
+        return res.status(503).json({ message: "BFT integration not configured" });
+      }
+
+      const network = (req.query.network as 'devnet' | 'mainnet') || 'mainnet';
+      const eligibility = await bftApiClient.getDistributionEligibility(network);
+      res.json(eligibility);
+    } catch (err: any) {
+      console.error("[/api/bft/distribution-eligibility] Error:", err.message);
+      res.status(500).json({ message: "Failed to fetch distribution eligibility" });
+    }
+  });
+
   app.post("/api/bft/convert-points", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { bftApiClient } = await import("./lib/bft-api-client");

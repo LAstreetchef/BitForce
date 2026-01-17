@@ -1,0 +1,109 @@
+Integration Request: BFT Token Platform Wallet Status & Distribution Eligibility APIs
+The BFT Token Platform has new sync API endpoints that the Ambassador Portal should integrate with to display wallet linking status and distribution eligibility to ambassadors.
+
+Authentication
+All endpoints require the X-API-Key header with the SYNC_API_KEY value.
+
+New/Enhanced Endpoints
+1. GET /api/sync/ambassador/:externalId (Enhanced)
+Returns ambassador details with wallet status included.
+
+Response now includes:
+
+{
+  "id": "...",
+  "externalId": "portal-ambassador-123",
+  "name": "John Doe",
+  "tokensEarned": 500,
+  "usdValue": 2.50,
+  "currentPrice": 0.005,
+  "walletStatus": {
+    "devnet": { "address": "ABC...", "status": "verified", "verified": true },
+    "mainnet": null
+  },
+  "hasVerifiedWallet": true
+}
+2. GET /api/sync/ambassador/:externalId/wallet-status (New)
+Detailed wallet verification status for a specific ambassador.
+
+Response:
+
+{
+  "ambassadorId": "...",
+  "externalId": "portal-ambassador-123",
+  "name": "John Doe",
+  "wallets": {
+    "devnet": {
+      "address": "ABC123...",
+      "status": "verified",
+      "verified": true,
+      "linkedAt": "2026-01-15T...",
+      "verifiedAt": "2026-01-16T..."
+    },
+    "mainnet": null
+  },
+  "hasVerifiedWallet": true,
+  "hasPendingWallet": false,
+  "eligibleForDistribution": true,
+  "tokensEarned": 500
+}
+3. GET /api/sync/distribution-eligibility?network=mainnet (New)
+Returns all ambassadors with their distribution eligibility status.
+
+Query params: network (optional, default: "mainnet", options: "devnet" | "mainnet")
+
+Response:
+
+{
+  "network": "mainnet",
+  "summary": {
+    "totalAmbassadors": 50,
+    "eligibleCount": 35,
+    "ineligibleCount": 15,
+    "totalTokensToDistribute": 125000,
+    "totalUsdValue": 625.00
+  },
+  "eligible": [
+    {
+      "ambassadorId": "...",
+      "externalId": "portal-123",
+      "name": "John Doe",
+      "tokensEarned": 500,
+      "usdValue": 2.50,
+      "wallet": {
+        "address": "ABC123...",
+        "verified": true,
+        "verifiedAt": "2026-01-16T..."
+      },
+      "eligible": true,
+      "ineligibleReason": null
+    }
+  ],
+  "ineligible": [
+    {
+      "ambassadorId": "...",
+      "externalId": "portal-456",
+      "name": "Jane Smith",
+      "tokensEarned": 250,
+      "usdValue": 1.25,
+      "wallet": null,
+      "eligible": false,
+      "ineligibleReason": "no_verified_wallet"
+    }
+  ]
+}
+Ineligible reasons: "no_verified_wallet" or "no_tokens_earned"
+
+Requested Portal Features
+Ambassador Profile/Dashboard: Show wallet linking status with a badge (Verified ✓, Pending, Not Linked) and link to the BFT Platform wallet page if not yet linked
+
+Leaderboard Enhancement: Add a column or icon showing which ambassadors have verified wallets ready for distribution
+
+Distribution Eligibility Banner (optional): Show ambassadors if they're eligible for the next token distribution, with a CTA to link their wallet if not
+
+BFT Platform URL
+The token platform is at: {BFT_PLATFORM_URL} (set as environment variable)
+
+Ambassadors can link wallets by clicking "Buy BFT" which uses SSO to redirect them to the wallet page where the WalletLinkingCard appears.
+
+This gives the Portal agent everything needed to integrate wallet status display and distribution eligibility into the ambassador experience.
