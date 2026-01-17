@@ -88,6 +88,27 @@ Key files:
 API endpoint: `POST /api/training/complete-lesson` with `{lessonId, moduleId}`
 Flow: Award lesson BFT → Check/award module BFT → Mark lesson complete (retry-safe)
 
+### BFT Daily Rewards & Activity Tracking
+Located at `/portal/dashboard`, ambassadors earn BFT tokens for daily engagement and sales activities:
+
+**Daily Login Rewards:**
+- **Daily Check-in**: +0.2 BFT for logging into the portal (once per day, auto-triggered on dashboard load)
+- **7-Day Streak**: +2.5 BFT bonus for logging in 7 consecutive days
+- **30-Day Streak**: +10 BFT bonus for logging in 30 consecutive days
+
+**Sales Activity Rewards:**
+- **Customer Contact**: +1 BFT when changing lead status to "Contacted"
+- **Interest Shown**: +1.5 BFT when changing lead status to "Interested"
+- **Sale Closed**: +5 BFT when changing lead status to "Customer"
+
+Key files:
+- `server/routes.ts` - Daily check-in endpoint with streak tracking
+- `server/storage.ts` - Streak tracking via `updateStreakAndActivity()` method
+- `client/src/pages/portal/Dashboard.tsx` - Auto-triggers daily check-in on load
+
+API endpoint: `POST /api/ambassador/daily-checkin`
+Transaction types (snake_case): `daily_login`, `streak_7day`, `streak_30day`, `customer_contact`, `interest_shown`, `sale_closed`
+
 ### Payment Scheme Scenario Analysis
 Located at `/payment-scheme`, this page provides stakeholder visibility into ambassador program economics:
 - **Ambassador Parameters**: Initial ambassadors, referrals per ambassador, time frame (months)
