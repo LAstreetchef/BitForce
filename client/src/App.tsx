@@ -25,6 +25,7 @@ import JoinBitForce from "@/pages/JoinBitForce";
 import NextStep from "@/pages/NextStep";
 import AmbassadorOne from "@/pages/AmbassadorOne";
 import SupportInbox from "@/pages/admin/SupportInbox";
+import Admin from "@/pages/portal/Admin";
 import TokenPitch from "@/pages/TokenPitch";
 import ExplainerVideos from "@/pages/ExplainerVideos";
 import EarningsCalculator from "@/pages/EarningsCalculator";
@@ -111,6 +112,11 @@ function Router() {
       <Route path="/portal/bft-wallet">
         <PortalLayout>
           <BftWallet />
+        </PortalLayout>
+      </Route>
+      <Route path="/portal/admin">
+        <PortalLayout>
+          <Admin />
         </PortalLayout>
       </Route>
       <Route path="/admin/support" component={SupportInbox} />

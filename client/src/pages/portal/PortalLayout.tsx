@@ -28,7 +28,8 @@ import {
   Wrench,
   Package,
   Target,
-  Coins
+  Coins,
+  ShieldCheck
 } from "lucide-react";
 import { AmbassadorPayoutModal } from "@/components/AmbassadorPayoutModal";
 import { SupportChat } from "@/components/SupportChat";
@@ -97,6 +98,19 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       return res.json();
     },
     enabled: !!user?.id && subscriptionStatus?.isAmbassador && subscriptionStatus?.subscriptionStatus === "active",
+  });
+
+  const { data: adminStatus } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/check", user?.id],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/admin/products");
+        return { isAdmin: res.ok };
+      } catch {
+        return { isAdmin: false };
+      }
+    },
+    enabled: !!user?.id,
   });
 
   const isSubscriptionCheckComplete = !!user?.id && subscriptionFetched;
@@ -233,6 +247,20 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                       </SidebarMenuItem>
                     );
                   })}
+                  {adminStatus?.isAdmin && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        asChild
+                        isActive={location === "/portal/admin"}
+                        data-testid="nav-admin"
+                      >
+                        <Link href="/portal/admin">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Admin</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
