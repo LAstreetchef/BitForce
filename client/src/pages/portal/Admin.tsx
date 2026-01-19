@@ -98,12 +98,30 @@ export default function Admin() {
   const [newProduct, setNewProduct] = useState(false);
   const [activeTab, setActiveTab] = useState("products");
 
+  const { data: adminCheck, isLoading: adminCheckLoading } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/check"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/admin/check");
+        if (res.ok) {
+          return { isAdmin: true };
+        }
+        return { isAdmin: false };
+      } catch {
+        return { isAdmin: false };
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products"],
+    enabled: adminCheck?.isAdmin === true,
   });
 
   const { data: settings = [], isLoading: settingsLoading } = useQuery<PlatformSetting[]>({
     queryKey: ["/api/admin/settings"],
+    enabled: adminCheck?.isAdmin === true,
   });
 
   const createProduct = useMutation({
@@ -165,6 +183,29 @@ export default function Admin() {
     acc[setting.category].push(setting);
     return acc;
   }, {} as Record<string, PlatformSetting[]>);
+
+  if (adminCheckLoading) {
+    return (
+      <div className="flex items-center justify-center py-16" data-testid="admin-loading">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!adminCheck?.isAdmin) {
+    return (
+      <div className="space-y-6" data-testid="page-admin-unauthorized">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <ShieldCheck className="w-16 h-16 text-muted-foreground mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Admin Access Required</h1>
+          <p className="text-muted-foreground max-w-md">
+            You don't have permission to access the admin dashboard. 
+            Contact your administrator if you believe this is an error.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-testid="page-admin">

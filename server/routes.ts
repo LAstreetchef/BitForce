@@ -1842,6 +1842,11 @@ export async function registerRoutes(
     }
   });
 
+  // Admin check endpoint - lightweight check for admin status
+  app.get("/api/admin/check", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    res.json({ isAdmin: true });
+  });
+
   // Admin Products CRUD
   app.get("/api/admin/products", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {

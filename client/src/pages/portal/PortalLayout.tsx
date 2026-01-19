@@ -104,13 +104,17 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     queryKey: ["/api/admin/check", user?.id],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/admin/products");
-        return { isAdmin: res.ok };
+        const res = await fetch("/api/admin/check");
+        if (res.ok) {
+          return { isAdmin: true };
+        }
+        return { isAdmin: false };
       } catch {
         return { isAdmin: false };
       }
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const isSubscriptionCheckComplete = !!user?.id && subscriptionFetched;
