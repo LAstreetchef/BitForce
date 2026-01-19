@@ -20,6 +20,8 @@ import {
   savedLeads,
   bftTransactions,
   trainingProgress,
+  products,
+  platformSettings,
   type Lead, 
   type InsertLead, 
   type EventRegistration, 
@@ -60,6 +62,10 @@ import {
   type InsertSavedLead,
   type TrainingProgress,
   type InsertTrainingProgress,
+  type Product,
+  type InsertProduct,
+  type PlatformSetting,
+  type InsertPlatformSetting,
   LEVEL_THRESHOLDS
 } from "@shared/schema";
 import { getDb, isDatabaseAvailable } from "./db";
@@ -191,6 +197,20 @@ export interface IStorage {
   getCompletedLessons(userId: string): Promise<TrainingProgress[]>;
   isLessonCompleted(userId: string, lessonId: string): Promise<boolean>;
   getModuleCompletedLessons(userId: string, moduleId: string): Promise<TrainingProgress[]>;
+  
+  // Products (Admin)
+  createProduct(product: InsertProduct): Promise<Product>;
+  getProducts(activeOnly?: boolean): Promise<Product[]>;
+  getProductById(id: number): Promise<Product | null>;
+  getProductBySlug(slug: string): Promise<Product | null>;
+  updateProduct(id: number, updates: Partial<Product>): Promise<Product | null>;
+  deleteProduct(id: number): Promise<boolean>;
+  
+  // Platform Settings (Admin)
+  getSetting(key: string): Promise<PlatformSetting | null>;
+  getSettings(category?: string): Promise<PlatformSetting[]>;
+  upsertSetting(setting: InsertPlatformSetting): Promise<PlatformSetting>;
+  deleteSetting(key: string): Promise<boolean>;
 }
 
 function generateReferralCode(): string {
@@ -1200,6 +1220,110 @@ export class DatabaseStorage implements IStorage {
         eq(trainingProgress.userId, userId),
         eq(trainingProgress.moduleId, moduleId)
       ));
+  }
+
+  // Products (Admin)
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await getDb()
+      .insert(products)
+      .values(product)
+      .returning();
+    return newProduct;
+  }
+
+  async getProducts(activeOnly: boolean = false): Promise<Product[]> {
+    if (activeOnly) {
+      return getDb()
+        .select()
+        .from(products)
+        .where(eq(products.isActive, true))
+        .orderBy(products.sortOrder, products.name);
+    }
+    return getDb()
+      .select()
+      .from(products)
+      .orderBy(products.sortOrder, products.name);
+  }
+
+  async getProductById(id: number): Promise<Product | null> {
+    const [product] = await getDb()
+      .select()
+      .from(products)
+      .where(eq(products.id, id));
+    return product || null;
+  }
+
+  async getProductBySlug(slug: string): Promise<Product | null> {
+    const [product] = await getDb()
+      .select()
+      .from(products)
+      .where(eq(products.slug, slug));
+    return product || null;
+  }
+
+  async updateProduct(id: number, updates: Partial<Product>): Promise<Product | null> {
+    const [updated] = await getDb()
+      .update(products)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await getDb()
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Platform Settings (Admin)
+  async getSetting(key: string): Promise<PlatformSetting | null> {
+    const [setting] = await getDb()
+      .select()
+      .from(platformSettings)
+      .where(eq(platformSettings.key, key));
+    return setting || null;
+  }
+
+  async getSettings(category?: string): Promise<PlatformSetting[]> {
+    if (category) {
+      return getDb()
+        .select()
+        .from(platformSettings)
+        .where(eq(platformSettings.category, category))
+        .orderBy(platformSettings.category, platformSettings.key);
+    }
+    return getDb()
+      .select()
+      .from(platformSettings)
+      .orderBy(platformSettings.category, platformSettings.key);
+  }
+
+  async upsertSetting(setting: InsertPlatformSetting): Promise<PlatformSetting> {
+    const existing = await this.getSetting(setting.key);
+    if (existing) {
+      const [updated] = await getDb()
+        .update(platformSettings)
+        .set({ ...setting, updatedAt: new Date() })
+        .where(eq(platformSettings.key, setting.key))
+        .returning();
+      return updated;
+    }
+    const [newSetting] = await getDb()
+      .insert(platformSettings)
+      .values(setting)
+      .returning();
+    return newSetting;
+  }
+
+  async deleteSetting(key: string): Promise<boolean> {
+    const result = await getDb()
+      .delete(platformSettings)
+      .where(eq(platformSettings.key, key))
+      .returning();
+    return result.length > 0;
   }
 }
 

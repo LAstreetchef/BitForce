@@ -13,6 +13,7 @@ import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { awardBftTokens } from "./lib/bft-rewards";
 import { registerImageRoutes } from "./replit_integrations/image";
+import { seedAll } from "./scripts/seed-products";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail, sendAIBuddyCustomerInviteEmail } from "./services/email";
 import { registerCouponAppRoutes, configureCouponAppCors } from "./services/couponAppApi";
 import { Router } from "express";
@@ -1841,6 +1842,160 @@ export async function registerRoutes(
     }
   });
 
+  // Admin Products CRUD
+  app.get("/api/admin/products", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const activeOnly = req.query.activeOnly === "true";
+      const products = await storage.getProducts(activeOnly);
+      res.json(products);
+    } catch (err) {
+      console.error("Get admin products error:", err);
+      res.status(500).json({ message: "Failed to get products" });
+    }
+  });
+
+  app.post("/api/admin/products", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const productSchema = z.object({
+        slug: z.string().min(1),
+        name: z.string().min(1),
+        tagline: z.string().min(1),
+        price: z.string().min(1),
+        priceDetail: z.string().min(1),
+        priceAmount: z.string().optional(),
+        description: z.string().min(1),
+        valueProposition: z.string().optional(),
+        backstory: z.string().optional(),
+        bestFor: z.array(z.string()).optional(),
+        useCases: z.array(z.string()).optional(),
+        features: z.array(z.string()).optional(),
+        imageUrl: z.string().optional(),
+        badge: z.string().optional(),
+        badgeType: z.string().optional(),
+        commissionAmount: z.string().optional(),
+        commissionType: z.string().optional(),
+        commissionInfo: z.string().optional(),
+        category: z.string(),
+        hasInteractiveFeature: z.boolean().optional(),
+        externalUrl: z.string().optional(),
+        isActive: z.boolean().optional(),
+        isFeatured: z.boolean().optional(),
+        sortOrder: z.number().optional(),
+      });
+
+      const result = productSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0].message });
+      }
+
+      const product = await storage.createProduct(result.data);
+      res.status(201).json(product);
+    } catch (err) {
+      console.error("Create product error:", err);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.get("/api/admin/products/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProductById(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (err) {
+      console.error("Get product error:", err);
+      res.status(500).json({ message: "Failed to get product" });
+    }
+  });
+
+  app.patch("/api/admin/products/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.updateProduct(id, req.body);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (err) {
+      console.error("Update product error:", err);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/admin/products/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProduct(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete product error:", err);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Admin Platform Settings CRUD
+  app.get("/api/admin/settings", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const category = req.query.category as string | undefined;
+      const settings = await storage.getSettings(category);
+      res.json(settings);
+    } catch (err) {
+      console.error("Get settings error:", err);
+      res.status(500).json({ message: "Failed to get settings" });
+    }
+  });
+
+  app.put("/api/admin/settings/:key", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const user = req.user as any;
+      const userId = user?.claims?.sub;
+      
+      const settingSchema = z.object({
+        value: z.string(),
+        label: z.string().optional(),
+        description: z.string().optional(),
+        category: z.string().optional(),
+        valueType: z.string().optional(),
+      });
+
+      const result = settingSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0].message });
+      }
+
+      const existing = await storage.getSetting(req.params.key);
+      const setting = await storage.upsertSetting({
+        key: req.params.key,
+        value: result.data.value,
+        label: result.data.label || existing?.label || req.params.key,
+        description: result.data.description || existing?.description,
+        category: result.data.category || existing?.category || "general",
+        valueType: result.data.valueType || existing?.valueType || "string",
+        updatedBy: userId,
+      });
+      res.json(setting);
+    } catch (err) {
+      console.error("Update setting error:", err);
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // Public products API (for frontend - only active products)
+  app.get("/api/products", async (req: Request, res: Response) => {
+    try {
+      const products = await storage.getProducts(true);
+      res.json(products);
+    } catch (err) {
+      console.error("Get products error:", err);
+      res.status(500).json({ message: "Failed to get products" });
+    }
+  });
+
   // Ambassador Invitations
   app.post("/api/ambassador/invite", isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -3304,6 +3459,16 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to complete lesson" });
     }
   });
+
+  // Seed products and settings on startup (idempotent - only creates if missing)
+  setTimeout(async () => {
+    try {
+      await seedAll();
+      console.log("[server] Products and settings seeding complete");
+    } catch (err) {
+      console.error("[server] Products/settings seeding error:", err);
+    }
+  }, 500);
 
   // Initialize providers and run scraper asynchronously after startup
   // In production (Cloud Run), skip auto-run entirely to avoid startup timeout
