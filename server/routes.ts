@@ -1153,7 +1153,8 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const ambassador = await storage.getAmbassadorByUserId(user.id);
+      const userId = user.claims?.sub || user.id;
+      const ambassador = await storage.getAmbassadorByUserId(userId);
       if (!ambassador) {
         return res.json([]);
       }
