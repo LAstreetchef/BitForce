@@ -518,3 +518,88 @@ export const SAVED_LEAD_STATUSES = [
 ] as const;
 
 export type SavedLeadStatus = typeof SAVED_LEAD_STATUSES[number];
+
+// Products - managed via admin dashboard
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(), // URL-friendly identifier (e.g., "monthly-subscription")
+  name: text("name").notNull(),
+  tagline: text("tagline").notNull(),
+  price: text("price").notNull(), // Display price (e.g., "$29", "Included")
+  priceDetail: text("price_detail").notNull(), // e.g., "per month", "one time"
+  priceAmount: decimal("price_amount", { precision: 10, scale: 2 }), // Actual numeric price for calculations
+  description: text("description").notNull(),
+  valueProposition: text("value_proposition"),
+  backstory: text("backstory"),
+  bestFor: text("best_for").array(), // e.g., ["Seniors", "Families"]
+  useCases: text("use_cases").array(),
+  features: text("features").array(), // JSON strings or simple text array
+  imageUrl: text("image_url"),
+  badge: text("badge"), // e.g., "Most Popular", "Best Value"
+  badgeType: text("badge_type"), // "popular", "bestValue", "new", "included"
+  commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }), // Dollar amount ambassador earns
+  commissionType: text("commission_type").default("one_time"), // "one_time", "recurring"
+  commissionInfo: text("commission_info"), // Display text (e.g., "Earn $20 per session")
+  category: text("category").notNull(), // "subscription", "session", "bundle", "security", "partner", etc.
+  hasInteractiveFeature: boolean("has_interactive_feature").default(false),
+  externalUrl: text("external_url"),
+  isActive: boolean("is_active").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertProductSchema = createInsertSchema(products).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+// Platform Settings - configurable values for the platform
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  label: text("label").notNull(), // Human-readable label
+  description: text("description"),
+  category: text("category").notNull(), // "subscription", "referral", "bft_rewards", "general"
+  valueType: text("value_type").default("string"), // "string", "number", "boolean", "json"
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: text("updated_by"),
+});
+
+export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({ 
+  id: true, 
+  updatedAt: true 
+});
+
+export type PlatformSetting = typeof platformSettings.$inferSelect;
+export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;
+
+// Default platform settings keys
+export const PLATFORM_SETTING_KEYS = {
+  // Subscription fees
+  MONTHLY_SUBSCRIPTION_FEE: "monthly_subscription_fee",
+  ACTIVATION_FEE: "activation_fee",
+  
+  // Referral payouts
+  REFERRAL_BONUS_AMOUNT: "referral_bonus_amount",
+  RECURRING_OVERRIDE_PERCENT: "recurring_override_percent",
+  
+  // BFT Reward rates
+  BFT_DAILY_LOGIN: "bft_daily_login",
+  BFT_STREAK_7DAY: "bft_streak_7day",
+  BFT_STREAK_30DAY: "bft_streak_30day",
+  BFT_CUSTOMER_CONTACT: "bft_customer_contact",
+  BFT_INTEREST_SHOWN: "bft_interest_shown",
+  BFT_SALE_CLOSED: "bft_sale_closed",
+  BFT_LESSON_COMPLETE: "bft_lesson_complete",
+  BFT_MODULE_COMPLETE: "bft_module_complete",
+  BFT_SERVICE_SUGGEST: "bft_service_suggest",
+} as const;
+
+export type PlatformSettingKey = typeof PLATFORM_SETTING_KEYS[keyof typeof PLATFORM_SETTING_KEYS];
