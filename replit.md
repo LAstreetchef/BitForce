@@ -127,6 +127,38 @@ Located at `/payment-scheme`, this page provides stakeholder visibility into amb
 
 Frontend page: `client/src/pages/PaymentScheme.tsx`
 
+### Admin Dashboard
+Located at `/portal/admin`, this page provides administrators with a comprehensive interface for managing platform configuration without code deployments:
+
+**Access Control:**
+- Protected by `isAdmin` middleware (checks `ADMIN_USER_IDS` environment variable)
+- Uses lightweight `/api/admin/check` endpoint for admin verification
+- Non-admin users see "Admin Access Required" message instead of data
+
+**Tabbed Interface:**
+- **Products Tab**: Full CRUD for products (name, description, pricing, commissions, active status, featured flag)
+- **Commissions Tab**: View and edit commission amounts per product
+- **BFT Rewards Tab**: Configure BFT token reward rates for various activities
+- **Settings Tab**: Platform-wide settings grouped by category (subscription, payouts, bft_rewards)
+
+**Database Tables:**
+- `products`: Stores product catalog with pricing, commission, and status fields
+- `platformSettings`: Key-value store for configurable settings with categories
+
+**Key Files:**
+- `client/src/pages/portal/Admin.tsx` - Admin dashboard UI with tabbed interface
+- `client/src/lib/productImages.ts` - Maps database products to static frontend image imports
+- `server/scripts/seed-products.ts` - Seeds initial products and settings on startup
+
+**API Endpoints:**
+- `GET /api/admin/check` - Lightweight admin status verification
+- `GET /api/admin/products` - List all products (admin only)
+- `POST /api/admin/products` - Create new product
+- `PUT /api/admin/products/:id` - Update product
+- `DELETE /api/admin/products/:id` - Delete product
+- `GET /api/admin/settings` - List all platform settings
+- `PUT /api/admin/settings/:id` - Update setting value
+
 ## External Dependencies
 
 ### Database
