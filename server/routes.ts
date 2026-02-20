@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./auth";
 import Stripe from "stripe";
 import { runScraper, getRecommendationsForLead, initializeProviders } from "./services/scraper";
 import { enqueueScrapeJob, getScraperJobStatus } from "./services/scraperJob";
@@ -12,7 +12,7 @@ import { getPropertyReport } from "./services/propertyData";
 import { askDeepSeek } from "./services/deepseek";
 import { ACTION_POINTS, BADGE_DEFINITIONS, type BadgeType } from "@shared/schema";
 import { awardBftTokens } from "./lib/bft-rewards";
-import { registerImageRoutes } from "./replit_integrations/image";
+import { registerImageRoutes } from "./services/imageGen";
 import { seedAll } from "./scripts/seed-products";
 import { sendLeadConfirmationEmail, sendLeadStatusUpdateEmail, sendAdminNotificationEmail, sendSupportChatInitiatedEmail, sendAmbassadorInviteEmail, sendAIBuddyCustomerInviteEmail } from "./services/email";
 import { registerCouponAppRoutes, configureCouponAppCors } from "./services/couponAppApi";
@@ -1043,8 +1043,9 @@ export async function registerRoutes(
       const signature = crypto.createHmac('sha256', ssoSecret).update(payloadB64).digest('hex');
       const ssoToken = `${payloadB64}.${signature}`;
 
+      const bftPlatformUrl = process.env.BFT_PLATFORM_URL || "https://bitforcetoken.com";
       res.json({ 
-        redirectUrl: `https://bitforcetoken.replit.app/wallet?sso_token=${encodeURIComponent(ssoToken)}`
+        redirectUrl: `${bftPlatformUrl}/wallet?sso_token=${encodeURIComponent(ssoToken)}`
       });
     } catch (err: any) {
       console.error("[/api/ambassador/sso-token] Error:", err.message);

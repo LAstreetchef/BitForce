@@ -4,7 +4,7 @@ import type { Lead } from "@shared/schema";
 const GMAIL_USER = process.env.GMAIL_USER || "kammiceli@gmail.com";
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Bit Force";
-const BASE_URL = process.env.BASE_URL || "https://bitforceambassadorportal.replit.app";
+const BASE_URL = process.env.BASE_URL || "https://bitforce.com";
 
 function createTransporter() {
   if (!GMAIL_APP_PASSWORD) {

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BFT_TOKEN_API_BASE = "https://bitforcetoken.replit.app";
+const BFT_TOKEN_API_BASE = process.env.BFT_PLATFORM_URL || "https://bitforcetoken.com";
 
 export interface PurchasedBftData {
   email: string;
