@@ -5,6 +5,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://bitforce-xmq3.onrender.com/api/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
